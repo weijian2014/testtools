@@ -1,0 +1,28 @@
+{
+  "__CommonConfig__": "__CommonConfig__",
+  "CommonRecvBufferSizeBytes": 512,
+  "__ServerConfig__": "__ServerConfig__",
+  "ServerListenHost": "0.0.0.0",
+  "ServerTcpListenPort": 8000,
+  "ServerUdpListenPort": 8000,
+  "ServerHttpListenPort": 8080,
+  "ServerHttpsListenPort": 8443,
+  "ServerIeeeQuicListenPort": 8081,
+  "ServerDnsListenPort": 53,
+  "ServerDnsAEntrys": {
+    "www.google.com": "1.0.0.1",
+    "www.qq.com": "1.0.0.2",
+    "www.cnblogs.com": "1.0.0.3"
+  },
+  "ServerDns4AEntrys": {
+    "www.google.com": "fe80::f64d:30ff:fea9:2b89",
+    "www.qq.com": "fe80::f64d:30ff:fea9:2b81",
+    "www.cnblogs.com": "fe80::f64d:30ff:fea9:2b88"
+  },
+  "ServerSendData": "Hello Client",
+  "__ClientConfig__": "__ClientConfig__",
+  "ClientBindIpAddress": "1.0.0.1",
+  "ClientSendToIpv4Address": "2.0.0.1",
+  "ClientSendToIpv6Address": "::1",
+  "ClientSendData": "Hello Server"
+}
