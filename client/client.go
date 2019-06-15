@@ -6,8 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/lucas-clemente/quic-go"
-	"golang.org/x/net/dns/dnsmessage"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/lucas-clemente/quic-go"
+	"golang.org/x/net/dns/dnsmessage"
 )
 
 var (
@@ -412,7 +413,7 @@ func sendByIEEEQuic() {
 		panic(err)
 	}
 
-	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true}, nil)
+	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true, NextProtos: []string{"quic-echo-example"}}, nil)
 	defer session.Close()
 	if err != nil {
 		panic(fmt.Sprintf("IEEE Quic client dial with %v failed, err : %v\n", remoteAddr, err.Error()))
@@ -422,7 +423,6 @@ func sendByIEEEQuic() {
 	defer stream.Close()
 	if err != nil {
 		panic(fmt.Sprintf("IEEE Quic client[%v]----Quic server[%v] open stream failed, err : %v\n", session.LocalAddr(), session.RemoteAddr(), err.Error()))
-		return
 	}
 
 	fmt.Printf("IEEE Quic client bind on %v, will sent data to %v\n", Configs.ClientBindIpAddress, remoteAddr)

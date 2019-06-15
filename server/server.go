@@ -12,8 +12,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/lucas-clemente/quic-go"
-	"golang.org/x/net/dns/dnsmessage"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -26,6 +24,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/lucas-clemente/quic-go"
+	"golang.org/x/net/dns/dnsmessage"
 )
 
 var (
@@ -155,7 +156,6 @@ func startTcpServer() {
 	listener, err := net.Listen("tcp", serverAddress)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	fmt.Printf("Tcp   server startup, listen on %v\n", serverAddress)
@@ -479,7 +479,10 @@ func generateQuicTLSConfig() *tls.Config {
 	if err != nil {
 		panic(err)
 	}
-	return &tls.Config{Certificates: []tls.Certificate{tlsCert}}
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"quic-echo-example"},
+	}
 }
 
 func index(w http.ResponseWriter, r *http.Request) {

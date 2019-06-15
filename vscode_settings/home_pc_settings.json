@@ -1,0 +1,17 @@
+{
+    "editor.fontSize": 16,
+    "workbench.startupEditor": "newUntitledFile",
+    "remote.SSH.showLoginTerminal": true,
+    "go.goroot": "/opt/go",
+    "go.gopath": "/opt/go/gopath",
+    "go.buildOnSave": "workspace",
+    "go.lintOnSave": "workspace",
+    "go.vetOnSave": "workspace",
+    "go.buildTags": "",
+    "go.buildFlags": [],
+    "go.lintFlags": [],
+    "go.vetFlags": [],
+    "go.coverOnSave": false,
+    "go.useCodeSnippetsOnFunctionSuggest": false,
+    "go.formatTool": "goreturns"
+}
