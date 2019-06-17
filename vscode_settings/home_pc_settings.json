@@ -4,6 +4,7 @@
     "remote.SSH.showLoginTerminal": true,
     "go.goroot": "/opt/go",
     "go.gopath": "/opt/go/gopath",
+    "go.gocodeAutoBuild": true,
     "go.buildOnSave": "workspace",
     "go.lintOnSave": "workspace",
     "go.vetOnSave": "workspace",
@@ -13,5 +14,6 @@
     "go.vetFlags": [],
     "go.coverOnSave": false,
     "go.useCodeSnippetsOnFunctionSuggest": false,
-    "go.formatTool": "goreturns"
+    "go.formatTool": "goreturns",
+    "diffEditor.renderSideBySide": false
 }
