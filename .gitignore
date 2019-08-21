@@ -1,1 +1,3 @@
 bin/*
+server/cert/*
+server/files/*
