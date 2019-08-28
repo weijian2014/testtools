@@ -32,14 +32,18 @@ type Config struct {
 	// Common Config
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
 	// Server Config
-	ServerListenHost           string `json:"ServerListenHost"`
-	ServerTcpListenPort        uint16 `json:"ServerTcpListenPort"`
-	ServerUdpListenPort        uint16 `json:"ServerUdpListenPort"`
-	ServerHttpListenPort       uint16 `json:"ServerHttpListenPort"`
-	ServerHttpsListenPort      uint16 `json:"ServerHttpsListenPort"`
-	ServerIeeeQuicListenPort   uint16 `json:"ServerIeeeQuicListenPort"`
-	ServerGoogleQuicListenPort uint16 `json:"ServerGoogleQuicListenPort"`
-	ServerDnsListenPort        uint16 `json:"ServerDnsListenPort"`
+	ServerListenHost          string `json:"ServerListenHost"`
+	ServerTcpListenPort1      uint16 `json:"ServerTcpListenPort1"`
+	ServerUdpListenPort1      uint16 `json:"ServerUdpListenPort1"`
+	ServerHttpListenPort1     uint16 `json:"ServerHttpListenPort1"`
+	ServerHttpsListenPort1    uint16 `json:"ServerHttpsListenPort1"`
+	ServerIeeeQuicListenPort1 uint16 `json:"ServerIeeeQuicListenPort1"`
+	ServerTcpListenPort2      uint16 `json:"ServerTcpListenPort2"`
+	ServerUdpListenPort2      uint16 `json:"ServerUdpListenPort2"`
+	ServerHttpListenPort2     uint16 `json:"ServerHttpListenPort2"`
+	ServerHttpsListenPort2    uint16 `json:"ServerHttpsListenPort2"`
+	ServerIeeeQuicListenPort2 uint16 `json:"ServerIeeeQuicListenPort2"`
+	ServerDnsListenPort       uint16 `json:"ServerDnsListenPort"`
 	// map[string]interface{}
 	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`

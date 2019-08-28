@@ -12,8 +12,8 @@ import (
 	"math/big"
 )
 
-func startIeeeQuicServer() {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerIeeeQuicListenPort)
+func startIeeeQuicServer(listenPort uint16) {
+	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), nil)
 	if err != nil {
 		panic(err)

@@ -2,9 +2,12 @@ package main
 
 import (
 	"../common"
+	"errors"
 	"fmt"
 	"golang.org/x/net/dns/dnsmessage"
 	"net"
+	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -129,4 +132,75 @@ func printDnsServerEntrys() {
 		fmt.Printf("\t%v ---- %v\n", k, v)
 	}
 	fmt.Printf("\n")
+}
+
+func checkDomainName(domainName string) error {
+	if strings.Contains(domainName, " ") {
+		return errors.New(fmt.Sprintf("The domain name %v invalid", domainName))
+	}
+
+	if strings.HasPrefix(domainName, "http") {
+		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'http'", domainName))
+	}
+
+	if strings.HasPrefix(domainName, "https") {
+		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'https", domainName))
+	}
+
+	//支持以http://或者https://开头并且域名中间有/的情况
+	isLine := "^((http://)|(https://))?([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}(/)"
+	_, err := regexp.MatchString(isLine, domainName)
+	if nil != err {
+		return err
+	}
+
+	//支持以http://或者https://开头并且域名中间没有/的情况
+	notLine := "^((http://)|(https://))?([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}"
+	_, err = regexp.MatchString(notLine, domainName)
+	if nil != err {
+		return err
+	}
+
+	_, err = url.Parse(domainName)
+	if nil != err {
+		return err
+	}
+
+	return nil
+}
+
+func saveDnsEntrys() {
+	// 读取配置文件中的A记录到map<domainName, IPv4>
+	aEntryMap := common.Configs.ServerDnsAEntrys.(map[string]interface{})
+	dnsAEntrys = make(map[string]string, len(aEntryMap)+1)
+	for domainName, ip := range aEntryMap {
+		if nil != checkDomainName(domainName) {
+			panic(fmt.Sprintf("The domain name %v invalid", domainName))
+		}
+
+		ipv4 := ip.(string)
+		if nil == net.ParseIP(ipv4) ||
+			false == strings.Contains(ipv4, ".") {
+			panic(fmt.Sprintf("The domain name %v not match valid IPv4 address", domainName))
+		}
+		dnsAEntrys[domainName+"."] = ipv4
+	}
+	dnsAEntrys["www.example.com."] = "127.0.0.1"
+
+	// 读取配置文件中的AAAA记录到map<domainName, IPv6>
+	aaaaEntryMap := common.Configs.ServerDns4AEntrys.(map[string]interface{})
+	dns4AEntrys = make(map[string]string, len(aaaaEntryMap)+1)
+	for domainName, ip := range aaaaEntryMap {
+		if nil != checkDomainName(domainName) {
+			panic(fmt.Sprintf("The domain name %v invalid", domainName))
+		}
+
+		ipv6 := ip.(string)
+		if nil == net.ParseIP(ipv6) ||
+			false == strings.Contains(ipv6, ":") {
+			panic(fmt.Sprintf("The domain name %v not match valid IPv6 address", domainName))
+		}
+		dns4AEntrys[domainName+"."] = ipv6
+	}
+	dns4AEntrys["www.example.com."] = "::1"
 }

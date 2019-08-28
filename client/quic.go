@@ -4,23 +4,23 @@ import (
 	"../common"
 	"crypto/tls"
 	"fmt"
-	"net"
 	"github.com/lucas-clemente/quic-go"
+	"net"
 )
 
 func sendByIEEEQuic() {
 	localAddr := &net.UDPAddr{IP: net.ParseIP(common.Configs.ClientBindIpAddress)}
-	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.Configs.ServerIeeeQuicListenPort)}
+	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(sentToServerPort)}
 	udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: localAddr.IP, Port: localAddr.Port})
 	if err != nil {
 		panic(err)
 	}
 
-	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true}, nil)
-	defer session.Close()
+	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true, NextProtos: []string{"ieee-quic"}}, nil)
 	if err != nil {
 		panic(fmt.Sprintf("IEEE Quic client dial with %v failed, err : %v\n", remoteAddr, err.Error()))
 	}
+	defer session.Close()
 
 	stream, err := session.OpenStreamSync()
 	defer stream.Close()

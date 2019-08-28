@@ -8,7 +8,7 @@ import (
 
 func sendByUdp() {
 	localAddr := &net.UDPAddr{IP: net.ParseIP(common.Configs.ClientBindIpAddress)}
-	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.Configs.ServerUdpListenPort)}
+	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(sentToServerPort)}
 	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
 	defer conn.Close()
 	if err != nil {

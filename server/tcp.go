@@ -6,8 +6,8 @@ import (
 	"net"
 )
 
-func startTcpServer() {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerTcpListenPort)
+func startTcpServer(listenPort uint16) {
+	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	listener, err := net.Listen("tcp", serverAddress)
 	if err != nil {
 		panic(err)

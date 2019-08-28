@@ -15,32 +15,38 @@ var (
 	usingUdp              bool
 	usingHttp             bool
 	usingHttps            bool
-	usingDns              bool
 	usingIEEEQuic         bool
+	usingDns              bool
 	usingIos              bool
+	usingWin              bool
 	waitingSecond         int
 	clientBindIpAddress   = ""
 	clientSendNumbers     = 1
 	sendToServerIpAddress string
+	sentToServerPort      uint16
 )
 
 func init() {
+	tmpSentToServerPort := 0
 	flag.BoolVar(&common.IsHelp, "h", false, "Show help")
 	flag.StringVar(&common.ConfigFileFullPath, "f", common.CurrDir+"/config.json", "The path of config.json file, support for absolute and relative paths")
-	flag.IntVar(&waitingSecond, "w", 0, "The second waiting to send, only support TCP protocol")
+	flag.IntVar(&waitingSecond, "w", 0, "The second waiting to send before, only support TCP protocol")
 	flag.StringVar(&clientBindIpAddress, "b", "", "The ip address of client bind\n"+
 		"This parameter takes precedence over clientBindIpAddress in the config.json file\n"+
 		"If the parameter is an IPv6 address, the client will send data to the ClientSendToIpv6Address of config.json file")
-	flag.IntVar(&clientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, iQuic and gQuic protocols")
-	flag.BoolVar(&usingTcp, "tcp", true, "Using TCP protocol")
+	flag.IntVar(&clientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, iQuic protocols")
+	flag.IntVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, iQuic and gQuic protocols")
+	flag.BoolVar(&usingTcp, "tcp", false, "Using TCP protocol")
 	flag.BoolVar(&usingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&usingHttp, "http", false, "Using HTTP protocol")
 	flag.BoolVar(&usingHttps, "https", false, "Using HTTPS protocol")
 	flag.BoolVar(&usingIEEEQuic, "iquic", false, "Using IEEE QUIC protocol")
 	flag.BoolVar(&usingDns, "dns", false, "Using DNS protocol")
-	flag.BoolVar(&usingIos, "ios", false, "Using IOS characteristic TCP header sends TCP packets")
+	flag.BoolVar(&usingIos, "ios", false, "Using IOS characteristic TCP header sends TCP packets, valid only for IPv4 --- IOS simulator")
+	flag.BoolVar(&usingWin, "win", false, "Using Windows characteristic TCP header sends TCP packets, valid only for IPv4  --- Windows simulator")
 	flag.Parse()
 
+	sentToServerPort = uint16(tmpSentToServerPort)
 	_, err := os.Stat(common.ConfigFileFullPath)
 	if os.IsNotExist(err) {
 		common.ConfigFileFullPath = common.CurrDir + "/../config/config.json"
@@ -49,10 +55,6 @@ func init() {
 	common.Configs, err = common.LoadConfigFile(common.ConfigFileFullPath)
 	if nil != err {
 		panic(err)
-	}
-
-	if usingUdp || usingHttps || usingHttp || usingDns || usingIEEEQuic || usingIos {
-		usingTcp = false
 	}
 }
 
@@ -78,6 +80,11 @@ func main() {
 		sendToServerIpAddress = common.Configs.ClientSendToIpv6Address
 	}
 
+	err = parsePort()
+	if nil != err {
+		panic(err)
+	}
+
 	if usingTcp {
 		sendByTcp()
 		return
@@ -98,18 +105,23 @@ func main() {
 		return
 	}
 
-	if usingDns {
-		sendByDns()
-		return
-	}
-
 	if usingIEEEQuic {
 		sendByIEEEQuic()
 		return
 	}
 
+	if usingDns {
+		sendByDns()
+		return
+	}
+
 	if usingIos {
-		sendIosByTcp()
+		sendIosByHttp()
+		return
+	}
+
+	if usingWin {
+		sendWindowsByHttp()
 		return
 	}
 }
@@ -128,6 +140,89 @@ func checkConfigFlie() error {
 	if nil == net.ParseIP(common.Configs.ClientSendToIpv6Address) ||
 		false == strings.Contains(common.Configs.ClientSendToIpv6Address, ":") {
 		return errors.New(fmt.Sprintf("ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.Configs.ClientSendToIpv6Address))
+	}
+
+	return nil
+}
+
+func parsePort() error {
+	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingIEEEQuic && !usingDns && !usingIos && !usingWin {
+		if 0 == sentToServerPort {
+			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -iquic, -dns, -ios, -win, -dport")
+		} else {
+			if sentToServerPort == common.Configs.ServerTcpListenPort1 ||
+				sentToServerPort == common.Configs.ServerTcpListenPort2 {
+				usingTcp = true
+			} else if sentToServerPort == common.Configs.ServerUdpListenPort1 ||
+				sentToServerPort == common.Configs.ServerUdpListenPort2 {
+				usingUdp = true
+			} else if sentToServerPort == common.Configs.ServerHttpListenPort1 ||
+				sentToServerPort == common.Configs.ServerHttpListenPort2 {
+				usingHttp = true
+			} else if sentToServerPort == common.Configs.ServerHttpsListenPort1 ||
+				sentToServerPort == common.Configs.ServerHttpsListenPort2 {
+				usingHttps = true
+			} else if sentToServerPort == common.Configs.ServerIeeeQuicListenPort1 ||
+				sentToServerPort == common.Configs.ServerIeeeQuicListenPort2 {
+				usingIEEEQuic = true
+			} else if sentToServerPort == common.Configs.ServerDnsListenPort {
+				usingDns = true
+			}
+		}
+		return nil
+	}
+
+	if usingTcp &&
+		sentToServerPort != common.Configs.ServerTcpListenPort1 &&
+		sentToServerPort != common.Configs.ServerTcpListenPort2 {
+		sentToServerPort = common.Configs.ServerTcpListenPort1
+		return nil
+	}
+
+	if usingUdp &&
+		sentToServerPort != common.Configs.ServerUdpListenPort1 &&
+		sentToServerPort != common.Configs.ServerUdpListenPort2 {
+		sentToServerPort = common.Configs.ServerUdpListenPort1
+		return nil
+	}
+
+	if usingHttp &&
+		sentToServerPort != common.Configs.ServerHttpListenPort1 &&
+		sentToServerPort != common.Configs.ServerHttpListenPort2 {
+		sentToServerPort = common.Configs.ServerHttpListenPort1
+		return nil
+	}
+
+	if usingHttps &&
+		sentToServerPort != common.Configs.ServerHttpsListenPort1 &&
+		sentToServerPort != common.Configs.ServerHttpsListenPort2 {
+		sentToServerPort = common.Configs.ServerHttpsListenPort1
+		return nil
+	}
+
+	if usingIEEEQuic &&
+		sentToServerPort != common.Configs.ServerIeeeQuicListenPort1 &&
+		sentToServerPort != common.Configs.ServerIeeeQuicListenPort2 {
+		sentToServerPort = common.Configs.ServerIeeeQuicListenPort1
+		return nil
+	}
+
+	if usingDns &&
+		sentToServerPort != common.Configs.ServerDnsListenPort {
+		sentToServerPort = common.Configs.ServerDnsListenPort
+		return nil
+	}
+
+	if usingIos || usingWin {
+		if strings.Contains(common.Configs.ClientBindIpAddress, ":") {
+			return errors.New("IOS or Windows simulator do not support IPv6")
+		}
+
+		if sentToServerPort != common.Configs.ServerHttpListenPort1 &&
+			sentToServerPort != common.Configs.ServerHttpListenPort2 {
+			sentToServerPort = common.Configs.ServerHttpListenPort1
+		}
+		return nil
 	}
 
 	return nil

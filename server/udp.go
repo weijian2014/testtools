@@ -6,8 +6,8 @@ import (
 	"net"
 )
 
-func startUdpServer() {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerUdpListenPort)
+func startUdpServer(listenPort uint16) {
+	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	udp, err := net.ResolveUDPAddr("udp", serverAddress)
 	if err != nil {
 		panic(err)

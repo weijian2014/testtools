@@ -11,21 +11,30 @@ import (
 	"strings"
 )
 
-func startHttpServer() {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerHttpListenPort)
+var (
+	isRegistered   = false
+	isGenerateCert = false
+)
+
+func startHttpServer(listenPort uint16) {
+	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	fmt.Printf("Http  server startup, listen on %v\n", serverAddress)
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
-	http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+	if !isRegistered {
+		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
 
-	// 页面
-	http.HandleFunc("/", index)
-	http.HandleFunc("/upload", upload)
-	http.HandleFunc("/list", list)
+		http.HandleFunc("/", index)
+		http.HandleFunc("/upload", upload)
+		http.HandleFunc("/list", list)
+
+		isRegistered = true
+	}
+
 	http.ListenAndServe(serverAddress, nil)
 }
 
-func startHttpsServer() {
+func startHttpsServer(listenPort uint16) {
 	_, err := os.Stat(certificatePath)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(certificatePath, os.ModePerm)
@@ -37,36 +46,43 @@ func startHttpsServer() {
 	keyFullPath := certificatePath + "server.key"
 	crtFullPath := certificatePath + "server.crt"
 
-	_, err = os.Stat(keyFullPath)
-	if os.IsExist(err) {
-		err = os.Remove(keyFullPath)
+	if !isGenerateCert {
+		_, err = os.Stat(keyFullPath)
+		if os.IsExist(err) {
+			err = os.Remove(keyFullPath)
+			if nil != err {
+				panic(err)
+			}
+		}
+
+		_, err = os.Stat(crtFullPath)
+		if os.IsExist(err) {
+			err = os.Remove(crtFullPath)
+			if nil != err {
+				panic(err)
+			}
+		}
+		err = generateHttpsCertificate(keyFullPath, crtFullPath)
 		if nil != err {
 			panic(err)
 		}
+
+		isGenerateCert = true
 	}
 
-	_, err = os.Stat(crtFullPath)
-	if os.IsExist(err) {
-		err = os.Remove(crtFullPath)
-		if nil != err {
-			panic(err)
-		}
-	}
-	err = generateHttpsCertificate(keyFullPath, crtFullPath)
-	if nil != err {
-		panic(err)
-	}
-
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerHttpsListenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	fmt.Printf("Https server startup, listen on %v\n", serverAddress)
 
-	// 启动静态文件服务 Http已经注册过
-	//http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+	if !isRegistered {
+		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
 
-	// 页面 Http已经注册过
-	//http.HandleFunc("/", index)
-	//http.HandleFunc("/upload", upload)
-	//http.HandleFunc("/list", list)
+		http.HandleFunc("/", index)
+		http.HandleFunc("/upload", upload)
+		http.HandleFunc("/list", list)
+
+		isRegistered = true
+	}
+
 	http.ListenAndServeTLS(serverAddress, crtFullPath, keyFullPath, nil)
 }
 
@@ -183,21 +199,21 @@ func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 	return nil
 }
 
-func printHttpServerGuide() {
+func printHttpServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.Configs.ClientSendToIpv4Address)
 	fmt.Printf("Http server use guide:\n")
-	fmt.Printf("\tUse 'curl http://%v:%v' get index page\n", ip, common.Configs.ServerHttpListenPort)
-	fmt.Printf("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, common.Configs.ServerHttpListenPort)
-	fmt.Printf("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, common.Configs.ServerHttpListenPort)
-	fmt.Printf("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, common.Configs.ServerHttpListenPort)
+	fmt.Printf("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
+	fmt.Printf("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	fmt.Printf("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	fmt.Printf("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
-func printHttpsServerGuide() {
+func printHttpsServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.Configs.ClientSendToIpv4Address)
 	fmt.Printf("Https server certificate has been generated in the %v directory\n", certificatePath)
 	fmt.Printf("Https server use guide:\n")
-	fmt.Printf("\tUse 'curl -k https://%v:%v' get index page\n", ip, common.Configs.ServerHttpsListenPort)
-	fmt.Printf("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, common.Configs.ServerHttpsListenPort)
-	fmt.Printf("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, common.Configs.ServerHttpsListenPort)
-	fmt.Printf("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, common.Configs.ServerHttpsListenPort)
+	fmt.Printf("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
+	fmt.Printf("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	fmt.Printf("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	fmt.Printf("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
 }

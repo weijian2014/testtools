@@ -9,7 +9,7 @@ import (
 
 func sendByTcp() {
 	localAddr := &net.TCPAddr{IP: net.ParseIP(common.Configs.ClientBindIpAddress)}
-	remoteAddr := &net.TCPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.Configs.ServerTcpListenPort)}
+	remoteAddr := &net.TCPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(sentToServerPort)}
 	conn, err := net.DialTCP("tcp", localAddr, remoteAddr)
 	defer conn.Close()
 	if err != nil {
@@ -26,7 +26,7 @@ func sendByTcp() {
 		// send
 		_, err = conn.Write([]byte(common.Configs.ClientSendData))
 		if err != nil {
-			fmt.Printf("Tcp client[%v]----Udp server[%v] send failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
+			fmt.Printf("Tcp client[%v]----Tcp server[%v] send failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
 			return
 		}
 
@@ -34,7 +34,7 @@ func sendByTcp() {
 		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
 		n, err := conn.Read(recvBuffer)
 		if err != nil {
-			fmt.Printf("Tcp client[%v]----Udp server[%v] receive failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
+			fmt.Printf("Tcp client[%v]----Tcp server[%v] receive failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
 			return
 		}
 

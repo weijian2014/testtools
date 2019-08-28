@@ -36,9 +36,9 @@ func sendByHttp() {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("http://%s:%d", sendToServerIpAddress, common.Configs.ServerHttpListenPort)
+		reqeustUrl = fmt.Sprintf("http://%s:%d", sendToServerIpAddress, sentToServerPort)
 	} else {
-		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.Configs.ServerHttpListenPort)
+		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, sentToServerPort)
 	}
 
 	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.Configs.ClientBindIpAddress, reqeustUrl)
@@ -97,9 +97,9 @@ func sendByHttps() {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("https://%s:%d", sendToServerIpAddress, common.Configs.ServerHttpsListenPort)
+		reqeustUrl = fmt.Sprintf("https://%s:%d", sendToServerIpAddress, sentToServerPort)
 	} else {
-		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.Configs.ServerHttpsListenPort)
+		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, sentToServerPort)
 	}
 
 	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.Configs.ClientBindIpAddress, reqeustUrl)

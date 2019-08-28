@@ -59,18 +59,4 @@ git clone https://github.com/golang/oauth2.git golang.org/x/oauth2
     "go.formatTool": "goreturns",
 }
 
-# keybindings.json
-[
-    {
-        "key": "f7",
-        "command": "workbench.action.tasks.runTask",
-        "args": "go_build_server",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "f8",
-        "command": "workbench.action.tasks.runTask",
-        "args": "go_build_client",
-        "when": "editorTextFocus"
-    }
-]
+apt-get install libpcap-dev

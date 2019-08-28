@@ -5,11 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
-	"net/url"
 	"os"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -47,8 +43,8 @@ func main() {
 
 	if common.IsHelp {
 		flag.Usage()
-		printHttpServerGuide()
-		printHttpsServerGuide()
+		printHttpServerGuide(common.Configs.ServerHttpListenPort1)
+		printHttpsServerGuide(common.Configs.ServerHttpsListenPort1)
 		saveDnsEntrys()
 		printDnsServerEntrys()
 		fmt.Printf("Json config: %+v\n\n", common.Configs)
@@ -73,26 +69,36 @@ func main() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
-	go startTcpServer()
+	go startTcpServer(common.Configs.ServerTcpListenPort1)
+	time.Sleep(time.Duration(5) * time.Millisecond)
+	go startTcpServer(common.Configs.ServerTcpListenPort2)
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startUdpServer()
+	go startUdpServer(common.Configs.ServerUdpListenPort1)
+	time.Sleep(time.Duration(5) * time.Millisecond)
+	go startUdpServer(common.Configs.ServerUdpListenPort2)
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpServer()
+	go startHttpServer(common.Configs.ServerHttpListenPort1)
+	time.Sleep(time.Duration(5) * time.Millisecond)
+	go startHttpServer(common.Configs.ServerHttpListenPort2)
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpsServer()
+	go startHttpsServer(common.Configs.ServerHttpsListenPort1)
+	time.Sleep(time.Duration(5) * time.Millisecond)
+	go startHttpsServer(common.Configs.ServerHttpsListenPort2)
+	time.Sleep(time.Duration(200) * time.Millisecond)
+
+	go startIeeeQuicServer(common.Configs.ServerIeeeQuicListenPort1)
+	time.Sleep(time.Duration(10) * time.Millisecond)
+	go startIeeeQuicServer(common.Configs.ServerIeeeQuicListenPort2)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
 	go startDnsServer()
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startIeeeQuicServer()
-
-	time.Sleep(time.Duration(200) * time.Millisecond)
-	printHttpServerGuide()
-	printHttpsServerGuide()
+	printHttpServerGuide(common.Configs.ServerHttpListenPort1)
+	printHttpsServerGuide(common.Configs.ServerHttpsListenPort1)
 	printDnsServerEntrys()
 
 	for {
@@ -114,24 +120,54 @@ func checkConfigFlie() error {
 		}
 	}
 
-	if 0 > common.Configs.ServerTcpListenPort || 65535 < common.Configs.ServerTcpListenPort {
-		return errors.New(fmt.Sprintf("ServerTcpListenPort[%v] invalid of config.json file", common.Configs.ServerTcpListenPort))
+	if 0 > common.Configs.ServerTcpListenPort1 || 65535 < common.Configs.ServerTcpListenPort1 {
+		return errors.New(fmt.Sprintf("ServerTcpListenPort[%v] invalid of config.json file", common.Configs.ServerTcpListenPort1))
+	}
+	if 0 > common.Configs.ServerTcpListenPort2 || 65535 < common.Configs.ServerTcpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerTcpListenPort[%v] invalid of config.json file", common.Configs.ServerTcpListenPort2))
+	}
+	if common.Configs.ServerTcpListenPort1 == common.Configs.ServerTcpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerTcpListenPort has to be different of config.json file"))
 	}
 
-	if 0 > common.Configs.ServerUdpListenPort || 65535 < common.Configs.ServerUdpListenPort {
-		return errors.New(fmt.Sprintf("ServerUdpListenPort[%v] invalid of config.json file", common.Configs.ServerUdpListenPort))
+	if 0 > common.Configs.ServerUdpListenPort1 || 65535 < common.Configs.ServerUdpListenPort1 {
+		return errors.New(fmt.Sprintf("ServerUdpListenPort[%v] invalid of config.json file", common.Configs.ServerUdpListenPort1))
+	}
+	if 0 > common.Configs.ServerUdpListenPort2 || 65535 < common.Configs.ServerUdpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerUdpListenPort[%v] invalid of config.json file", common.Configs.ServerUdpListenPort2))
+	}
+	if common.Configs.ServerUdpListenPort1 == common.Configs.ServerUdpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerUdpListenPort has to be different of config.json file"))
 	}
 
-	if 0 > common.Configs.ServerHttpListenPort || 65535 < common.Configs.ServerHttpListenPort {
-		return errors.New(fmt.Sprintf("ServerHttpListenPort[%v] invalid of config.json file", common.Configs.ServerHttpListenPort))
+	if 0 > common.Configs.ServerHttpListenPort1 || 65535 < common.Configs.ServerHttpListenPort1 {
+		return errors.New(fmt.Sprintf("ServerHttpListenPort[%v] invalid of config.json file", common.Configs.ServerHttpListenPort1))
+	}
+	if 0 > common.Configs.ServerHttpListenPort2 || 65535 < common.Configs.ServerHttpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerHttpListenPort[%v] invalid of config.json file", common.Configs.ServerHttpListenPort2))
+	}
+	if common.Configs.ServerHttpListenPort1 == common.Configs.ServerHttpListenPort2 {
+		return errors.New(fmt.Sprintf("ServerHttpListenPort has to be different of config.json file"))
 	}
 
-	if 0 > common.Configs.ServerHttpsListenPort || 65535 < common.Configs.ServerHttpsListenPort {
-		return errors.New(fmt.Sprintf("ServerHttpsListenPort[%v] invalid of config.json file", common.Configs.ServerHttpsListenPort))
+	if 0 > common.Configs.ServerHttpsListenPort1 || 65535 < common.Configs.ServerHttpsListenPort1 {
+		return errors.New(fmt.Sprintf("ServerHttpsListenPort[%v] invalid of config.json file", common.Configs.ServerHttpsListenPort1))
+	}
+	if 0 > common.Configs.ServerHttpsListenPort2 || 65535 < common.Configs.ServerHttpsListenPort2 {
+		return errors.New(fmt.Sprintf("ServerHttpsListenPort[%v] invalid of config.json file", common.Configs.ServerHttpsListenPort2))
+	}
+	if common.Configs.ServerHttpsListenPort1 == common.Configs.ServerHttpsListenPort2 {
+		return errors.New(fmt.Sprintf("ServerHttpsListenPort has to be different of config.json file"))
 	}
 
-	if 0 > common.Configs.ServerIeeeQuicListenPort || 65535 < common.Configs.ServerIeeeQuicListenPort {
-		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort[%v] invalid of config.json file", common.Configs.ServerIeeeQuicListenPort))
+	if 0 > common.Configs.ServerIeeeQuicListenPort1 || 65535 < common.Configs.ServerIeeeQuicListenPort1 {
+		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort[%v] invalid of config.json file", common.Configs.ServerIeeeQuicListenPort1))
+	}
+	if 0 > common.Configs.ServerIeeeQuicListenPort2 || 65535 < common.Configs.ServerIeeeQuicListenPort2 {
+		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort[%v] invalid of config.json file", common.Configs.ServerIeeeQuicListenPort2))
+	}
+	if common.Configs.ServerIeeeQuicListenPort1 == common.Configs.ServerIeeeQuicListenPort2 {
+		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort has to be different of config.json file"))
 	}
 
 	if 0 > common.Configs.ServerDnsListenPort || 65535 < common.Configs.ServerDnsListenPort {
@@ -139,75 +175,4 @@ func checkConfigFlie() error {
 	}
 
 	return nil
-}
-
-func checkDomainName(domainName string) error {
-	if strings.Contains(domainName, " ") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid", domainName))
-	}
-
-	if strings.HasPrefix(domainName, "http") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'http'", domainName))
-	}
-
-	if strings.HasPrefix(domainName, "https") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'https", domainName))
-	}
-
-	//支持以http://或者https://开头并且域名中间有/的情况
-	isLine := "^((http://)|(https://))?([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}(/)"
-	_, err := regexp.MatchString(isLine, domainName)
-	if nil != err {
-		return err
-	}
-
-	//支持以http://或者https://开头并且域名中间没有/的情况
-	notLine := "^((http://)|(https://))?([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}"
-	_, err = regexp.MatchString(notLine, domainName)
-	if nil != err {
-		return err
-	}
-
-	_, err = url.Parse(domainName)
-	if nil != err {
-		return err
-	}
-
-	return nil
-}
-
-func saveDnsEntrys() {
-	// 读取配置文件中的A记录到map<domainName, IPv4>
-	aEntryMap := common.Configs.ServerDnsAEntrys.(map[string]interface{})
-	dnsAEntrys = make(map[string]string, len(aEntryMap)+1)
-	for domainName, ip := range aEntryMap {
-		if nil != checkDomainName(domainName) {
-			panic(fmt.Sprintf("The domain name %v invalid", domainName))
-		}
-
-		ipv4 := ip.(string)
-		if nil == net.ParseIP(ipv4) ||
-			false == strings.Contains(ipv4, ".") {
-			panic(fmt.Sprintf("The domain name %v not match valid IPv4 address", domainName))
-		}
-		dnsAEntrys[domainName+"."] = ipv4
-	}
-	dnsAEntrys["www.example.com."] = "127.0.0.1"
-
-	// 读取配置文件中的AAAA记录到map<domainName, IPv6>
-	aaaaEntryMap := common.Configs.ServerDns4AEntrys.(map[string]interface{})
-	dns4AEntrys = make(map[string]string, len(aaaaEntryMap)+1)
-	for domainName, ip := range aaaaEntryMap {
-		if nil != checkDomainName(domainName) {
-			panic(fmt.Sprintf("The domain name %v invalid", domainName))
-		}
-
-		ipv6 := ip.(string)
-		if nil == net.ParseIP(ipv6) ||
-			false == strings.Contains(ipv6, ":") {
-			panic(fmt.Sprintf("The domain name %v not match valid IPv6 address", domainName))
-		}
-		dns4AEntrys[domainName+"."] = ipv6
-	}
-	dns4AEntrys["www.example.com."] = "::1"
 }
