@@ -159,6 +159,7 @@ struct ContextInfo {
     bool isWin;
     bool isHttp;
     bool isDisableRST;
+    bool isNotNeedRevc;
     string srcIp;
     string destIp;
     uint16_t srcPort;
@@ -183,8 +184,8 @@ struct ContextInfo {
     PsdHeader psdHeader;
 
     ContextInfo()
-            : isHelp(false), isWin(true), isHttp(true), isDisableRST(false), srcIp(""), destIp(""), srcPort(0),
-              destPort(0), seqNo(0),
+            : isHelp(false), isWin(true), isHttp(true), isDisableRST(false), isNotNeedRevc(true),
+              srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
               iosTcpHeader(NULL), winTcpHeader(NULL),
@@ -227,14 +228,15 @@ void showUsage() {
     cout
             << " -i, --ios                   Bool, using ios TCP header options of the raw socket, optional, default false."
             << endl;
-    cout << " -t, --tcp                   Bool, using TCP packet of raw socket, optional, default false, will using HTTP packet."
-         << endl;
+    cout
+            << " -t, --tcp                   Bool, using TCP packet of raw socket, optional, default false, will using HTTP packet."
+            << endl;
     cout << " -h, --help                Print this message and exit." << endl;
     cout << "Examples:" << endl;
-    cout << " ./RawSocket -w -s 1.0.0.1 -d 2.0.0.2 -r 8888" << endl;
-    cout << " ./RawSocket -w -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888" << endl;
-    cout << " ./RawSocket -i -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888 -t" << endl;
-    cout << " ./RawSocket --ios -s 1.0.0.1 -d 2.0.0.2 --sport 6666--dport 8888 --tcp" << endl << endl;
+    cout << " ./Simulator -w -s 1.0.0.1 -d 2.0.0.2 -r 8888" << endl;
+    cout << " ./Simulator -w -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888" << endl;
+    cout << " ./Simulator -i -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888 -t" << endl;
+    cout << " ./Simulator --ios -s 1.0.0.1 -d 2.0.0.2 --sport 6666--dport 8888 --tcp" << endl << endl;
 }
 
 int parseOpt(int argc, char *argv[], ContextInfo &context) {
@@ -857,78 +859,85 @@ int sendHelloPacketForHttp(ContextInfo &context) {
 
 int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
     uint8_t ackPacket[1024];
+    uint32_t ackPacketSeqNo = 0;
+    uint32_t ackPacketAckNo = 0;
 
     while (1) {
-        bzero(ackPacket, sizeof(ackPacket));
-        //接收Hello ACK报文
-        int recvByte = recvfrom(context.sendSockFd, ackPacket, 1024, 0, NULL, NULL);
-        if (recvByte < 0) {
-            printf("packet recv failed, ret=%d\n", recvByte);
-            return -1;
-        }
-
-        /*校验接收到的IP数据报，重新计算校验和，结果应为0*/
-        uint8_t ipHeaderLength = ackPacket[0];                                          //取出IP数据包的长度
-        ipHeaderLength = (ipHeaderLength & 0x0f);                                       //IP首部长度字段只占该字节后四位
-        ipHeaderLength *= 4;                                                            //四个字节为单位
-        uint16_t ipTotalLength = ntohs(*((uint16_t *) (ackPacket + 2)));                //获取IP数据报长度
-        uint16_t tcpTotalLength = ipTotalLength - ipHeaderLength;                       //计算TCP数据报长度
-
-        /*以下校验TCP报文，同样将伪首部和TCP报文放入buffer中*/
-        bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
-        for (int i = 0; i < 8; i++) {
-            context.checksumBuffer[i] = ackPacket[i + 12];                          //获取源IP和目的IP
-        }
-        context.checksumBuffer[8] = 0;                                              //伪首部的字段，可查阅资料
-        context.checksumBuffer[9] = ackPacket[9];                                   //IP首部“上层协议”字段，即IPPROTO_TCP
-        context.checksumBuffer[10] = 0;                                             //第10,11字节存储TCP报文长度，此处只考虑报文长度只用一个字节时，不会溢出，根据网络字节顺序存储
-        uint8_t tcpHeaderLength = ackPacket[32];                                    //获取TCP报文长度
-        tcpHeaderLength = tcpHeaderLength >> 4;                                     //因为TCP报文长度只占该字节的高四位，需要取出该四位的值
-        tcpHeaderLength *= 4;                                                       //以四个字节为单位
-
-        context.checksumBuffer[11] = tcpHeaderLength;                               //将TCP长度存入
-        for (int i = 0; i < tcpTotalLength; i++) {                                  //buffer中加入TCP报文
-            context.checksumBuffer[i + 12] = ackPacket[i + ipHeaderLength];
-        }
-
-        /*检验收到的是否是SYN+ACK包，是否与上一个SYN请求包对应*/
-        uint32_t ackPacketSeqNo = ntohl(*((uint32_t *) (ackPacket + ipHeaderLength + 4)));   //获取接收到的SYN包的序列号
-        uint32_t ackPacketAckNo = ntohl(*((int32_t *) (ackPacket + ipHeaderLength + 8)));
-        uint8_t flag = ackPacket[13 + ipHeaderLength];
-        uint8_t tcpFlag = (flag & 0x18);
-        uint8_t httpAckFlag = (flag & 0x10);
-
-        // Hello Client packet
-        if (!context.isHttp) {
-            if (tcpFlag != 0x18) {
-                continue;
-            }
-
-            if (ackPacketSeqNo != context.lastAckNo) {
-                continue;
-            }
-
-            if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
-                continue;
-            }
+        if (context.isNotNeedRevc) {
+            ackPacketSeqNo = context.lastAckNo;
+            ackPacketAckNo = (context.lastSeqNo + context.sendHelloDataLength);
         } else {
-            if (tcpFlag != 0x10) {
-                continue;
+            bzero(ackPacket, sizeof(ackPacket));
+            //接收Hello ACK报文
+            int recvByte = recvfrom(context.sendSockFd, ackPacket, 1024, 0, NULL, NULL);
+            if (recvByte < 0) {
+                printf("packet recv failed, ret=%d\n", recvByte);
+                return -1;
             }
 
-            if (ackPacketSeqNo != context.lastAckNo) {
-                continue;
+            /*校验接收到的IP数据报，重新计算校验和，结果应为0*/
+            uint8_t ipHeaderLength = ackPacket[0];                                          //取出IP数据包的长度
+            ipHeaderLength = (ipHeaderLength & 0x0f);                                       //IP首部长度字段只占该字节后四位
+            ipHeaderLength *= 4;                                                            //四个字节为单位
+            uint16_t ipTotalLength = ntohs(*((uint16_t *) (ackPacket + 2)));                //获取IP数据报长度
+            uint16_t tcpTotalLength = ipTotalLength - ipHeaderLength;                       //计算TCP数据报长度
+
+            /*以下校验TCP报文，同样将伪首部和TCP报文放入buffer中*/
+            bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
+            for (int i = 0; i < 8; i++) {
+                context.checksumBuffer[i] = ackPacket[i + 12];                          //获取源IP和目的IP
+            }
+            context.checksumBuffer[8] = 0;                                              //伪首部的字段，可查阅资料
+            context.checksumBuffer[9] = ackPacket[9];                                   //IP首部“上层协议”字段，即IPPROTO_TCP
+            context.checksumBuffer[10] = 0;                                             //第10,11字节存储TCP报文长度，此处只考虑报文长度只用一个字节时，不会溢出，根据网络字节顺序存储
+            uint8_t tcpHeaderLength = ackPacket[32];                                    //获取TCP报文长度
+            tcpHeaderLength = tcpHeaderLength >> 4;                                     //因为TCP报文长度只占该字节的高四位，需要取出该四位的值
+            tcpHeaderLength *= 4;                                                       //以四个字节为单位
+
+            context.checksumBuffer[11] = tcpHeaderLength;                               //将TCP长度存入
+            for (int i = 0; i < tcpTotalLength; i++) {                                  //buffer中加入TCP报文
+                context.checksumBuffer[i + 12] = ackPacket[i + ipHeaderLength];
             }
 
-            if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
-                continue;
+            /*检验收到的是否是SYN+ACK包，是否与上一个SYN请求包对应*/
+            ackPacketSeqNo = ntohl(*((uint32_t *) (ackPacket + ipHeaderLength + 4)));   //获取接收到的SYN包的序列号
+            ackPacketAckNo = ntohl(*((int32_t *) (ackPacket + ipHeaderLength + 8)));
+            uint8_t flag = ackPacket[13 + ipHeaderLength];
+            uint8_t tcpFlag = (flag & 0x18);
+            uint8_t httpAckFlag = (flag & 0x10);
+
+            // Hello Client packet
+            if (!context.isHttp) {
+                if (tcpFlag != 0x18) {
+                    continue;
+                }
+
+                if (ackPacketSeqNo != context.lastAckNo) {
+                    continue;
+                }
+
+                if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
+                    continue;
+                }
+            } else {
+                if (tcpFlag != 0x10) {
+                    continue;
+                }
+
+                if (ackPacketSeqNo != context.lastAckNo) {
+                    continue;
+                }
+
+                if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
+                    continue;
+                }
             }
+
+            uint16_t ipHeaderChecksum = checkSum((uint16_t *) ackPacket, ipHeaderLength);
+            uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
+            (void) ipHeaderChecksum;
+            (void) tcpHeaderChecksum;
         }
-
-        uint16_t ipHeaderChecksum = checkSum((uint16_t *) ackPacket, ipHeaderLength);
-        uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
-        (void) ipHeaderChecksum;
-        (void) tcpHeaderChecksum;
 
 #if 0
         //将接受的IP数据报输出
@@ -1089,67 +1098,75 @@ int sendFinalPacket(ContextInfo &context) {
 
 int recvAndCheckFinalAckPacket(ContextInfo &context) {
     uint8_t finalAckPacket[1024];
+    uint32_t finalAckPacketSeqNo = 0;
+    uint32_t finalAckPacketAckNo = 0;
+
     while (1) {
-        bzero(finalAckPacket, sizeof(finalAckPacket));
-        //接收FIN+ACK报文
-        int recvByte = recvfrom(context.sendSockFd, finalAckPacket, 1024, 0, NULL, NULL);
-        if (recvByte < 0) {
-            printf("FIN+ACK packet recv failed, ret=%d\n", recvByte);
-            return -1;
-        }
+        if (context.isNotNeedRevc) {
+            finalAckPacketSeqNo = context.lastAckNo;
+            finalAckPacketAckNo = (context.lastSeqNo + 1);
+        } else {
+            bzero(finalAckPacket, sizeof(finalAckPacket));
+            //接收FIN+ACK报文
+            int recvByte = recvfrom(context.sendSockFd, finalAckPacket, 1024, 0, NULL, NULL);
+            if (recvByte < 0) {
+                printf("FIN+ACK packet recv failed, ret=%d\n", recvByte);
+                return -1;
+            }
 
-        /*校验接收到的IP数据报，重新计算校验和，结果应为0*/
-        uint8_t ipHeaderLength = finalAckPacket[0];                                          //取出IP数据包的长度
-        ipHeaderLength = (ipHeaderLength & 0x0f);                                       //IP首部长度字段只占该字节后四位
-        ipHeaderLength *= 4;                                                            //四个字节为单位
-        uint16_t ipTotalLength = ntohs(*((uint16_t *) (finalAckPacket + 2)));                //获取IP数据报长度
-        uint16_t tcpTotalLength = ipTotalLength - ipHeaderLength;                       //计算TCP数据报长度
-
-
-        /*以下校验TCP报文，同样将伪首部和TCP报文放入buffer中*/
-        bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
-        for (int i = 0; i < 8; i++) {
-            context.checksumBuffer[i] = finalAckPacket[i + 12];                          //获取源IP和目的IP
-        }
-        context.checksumBuffer[8] = 0;                                              //伪首部的字段，可查阅资料
-        context.checksumBuffer[9] = finalAckPacket[9];                                   //IP首部“上层协议”字段，即IPPROTO_TCP
-        context.checksumBuffer[10] = 0;                                             //第10,11字节存储TCP报文长度，此处只考虑报文长度只用一个字节时，不会溢出，根据网络字节顺序存储
-        uint8_t tcpHeaderLength = finalAckPacket[32];                                    //获取TCP报文长度
-        tcpHeaderLength = tcpHeaderLength >> 4;                                     //因为TCP报文长度只占该字节的高四位，需要取出该四位的值
-        tcpHeaderLength *= 4;                                                       //以四个字节为单位
-
-        context.checksumBuffer[11] = tcpHeaderLength;                               //将TCP长度存入
-        for (int i = 0; i < tcpTotalLength; i++) {                                  //buffer中加入TCP报文
-            context.checksumBuffer[i + 12] = finalAckPacket[i + ipHeaderLength];
-        }
-
-        /*检验收到的是否是FIN+ACK包，是否与上一个FIN+ACK对应*/
-        uint32_t finalAckPacketSeqNo = ntohl(*((uint32_t *) (finalAckPacket + ipHeaderLength + 4)));   //获取接收到的SYN包的序列号
-        uint32_t finalAckPacketAckNo = ntohl(*((int32_t *) (finalAckPacket + ipHeaderLength + 8)));
-        uint8_t finalAckPacketFlag = finalAckPacket[13 + ipHeaderLength];
-        finalAckPacketFlag = (finalAckPacketFlag & 0x11);
+            /*校验接收到的IP数据报，重新计算校验和，结果应为0*/
+            uint8_t ipHeaderLength = finalAckPacket[0];                                          //取出IP数据包的长度
+            ipHeaderLength = (ipHeaderLength & 0x0f);                                       //IP首部长度字段只占该字节后四位
+            ipHeaderLength *= 4;                                                            //四个字节为单位
+            uint16_t ipTotalLength = ntohs(*((uint16_t *) (finalAckPacket + 2)));                //获取IP数据报长度
+            uint16_t tcpTotalLength = ipTotalLength - ipHeaderLength;                       //计算TCP数据报长度
 
 
-        if (finalAckPacketFlag != 0x11) {
+            /*以下校验TCP报文，同样将伪首部和TCP报文放入buffer中*/
+            bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
+            for (int i = 0; i < 8; i++) {
+                context.checksumBuffer[i] = finalAckPacket[i + 12];                          //获取源IP和目的IP
+            }
+            context.checksumBuffer[8] = 0;                                              //伪首部的字段，可查阅资料
+            context.checksumBuffer[9] = finalAckPacket[9];                                   //IP首部“上层协议”字段，即IPPROTO_TCP
+            context.checksumBuffer[10] = 0;                                             //第10,11字节存储TCP报文长度，此处只考虑报文长度只用一个字节时，不会溢出，根据网络字节顺序存储
+            uint8_t tcpHeaderLength = finalAckPacket[32];                                    //获取TCP报文长度
+            tcpHeaderLength = tcpHeaderLength >> 4;                                     //因为TCP报文长度只占该字节的高四位，需要取出该四位的值
+            tcpHeaderLength *= 4;                                                       //以四个字节为单位
+
+            context.checksumBuffer[11] = tcpHeaderLength;                               //将TCP长度存入
+            for (int i = 0; i < tcpTotalLength; i++) {                                  //buffer中加入TCP报文
+                context.checksumBuffer[i + 12] = finalAckPacket[i + ipHeaderLength];
+            }
+
+            /*检验收到的是否是FIN+ACK包，是否与上一个FIN+ACK对应*/
+            finalAckPacketSeqNo = ntohl(*((uint32_t *) (finalAckPacket + ipHeaderLength + 4)));   //获取接收到的SYN包的序列号
+            finalAckPacketAckNo = ntohl(*((int32_t *) (finalAckPacket + ipHeaderLength + 8)));
+            uint8_t finalAckPacketFlag = finalAckPacket[13 + ipHeaderLength];
+            finalAckPacketFlag = (finalAckPacketFlag & 0x11);
+
+
+            if (finalAckPacketFlag != 0x11) {
 //            printf("This is not FIN+ACK packet, ackPacketFlag=%02x\n", finalAckPacketFlag);
 //            usleep(30);
-            continue;
-        }
+                continue;
+            }
 
-        if (finalAckPacketSeqNo != context.lastAckNo) {
-            continue;
-        }
+            if (finalAckPacketSeqNo != context.lastAckNo) {
+                continue;
+            }
 
-        if (finalAckPacketAckNo != context.lastSeqNo + 1) {
+            if (finalAckPacketAckNo != context.lastSeqNo + 1) {
 //            printf("This is not match an FIN+ACK with send Hello\n");
 //            usleep(30);
-            continue;
-        }
+                continue;
+            }
 
-        uint16_t ipHeaderChecksum = checkSum((uint16_t *) finalAckPacket, ipHeaderLength);
-        uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
-        (void) ipHeaderChecksum;
-        (void) tcpHeaderChecksum;
+            uint16_t ipHeaderChecksum = checkSum((uint16_t *) finalAckPacket, ipHeaderLength);
+            uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
+            (void) ipHeaderChecksum;
+            (void) tcpHeaderChecksum;
+        }
 
 #if 0
         //将接受的IP数据报输出
@@ -1270,7 +1287,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cout << "Using " << (context.isWin ? "Windows" : "IOS") << " TCP header options of the raw socket" << ", srcIp="
+    cout << "Using " << (context.isWin ? "Windows" : "IOS") << " TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic" : "TCP traffic") << (context.isNotNeedRevc ? ", do not verify the response packet." : ".") << "\nsrcIp="
          << context.srcIp << ", destIp=" << context.destIp << ", srcPort="
          << context.srcPort << ", destPort=" << context.destPort << endl;
 
@@ -1318,7 +1335,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    usleep(200);
+    usleep(100);
 
     // HelloServerACK packet and HelloClient packet
     if (-1 == recvAndCheckHelloServerAckAndHelloClientPacket(context)) {
@@ -1330,13 +1347,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    sleep(1);
+    usleep(500);
 
     printf("     ---------------------------------     \n");
     if (-1 == sendFinalPacket(context)) {
         return -1;
     }
 
+    usleep(100);
     if (-1 == recvAndCheckFinalAckPacket(context)) {
         return -1;
     }
@@ -1347,7 +1365,7 @@ int main(int argc, char *argv[]) {
 
     cout << "****************************************************************************" << endl;
 
-    sleep(1);
-    cout << "ok" << endl;
+    usleep(100);
+    cout << "successful" << endl;
     return 0;
 }

@@ -3,3 +3,4 @@ client/client
 server/server
 server/cert/*
 server/files/*
+.idea
