@@ -17,8 +17,6 @@ var (
 	usingHttps            bool
 	usingIEEEQuic         bool
 	usingDns              bool
-	usingIos              bool
-	usingWin              bool
 	waitingSecond         int
 	clientBindIpAddress   = ""
 	clientSendNumbers     = 1
@@ -42,8 +40,6 @@ func init() {
 	flag.BoolVar(&usingHttps, "https", false, "Using HTTPS protocol")
 	flag.BoolVar(&usingIEEEQuic, "iquic", false, "Using IEEE QUIC protocol")
 	flag.BoolVar(&usingDns, "dns", false, "Using DNS protocol")
-	flag.BoolVar(&usingIos, "ios", false, "Using IOS characteristic TCP header sends TCP packets, valid only for IPv4 --- IOS simulator")
-	flag.BoolVar(&usingWin, "win", false, "Using Windows characteristic TCP header sends TCP packets, valid only for IPv4  --- Windows simulator")
 	flag.Parse()
 
 	sentToServerPort = uint16(tmpSentToServerPort)
@@ -114,16 +110,6 @@ func main() {
 		sendByDns()
 		return
 	}
-
-	if usingIos {
-		sendIosByHttp()
-		return
-	}
-
-	if usingWin {
-		sendWindowsByHttp()
-		return
-	}
 }
 
 func checkConfigFlie() error {
@@ -146,9 +132,9 @@ func checkConfigFlie() error {
 }
 
 func parsePort() error {
-	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingIEEEQuic && !usingDns && !usingIos && !usingWin {
+	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingIEEEQuic && !usingDns {
 		if 0 == sentToServerPort {
-			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -iquic, -dns, -ios, -win, -dport")
+			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -iquic, -dns, -dport")
 		} else {
 			if sentToServerPort == common.Configs.ServerTcpListenPort1 ||
 				sentToServerPort == common.Configs.ServerTcpListenPort2 {
@@ -210,18 +196,6 @@ func parsePort() error {
 	if usingDns &&
 		sentToServerPort != common.Configs.ServerDnsListenPort {
 		sentToServerPort = common.Configs.ServerDnsListenPort
-		return nil
-	}
-
-	if usingIos || usingWin {
-		if strings.Contains(common.Configs.ClientBindIpAddress, ":") {
-			return errors.New("IOS or Windows simulator do not support IPv6")
-		}
-
-		if sentToServerPort != common.Configs.ServerHttpListenPort1 &&
-			sentToServerPort != common.Configs.ServerHttpListenPort2 {
-			sentToServerPort = common.Configs.ServerHttpListenPort1
-		}
 		return nil
 	}
 

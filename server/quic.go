@@ -2,6 +2,7 @@ package main
 
 import (
 	"../common"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -22,7 +23,7 @@ func startIeeeQuicServer(listenPort uint16) {
 	fmt.Printf("Quic  server startup, listen on %v\n", serverAddress)
 
 	for {
-		session, err := listener.Accept()
+		session, err := listener.Accept(context.Background())
 		if err != nil {
 			fmt.Printf("Quic server accept fail, err: %v\n", err)
 			continue
@@ -33,7 +34,7 @@ func startIeeeQuicServer(listenPort uint16) {
 }
 
 func newQuicSessionHandler(sess quic.Session) {
-	stream, err := sess.AcceptStream()
+	stream, err := sess.AcceptStream(context.Background())
 	defer stream.Close()
 	if err != nil {
 		fmt.Printf("Quic server[%v] ---- %v accept stream failed, err: %v\n", sess.LocalAddr(), sess.RemoteAddr(), err)

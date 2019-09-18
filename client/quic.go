@@ -2,6 +2,7 @@ package main
 
 import (
 	"../common"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/lucas-clemente/quic-go"
@@ -22,7 +23,7 @@ func sendByIEEEQuic() {
 	}
 	defer session.Close()
 
-	stream, err := session.OpenStreamSync()
+	stream, err := session.OpenStreamSync(context.Background())
 	defer stream.Close()
 	if err != nil {
 		panic(fmt.Sprintf("IEEE Quic client[%v]----Quic server[%v] open stream failed, err : %v\n", session.LocalAddr(), session.RemoteAddr(), err.Error()))
