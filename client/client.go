@@ -15,6 +15,7 @@ var (
 	usingUdp              bool
 	usingHttp             bool
 	usingHttps            bool
+	usingGoogleQuic       bool
 	usingIEEEQuic         bool
 	usingDns              bool
 	waitingSecond         int
@@ -38,6 +39,7 @@ func init() {
 	flag.BoolVar(&usingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&usingHttp, "http", false, "Using HTTP protocol")
 	flag.BoolVar(&usingHttps, "https", false, "Using HTTPS protocol")
+	flag.BoolVar(&usingGoogleQuic, "gquic", false, "Using Google QUIC protocol")
 	flag.BoolVar(&usingIEEEQuic, "iquic", false, "Using IEEE QUIC protocol")
 	flag.BoolVar(&usingDns, "dns", false, "Using DNS protocol")
 	flag.Parse()
@@ -101,8 +103,13 @@ func main() {
 		return
 	}
 
+	if usingGoogleQuic {
+		sendByQuic("gQuic")
+		return
+	}
+
 	if usingIEEEQuic {
-		sendByIEEEQuic()
+		sendByQuic("iQuic")
 		return
 	}
 
@@ -134,7 +141,7 @@ func checkConfigFlie() error {
 func parsePort() error {
 	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingIEEEQuic && !usingDns {
 		if 0 == sentToServerPort {
-			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -iquic, -dns, -dport")
+			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport")
 		} else {
 			if sentToServerPort == common.Configs.ServerTcpListenPort1 ||
 				sentToServerPort == common.Configs.ServerTcpListenPort2 {
@@ -148,6 +155,9 @@ func parsePort() error {
 			} else if sentToServerPort == common.Configs.ServerHttpsListenPort1 ||
 				sentToServerPort == common.Configs.ServerHttpsListenPort2 {
 				usingHttps = true
+			} else if sentToServerPort == common.Configs.ServerGoogleQuicListenPort1 ||
+				sentToServerPort == common.Configs.ServerGoogleQuicListenPort2 {
+				usingGoogleQuic = true
 			} else if sentToServerPort == common.Configs.ServerIeeeQuicListenPort1 ||
 				sentToServerPort == common.Configs.ServerIeeeQuicListenPort2 {
 				usingIEEEQuic = true
@@ -183,6 +193,13 @@ func parsePort() error {
 		sentToServerPort != common.Configs.ServerHttpsListenPort1 &&
 		sentToServerPort != common.Configs.ServerHttpsListenPort2 {
 		sentToServerPort = common.Configs.ServerHttpsListenPort1
+		return nil
+	}
+
+	if usingGoogleQuic &&
+		sentToServerPort != common.Configs.ServerGoogleQuicListenPort1 &&
+		sentToServerPort != common.Configs.ServerGoogleQuicListenPort2 {
+		sentToServerPort = common.Configs.ServerGoogleQuicListenPort1
 		return nil
 	}
 

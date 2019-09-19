@@ -89,9 +89,9 @@ func main() {
 	go startHttpsServer(common.Configs.ServerHttpsListenPort2)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
-	go startIeeeQuicServer(common.Configs.ServerIeeeQuicListenPort1)
+	go startQuicServer(common.Configs.ServerGoogleQuicListenPort1, "gQuic")
 	time.Sleep(time.Duration(10) * time.Millisecond)
-	go startIeeeQuicServer(common.Configs.ServerIeeeQuicListenPort2)
+	go startQuicServer(common.Configs.ServerGoogleQuicListenPort2, "gQuic")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
 	go startDnsServer()
@@ -158,6 +158,13 @@ func checkConfigFlie() error {
 	}
 	if common.Configs.ServerHttpsListenPort1 == common.Configs.ServerHttpsListenPort2 {
 		return errors.New(fmt.Sprintf("ServerHttpsListenPort has to be different of config.json file"))
+	}
+
+	if 0 > common.Configs.ServerGoogleQuicListenPort1 || 65535 < common.Configs.ServerGoogleQuicListenPort1 {
+		return errors.New(fmt.Sprintf("ServerGoogleQuicListenPort[%v] invalid of config.json file", common.Configs.ServerGoogleQuicListenPort1))
+	}
+	if 0 > common.Configs.ServerGoogleQuicListenPort2 || 65535 < common.Configs.ServerGoogleQuicListenPort2 {
+		return errors.New(fmt.Sprintf("ServerGoogleQuicListenPort[%v] invalid of config.json file", common.Configs.ServerGoogleQuicListenPort2))
 	}
 
 	if 0 > common.Configs.ServerIeeeQuicListenPort1 || 65535 < common.Configs.ServerIeeeQuicListenPort1 {

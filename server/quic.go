@@ -2,7 +2,6 @@ package main
 
 import (
 	"../common"
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -13,31 +12,31 @@ import (
 	"math/big"
 )
 
-func startIeeeQuicServer(listenPort uint16) {
+func startQuicServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), nil)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Quic  server startup, listen on %v\n", serverAddress)
+	fmt.Printf("%v  server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
-		session, err := listener.Accept(context.Background())
+		session, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("Quic server accept fail, err: %v\n", err)
+			fmt.Printf("%v server accept fail, err: %v\n", serverName, err)
 			continue
 		}
 
-		go newQuicSessionHandler(session)
+		go newQuicSessionHandler(session, serverName)
 	}
 }
 
-func newQuicSessionHandler(sess quic.Session) {
-	stream, err := sess.AcceptStream(context.Background())
+func newQuicSessionHandler(sess quic.Session, serverName string) {
+	stream, err := sess.AcceptStream()
 	defer stream.Close()
 	if err != nil {
-		fmt.Printf("Quic server[%v] ---- %v accept stream failed, err: %v\n", sess.LocalAddr(), sess.RemoteAddr(), err)
+		fmt.Printf("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 		return
 	}
 
@@ -54,21 +53,22 @@ func newQuicSessionHandler(sess quic.Session) {
 				break
 			}
 
-			fmt.Printf("Quic server[%v]----Quic client[%v] receive failed, err: %v\n", sess.LocalAddr(), sess.RemoteAddr(), err)
+			fmt.Printf("%v server[%v]----Quic client[%v] receive failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 			return
 		}
 
 		// send
 		n, err := stream.Write([]byte(common.Configs.ServerSendData))
 		if nil != err {
-			fmt.Printf("Quic server[%v]----Quic client[%v] send failed, err: %v\n", sess.LocalAddr(), sess.RemoteAddr(), err)
+			fmt.Printf("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 			return
 		}
 
-		fmt.Printf("Quic server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n", sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
+		fmt.Printf("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
+			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
 	}
 
-	fmt.Printf("Quic server[%v]----Quic client[%v] closed\n", sess.LocalAddr(), sess.RemoteAddr())
+	fmt.Printf("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
 }
 
 // Setup a bare-bones TLS config for the server
@@ -89,5 +89,5 @@ func generateQuicTLSConfig() *tls.Config {
 	if err != nil {
 		panic(err)
 	}
-	return &tls.Config{Certificates: []tls.Certificate{tlsCert}, NextProtos: []string{"ieee-quic"}}
+	return &tls.Config{Certificates: []tls.Certificate{tlsCert}}
 }
