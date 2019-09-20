@@ -16,7 +16,12 @@ func sendByQuic(serverName string) {
 		panic(err)
 	}
 
-	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true}, nil)
+	session, err := quic.Dial(udpConn, remoteAddr, remoteAddr.String(), &tls.Config{InsecureSkipVerify: true}, &quic.Config{
+		Versions: []quic.VersionNumber{
+			quic.VersionGQUIC39,
+			quic.VersionGQUIC43,
+		},
+	})
 	if err != nil {
 		panic(fmt.Sprintf("%v client dial with %v failed, err : %v\n", serverName, remoteAddr, err.Error()))
 	}

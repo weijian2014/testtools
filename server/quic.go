@@ -14,7 +14,12 @@ import (
 
 func startQuicServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
-	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), nil)
+	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), &quic.Config{
+		Versions: []quic.VersionNumber{
+			quic.VersionGQUIC39,
+			quic.VersionGQUIC43,
+		},
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -45,11 +50,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
 		_, err = stream.Read(recvBuffer)
 		if err != nil {
-			if "NO_ERROR" == err.Error() {
-				break
-			}
-
-			if "EOF" == err.Error() {
+			if "NO_ERROR" == err.Error() || "EOF" == err.Error() || "PeerGoingAway:" == err.Error() {
 				break
 			}
 
