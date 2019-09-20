@@ -139,7 +139,7 @@ func checkConfigFlie() error {
 }
 
 func parsePort() error {
-	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingIEEEQuic && !usingDns {
+	if !usingTcp && !usingUdp && !usingHttp && !usingHttps && !usingGoogleQuic && !usingIEEEQuic && !usingDns {
 		if 0 == sentToServerPort {
 			return errors.New("Please use a required option: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport")
 		} else {
