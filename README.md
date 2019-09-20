@@ -1,62 +1,24 @@
-# testtools
-echo server(tcp, udp, http, https, dns, quic)
+#go mod命令说明
+    go mod download: 下载依赖的 module 到本地 cache
+    go mod edit: 编辑 go.mod
+    go mod graph: 打印模块依赖图
+    go mod init: 在当前目录下初始化 go.mod(就是会新建一个 go.mod 文件)
+    go mod tidy: 整理依赖关系，会添加丢失的 module，删除不需要的 module
+    go mod vender: 将依赖复制到 vendor 下
+    go mod verify: 校验依赖
+    go mod why: 解释为什么需要依赖
 
-# install go
-echo "export PATH=${PATH}:/opt/go/bin" >> /etc/profile
-echo "export GOROOT=/opt/go" >> /etc/profile
-mkdir -p /opt/go/gopath
-echo "export GOPATH=/opt/go/gopath" >> /etc/profile
+#GoLand配置
+    settings---GO---Go Modules(vgo)---勾选 Enable Go Modules(vgo) integration  #开启Go Modules
+    settings---GO---Go Modules(vgo)---proxy中填入https://goproxy.io            #开启代理
 
-# install clang8.0
-#!/bin/sh
-CURRENT_DIR=`pwd`
-mkdir clang
-cd clang
-wget http://releases.llvm.org/8.0.0/llvm-8.0.0.src.tar.xz
-tar -xf llvm-8.0.0.src.tar.xz
-mv llvm-8.0.0.src llvm
-cd llvm/tools/
-wget http://releases.llvm.org/8.0.0/cfe-8.0.0.src.tar.xz
-tar -xf cfe-8.0.0.src.tar.xz
-mv cfe-8.0.0.src clang
-cd ../projects
-wget http://releases.llvm.org/8.0.0/compiler-rt-8.0.0.src.tar.xz
-tar -xf compiler-rt-8.0.0.src.tar.xz
-mv compiler-rt-8.0.0.src compiler-rt
-mkdir -p /tmp/clang_build
-cd /tmp/clang_build
-cmake -G "Unix Makefiles" ${CURRENT_DIR}/clang/llvm
-make -j 8
-make instal
+#项目中使用Go Modules
+    cd testtools
+    go mod init testtools
+    go mod tidy
 
-# install go tools
-mkdir -p $GOPATH/src && cd $GOPATH/src
-git clone https://github.com/golang/tools.git golang.org/x/tools
-git clone https://github.com/golang/lint.git golang.org/x/lint
-git clone https://github.com/golang/net.git golang.org/x/net
-git clone https://github.com/golang/sys.git golang.org/x/sys
-git clone https://github.com/golang/crypto.git golang.org/x/crypto
-git clone https://github.com/golang/text.git golang.org/x/text
-git clone https://github.com/golang/image.git golang.org/x/image
-git clone https://github.com/golang/oauth2.git golang.org/x/oauth2
+#go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
+    require github.com/lucas-clemente/quic-go 0810051
 
-# settings.json
-{
-    "editor.fontSize": 16,
-    "workbench.startupEditor": "newUntitledFile",
-    "remote.SSH.showLoginTerminal": true,
-    "go.goroot": "/opt/go",
-    "go.gopath": "/opt/go/gopath",
-    "go.buildOnSave": "workspace",
-    "go.lintOnSave": "workspace",
-    "go.vetOnSave": "workspace",
-    "go.buildTags": "",
-    "go.buildFlags": [],
-    "go.lintFlags": [],
-    "go.vetFlags": [],
-    "go.coverOnSave": false,
-    "go.useCodeSnippetsOnFunctionSuggest": false,
-    "go.formatTool": "goreturns",
-}
-
-apt-get install libpcap-dev
+#build tag:
+    GOPROXY=https://goproxy.io;GOOS=linux;GOARCH=amd64;GO111MODULE=on
