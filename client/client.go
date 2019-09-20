@@ -216,5 +216,9 @@ func parsePort() error {
 		return nil
 	}
 
+	// default
+	usingHttp = true
+	sentToServerPort = common.Configs.ServerHttpListenPort1
+
 	return nil
 }
