@@ -15,7 +15,7 @@
   "ServerHttpsListenPort2": 4999,
   "ServerGoogleQuicListenPort2": 5999,
   "ServerIeeeQuicListenPort2": 6999,
-  "ServerDnsListenPort": 53,
+  "ServerDnsListenPort": 153,
   "ServerDnsAEntrys": {
     "www.google.com": "1.0.0.1",
     "www.qq.com": "1.0.0.2",

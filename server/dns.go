@@ -1,7 +1,6 @@
 package main
 
 import (
-	"../common"
 	"errors"
 	"fmt"
 	"golang.org/x/net/dns/dnsmessage"
@@ -9,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"testtools/common"
 )
 
 func startDnsServer() {

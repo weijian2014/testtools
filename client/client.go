@@ -1,13 +1,13 @@
 package main
 
 import (
-	"../common"
 	"errors"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strings"
+	"testtools/common"
 )
 
 var (

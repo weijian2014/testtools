@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../common"
 	"fmt"
 	"net"
+	"testtools/common"
 )
 
 func sendByUdp() {

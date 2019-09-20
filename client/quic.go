@@ -1,11 +1,11 @@
 package main
 
 import (
-	"../common"
 	"crypto/tls"
 	"fmt"
 	"github.com/lucas-clemente/quic-go"
 	"net"
+	"testtools/common"
 )
 
 func sendByQuic(serverName string) {

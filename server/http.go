@@ -1,7 +1,6 @@
 package main
 
 import (
-	"../common"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"testtools/common"
 )
 
 var (

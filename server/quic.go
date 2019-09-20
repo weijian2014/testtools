@@ -1,7 +1,6 @@
 package main
 
 import (
-	"../common"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -10,6 +9,7 @@ import (
 	"fmt"
 	"github.com/lucas-clemente/quic-go"
 	"math/big"
+	"testtools/common"
 )
 
 func startQuicServer(listenPort uint16, serverName string) {

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"../common"
 	"fmt"
+	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"strings"
-	"golang.org/x/net/dns/dnsmessage"
+	"testtools/common"
 )
 
 func sendByDns() {

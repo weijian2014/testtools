@@ -1,13 +1,13 @@
 package main
 
 import (
-	"../common"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
+	"testtools/common"
 	"time"
 )
 

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"../common"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"testtools/common"
 	"time"
 )
 
