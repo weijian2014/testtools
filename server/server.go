@@ -87,12 +87,12 @@ func main() {
 	go startHttpsServer(common.Configs.ServerHttpsListenPort1, "Https-1")
 	time.Sleep(time.Duration(5) * time.Millisecond)
 	go startHttpsServer(common.Configs.ServerHttpsListenPort2, "Https-1")
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	go startQuicServer(common.Configs.ServerGoogleQuicListenPort1, "gQuic")
+	go startQuicServer(common.Configs.ServerGoogleQuicListenPort1, "gQuic-1")
 	time.Sleep(time.Duration(10) * time.Millisecond)
-	go startQuicServer(common.Configs.ServerGoogleQuicListenPort2, "gQuic")
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	go startQuicServer(common.Configs.ServerGoogleQuicListenPort2, "gQuic-2")
+	time.Sleep(time.Duration(400) * time.Millisecond)
 
 	go startDnsServer("Dns")
 	time.Sleep(time.Duration(50) * time.Millisecond)
