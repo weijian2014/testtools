@@ -4,3 +4,4 @@ server/server
 server/cert/*
 server/files/*
 .idea
+go.sum
