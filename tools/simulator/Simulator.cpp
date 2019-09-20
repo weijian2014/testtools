@@ -160,6 +160,7 @@ struct ContextInfo {
     bool isHttp;
     bool isDisableRST;
     bool isNotNeedRevc;
+    uint8_t ipHeaderTTL;
     string srcIp;
     string destIp;
     uint16_t srcPort;
@@ -185,7 +186,7 @@ struct ContextInfo {
 
     ContextInfo()
             : isHelp(false), isWin(true), isHttp(true), isDisableRST(false), isNotNeedRevc(true),
-              srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
+              ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
               iosTcpHeader(NULL), winTcpHeader(NULL),
@@ -217,6 +218,7 @@ struct ContextInfo {
 void showUsage() {
     cout << "Usage: RawSocket Version: " << RAW_SOCKET_VERSION << endl;
     cout << "Options:" << endl;
+    cout << " -x, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
     cout << " -s                        String, the source IP addrss, must be specified." << endl;
     cout << " -d                        String, the destination IP addrss, must be specified." << endl;
     cout << " -l, --sport                  Int, the source port, optional, default will be automatically assigned."
@@ -244,16 +246,17 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
             {"ios",   no_argument,       NULL, 'i'},
             {"win",   no_argument,       NULL, 'w'},
             {"tcp",   no_argument,       NULL, 't'},
+            {"help",  no_argument,       NULL, 'h'},
             {"s",     required_argument, NULL, 's'},
             {"d",     required_argument, NULL, 'd'},
             {"sport", required_argument, NULL, 'l'},
             {"dport", required_argument, NULL, 'r'},
-            {"help",  no_argument,       NULL, 'h'}
+            {"ttl",   required_argument, NULL, 'x'}
     };
 
     int optIndex = 0;
     for (;;) {
-        optIndex = getopt_long(argc, argv, "iws:d:l:r:h", longOpts, NULL);
+        optIndex = getopt_long(argc, argv, "iwths:d:l:r:x:", longOpts, NULL);
         if (-1 == optIndex) {
             break;
         }
@@ -280,8 +283,8 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
             case 'r':
                 context.destPort = atoi(optarg);
                 break;
-            case 'v':
-                context.destPort = atoi(optarg);
+            case 'x':
+                context.ipHeaderTTL = atoi(optarg);
                 break;
             case 'h':
             default:
@@ -386,7 +389,7 @@ int sendIosSynPacket(ContextInfo &context) {
     context.ipHeader->totalLength = htons(IosPacketLengthC);
     context.ipHeader->ident = htons(0);
     context.ipHeader->off = htons(0x4000);
-    context.ipHeader->ttl = 64;
+    context.ipHeader->ttl = context.ipHeaderTTL;
     context.ipHeader->proto = IPPROTO_TCP;
     context.ipHeader->srcIp = inet_addr(context.srcIp.c_str());
     context.ipHeader->destIp = inet_addr(context.destIp.c_str());
@@ -593,7 +596,7 @@ int sendWindowsSynPacket(ContextInfo &context) {
     context.ipHeader->totalLength = htons(WinPacketLengthC);
     context.ipHeader->ident = htons(0);
     context.ipHeader->off = htons(0x4000);
-    context.ipHeader->ttl = 64;
+    context.ipHeader->ttl = context.ipHeaderTTL;
     context.ipHeader->proto = IPPROTO_TCP;
     context.ipHeader->srcIp = inet_addr(context.srcIp.c_str());
     context.ipHeader->destIp = inet_addr(context.destIp.c_str());
@@ -1335,7 +1338,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    usleep(100);
+    sleep(1);
 
     // HelloServerACK packet and HelloClient packet
     if (-1 == recvAndCheckHelloServerAckAndHelloClientPacket(context)) {
@@ -1347,14 +1350,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    usleep(500);
+    sleep(1);
 
     printf("     ---------------------------------     \n");
     if (-1 == sendFinalPacket(context)) {
         return -1;
     }
 
-    usleep(100);
+    sleep(1);
     if (-1 == recvAndCheckFinalAckPacket(context)) {
         return -1;
     }
@@ -1365,7 +1368,7 @@ int main(int argc, char *argv[]) {
 
     cout << "****************************************************************************" << endl;
 
-    usleep(100);
+    sleep(1);
     cout << "successful" << endl;
     return 0;
 }
