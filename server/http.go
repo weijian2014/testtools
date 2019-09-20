@@ -16,9 +16,9 @@ var (
 	isGenerateCert = false
 )
 
-func startHttpServer(listenPort uint16) {
+func startHttpServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
-	fmt.Printf("Http  server startup, listen on %v\n", serverAddress)
+	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
 	if !isRegistered {
@@ -34,7 +34,7 @@ func startHttpServer(listenPort uint16) {
 	http.ListenAndServe(serverAddress, nil)
 }
 
-func startHttpsServer(listenPort uint16) {
+func startHttpsServer(listenPort uint16, serverName string) {
 	_, err := os.Stat(certificatePath)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(certificatePath, os.ModePerm)
@@ -71,7 +71,7 @@ func startHttpsServer(listenPort uint16) {
 	}
 
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
-	fmt.Printf("Https server startup, listen on %v\n", serverAddress)
+	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	if !isRegistered {
 		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))

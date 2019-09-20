@@ -69,24 +69,24 @@ func main() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
-	go startTcpServer(common.Configs.ServerTcpListenPort1)
+	go startTcpServer(common.Configs.ServerTcpListenPort1, "Tcp-1")
 	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startTcpServer(common.Configs.ServerTcpListenPort2)
+	go startTcpServer(common.Configs.ServerTcpListenPort2, "Tcp-2")
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startUdpServer(common.Configs.ServerUdpListenPort1)
+	go startUdpServer(common.Configs.ServerUdpListenPort1, "Udp-1")
 	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startUdpServer(common.Configs.ServerUdpListenPort2)
+	go startUdpServer(common.Configs.ServerUdpListenPort2, "Udp-2")
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpServer(common.Configs.ServerHttpListenPort1)
+	go startHttpServer(common.Configs.ServerHttpListenPort1, "Http-1")
 	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startHttpServer(common.Configs.ServerHttpListenPort2)
+	go startHttpServer(common.Configs.ServerHttpListenPort2, "Http-2")
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpsServer(common.Configs.ServerHttpsListenPort1)
+	go startHttpsServer(common.Configs.ServerHttpsListenPort1, "Https-1")
 	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startHttpsServer(common.Configs.ServerHttpsListenPort2)
+	go startHttpsServer(common.Configs.ServerHttpsListenPort2, "Https-1")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
 	go startQuicServer(common.Configs.ServerGoogleQuicListenPort1, "gQuic")
@@ -94,7 +94,7 @@ func main() {
 	go startQuicServer(common.Configs.ServerGoogleQuicListenPort2, "gQuic")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
-	go startDnsServer()
+	go startDnsServer("Dns")
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
 	printHttpServerGuide(common.Configs.ServerHttpListenPort1)

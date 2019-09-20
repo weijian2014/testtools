@@ -19,7 +19,7 @@ func startQuicServer(listenPort uint16, serverName string) {
 		panic(err)
 	}
 
-	fmt.Printf("%v  server startup, listen on %v\n", serverName, serverAddress)
+	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		session, err := listener.Accept()

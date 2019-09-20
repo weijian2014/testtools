@@ -6,7 +6,7 @@ import (
 	"testtools/common"
 )
 
-func startTcpServer(listenPort uint16) {
+func startTcpServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	listener, err := net.Listen("tcp", serverAddress)
 	if err != nil {
@@ -14,20 +14,20 @@ func startTcpServer(listenPort uint16) {
 		return
 	}
 
-	fmt.Printf("Tcp   server startup, listen on %v\n", serverAddress)
+	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("Tpc server accept failed, err: %v\n", err)
+			fmt.Printf("%v server accept failed, err: %v\n", serverName, err)
 			continue
 		}
 
-		go newTcpConnectionHandler(conn)
+		go newTcpConnectionHandler(conn, serverName)
 	}
 }
 
-func newTcpConnectionHandler(conn net.Conn) {
+func newTcpConnectionHandler(conn net.Conn, serverName string) {
 	defer conn.Close()
 	for {
 		// receive
@@ -42,19 +42,19 @@ func newTcpConnectionHandler(conn net.Conn) {
 				break
 			}
 
-			fmt.Printf("Tcp server[%v]----Tcp client[%v] receive failed, err: %v\n", conn.LocalAddr(), conn.RemoteAddr(), err)
+			fmt.Printf("%v server[%v]----Tcp client[%v] receive failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 			break
 		}
 
 		// send
 		_, err = conn.Write([]byte(common.Configs.ServerSendData))
 		if nil != err {
-			fmt.Printf("Tcp server[%v]----Tcp client[%v] send failed, err: %v\n", conn.LocalAddr(), conn.RemoteAddr(), err)
+			fmt.Printf("%v server[%v]----Tcp client[%v] send failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 			break
 		}
 
-		fmt.Printf("Tcp server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
+		fmt.Printf("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
 	}
 
-	fmt.Printf("Tcp server[%v]----Tcp client[%v] closed\n", conn.LocalAddr(), conn.RemoteAddr())
+	fmt.Printf("%v server[%v]----Tcp client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())
 }

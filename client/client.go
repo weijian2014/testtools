@@ -33,8 +33,8 @@ func init() {
 	flag.StringVar(&clientBindIpAddress, "b", "", "The ip address of client bind\n"+
 		"This parameter takes precedence over clientBindIpAddress in the config.json file\n"+
 		"If the parameter is an IPv6 address, the client will send data to the ClientSendToIpv6Address of config.json file")
-	flag.IntVar(&clientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, iQuic protocols")
-	flag.IntVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, iQuic and gQuic protocols")
+	flag.IntVar(&clientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, gQuic and iQuic protocols")
+	flag.IntVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, gQuic and iQuic protocols")
 	flag.BoolVar(&usingTcp, "tcp", false, "Using TCP protocol")
 	flag.BoolVar(&usingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&usingHttp, "http", false, "Using HTTP protocol")
