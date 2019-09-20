@@ -1,4 +1,4 @@
-#go mod命令说明
+# go mod命令说明
     go mod download: 下载依赖的 module 到本地 cache
     go mod edit: 编辑 go.mod
     go mod graph: 打印模块依赖图
@@ -8,17 +8,17 @@
     go mod verify: 校验依赖
     go mod why: 解释为什么需要依赖
 
-#GoLand配置
+# GoLand配置
     settings---GO---Go Modules(vgo)---勾选 Enable Go Modules(vgo) integration  #开启Go Modules
     settings---GO---Go Modules(vgo)---proxy中填入https://goproxy.io            #开启代理
 
-#项目中使用Go Modules
+# 项目中使用Go Modules
     cd testtools
     go mod init testtools
     go mod tidy
 
-#go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
+# go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
     require github.com/lucas-clemente/quic-go 0810051
 
-#build tag:
+# Go Build Environment:
     GOPROXY=https://goproxy.io;GOOS=linux;GOARCH=amd64;GO111MODULE=on
