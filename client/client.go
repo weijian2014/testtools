@@ -104,12 +104,12 @@ func main() {
 	}
 
 	if usingGoogleQuic {
-		sendByQuic("gQuic")
+		sendByGQuic("gQuic")
 		return
 	}
 
 	if usingIEEEQuic {
-		sendByQuic("iQuic")
+		sendByGQuic("iQuic")
 		return
 	}
 

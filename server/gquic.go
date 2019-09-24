@@ -12,7 +12,7 @@ import (
 	"testtools/common"
 )
 
-func startQuicServer(listenPort uint16, serverName string) {
+func startGQuicServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
 	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), &quic.Config{
 		Versions: []quic.VersionNumber{

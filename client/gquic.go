@@ -8,7 +8,7 @@ import (
 	"testtools/common"
 )
 
-func sendByQuic(serverName string) {
+func sendByGQuic(serverName string) {
 	localAddr := &net.UDPAddr{IP: net.ParseIP(common.Configs.ClientBindIpAddress)}
 	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(sentToServerPort)}
 	udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: localAddr.IP, Port: localAddr.Port})
