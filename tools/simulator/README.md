@@ -1,3 +1,7 @@
+# Tips:
+    Need to use the OS prepared for the simulator, please contact weijian45590@bill-jc.com
+    --tcp using non-split tcp mode
+
 # Build Simulator:
     CURR_DIR=`pwd`
     mkdir -p /tmp/simulator_build
@@ -14,7 +18,7 @@
      -r, --dport                  Int, the destination port, must be specified.
      -w, --win                   Bool, using windows TCP header options of the raw socket, optional, default true.
      -i, --ios                   Bool, using ios TCP header options of the raw socket, optional, default false.
-     -t, --tcp                   Bool, using TCP packet of raw socket, optional, default false, will using HTTP packet.
+     -t, --tcp                   Bool, using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet.
      -h, --help                Print this message and exit.
     Examples:
      ./Simulator -w -s 1.0.0.1 -d 2.0.0.2 -r 8888

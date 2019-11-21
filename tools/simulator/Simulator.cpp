@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 
-#define RAW_SOCKET_VERSION "v0.1"
+#define SIMULATOR_VERSION "v0.1"
 
 using namespace std;
 
@@ -216,7 +216,7 @@ struct ContextInfo {
 };
 
 void showUsage() {
-    cout << "Usage: RawSocket Version: " << RAW_SOCKET_VERSION << endl;
+    cout << "Usage: Simulator Version: " << SIMULATOR_VERSION << endl;
     cout << "Options:" << endl;
     cout << " -x, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
     cout << " -s                        String, the source IP addrss, must be specified." << endl;
@@ -231,7 +231,7 @@ void showUsage() {
             << " -i, --ios                   Bool, using ios TCP header options of the raw socket, optional, default false."
             << endl;
     cout
-            << " -t, --tcp                   Bool, using TCP packet of raw socket, optional, default false, will using HTTP packet."
+            << " -t, --tcp                   Bool, using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet."
             << endl;
     cout << " -h, --help                Print this message and exit." << endl;
     cout << "Examples:" << endl;
