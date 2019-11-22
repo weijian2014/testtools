@@ -197,6 +197,7 @@ struct ContextInfo {
         bzero(winPacket, sizeof(winPacket));
         bzero(helloPacket, sizeof(helloPacket));
         bzero(helloForHttpPacket, sizeof(helloForHttpPacket));
+        bzero(psdHeader, sizeof(psdHeader));
     }
 
     ~ContextInfo() {
@@ -433,7 +434,7 @@ int sendIosSynPacket(ContextInfo &context) {
 
     context.lastSeqNo = context.seqNo;
     context.lastAckNo = context.ackNo;
-    printf("Client -----> SYN -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo, context.lastAckNo);
+    printf("Client -----> SYN -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo, context.lastAckNo);
     return 0;
 }
 
@@ -506,7 +507,7 @@ int recvAndCheckSynAckPacket(ContextInfo &context) {
 
         printf("\nReceive SYN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
                "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "synAckPacketSeqNo=%d, synAckPacketAckNo=%d\n",
+               "synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n",
                ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
                tcpTotalLength, tcpHeaderChecksum, synAckPacketSeqNo, synAckPacketAckNo);
 #endif
@@ -514,7 +515,7 @@ int recvAndCheckSynAckPacket(ContextInfo &context) {
         context.synAckPacketSeqNo = synAckPacketSeqNo;
         context.lastSeqNo = synAckPacketSeqNo;
         context.lastAckNo = synAckPacketAckNo;
-        printf("Client <----- SYN+ACK <----- Server ok, synAckPacketSeqNo=%d, lastSeqNo=%d, lastAckNo=%d\n",
+        printf("Client <----- SYN+ACK <----- Server ok, synAckPacketSeqNo=%u, lastSeqNo=%u, lastAckNo=%u\n",
                context.synAckPacketSeqNo, context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
         return 0;
     }
@@ -579,7 +580,7 @@ int sendIosAckPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -640,7 +641,7 @@ int sendWindowsSynPacket(ContextInfo &context) {
 
     context.lastSeqNo = context.seqNo;
     context.lastAckNo = context.ackNo;
-    printf("Client -----> SYN -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo, context.lastAckNo);
+    printf("Client -----> SYN -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo, context.lastAckNo);
     return 0;
 }
 
@@ -703,7 +704,7 @@ int sendWindowsAckPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -770,7 +771,7 @@ int sendHelloPacket(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = HelloDataLengthC;
-    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -787,7 +788,7 @@ int sendHelloPacketForHttp(ContextInfo &context) {
                                  "GET / HTTP/1.1\r\n"
                                  "Host: %s:%d\r\n"
                                  "User-Agent: Go-http-client/1.1\r\n"
-                                 "Content-Length: %d\r\n"
+                                 "Content-Length: %zu\r\n"
                                  "Clientsenddata: %s\r\n"
                                  "Accept-Encoding: gzip\r\n"
                                  "\r\n"
@@ -855,7 +856,7 @@ int sendHelloPacketForHttp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = httpDataLength;
-    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -954,14 +955,14 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
 
         printf("\nReceive Hello ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
                "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "ackPacketSeqNo=%d, ackPacketAckNo=%d\n",
+               "ackPacketSeqNo=%u, ackPacketAckNo=%u\n",
                ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
                tcpTotalLength, tcpHeaderChecksum, ackPacketSeqNo, ackPacketAckNo);
 #endif
 
         context.lastSeqNo = ackPacketSeqNo;
         context.lastAckNo = ackPacketAckNo;
-        printf("Client <----- Hello Client <----- Server ok, lastSeqNo=%d, lastAckNo=%d\n",
+        printf("Client <----- Hello Client <----- Server ok, lastSeqNo=%u, lastAckNo=%u\n",
                context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
         return 0;
     }
@@ -1031,7 +1032,7 @@ int sendHelloClientAckPacketToServer(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> Hello Client ACK -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> Hello Client ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -1094,7 +1095,7 @@ int sendFinalPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> FIN+ACK -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n", context.lastSeqNo,
+    printf("Client -----> FIN+ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
            context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
@@ -1183,14 +1184,14 @@ int recvAndCheckFinalAckPacket(ContextInfo &context) {
 
         printf("\nReceive FIN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
                "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "finalAckPacketSeqNo=%d, finalAckPacketAckNo=%d\n",
+               "finalAckPacketSeqNo=%u, finalAckPacketAckNo=%u\n",
                ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
                tcpTotalLength, tcpHeaderChecksum, finalAckPacketSeqNo, finalAckPacketAckNo);
 #endif
 
         context.lastSeqNo = finalAckPacketSeqNo;
         context.lastAckNo = finalAckPacketAckNo;
-        printf("Client <----- FIN+ACK <----- Server ok, lastSeqNo=%d, lastAckNo=%d\n",
+        printf("Client <----- FIN+ACK <----- Server ok, lastSeqNo=%u, lastAckNo=%u\n",
                context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
         return 0;
     }
@@ -1254,7 +1255,7 @@ int sendLastAckPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%d, lastAckNo=%d\n",
+    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n",
            context.lastSeqNo, context.lastAckNo - context.synAckPacketSeqNo);
     return 0;
 }
