@@ -6,4 +6,4 @@ project(simulator)
 add_executable(Simulator Simulator.cpp)
 
 #可执行文件路径(PROJECT_SOURCE_DIR为项目的根目录 PROJECT_BINARY_DIR为执行cmake时的目录)
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")

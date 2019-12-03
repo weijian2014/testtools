@@ -25,15 +25,6 @@ static const uint8_t IosTcpOptions[24] = {
         0x00,
 };
 
-static const uint8_t WindowsTcpOptions[12] = {
-        0x02, 0x04, 0x05, 0xb4,
-        0x01,
-        0x03, 0x03, 0x08,
-        0x01,
-        0x01,
-        0x04, 0x02,
-};
-
 //IP首部
 struct IpHeader {
     uint8_t headerLength:4, ipVersion:4;    //4位首部长度+4位IP版本号
@@ -60,20 +51,6 @@ struct IosTcpHeader {
     uint16_t checksum;                    //16位校验和
     uint16_t surgent;                     //16位紧急数据偏移量
     uint8_t options[24];                  //IOS 24byte options
-};
-
-//Windows TCP首部
-struct WindowsTcpHeader {
-    uint16_t srcPort;                     //16位源端口
-    uint16_t destPort;                    //16位目的端口
-    uint32_t seq;                         //32位序列号
-    uint32_t ack;                         //32位确认号
-    uint8_t offset:4, headerLength:4;   //4位首部长度 6位保留字
-    uint8_t flag;                         //6位标志位
-    uint16_t winSize;                     //16位窗口大小
-    uint16_t checksum;                    //16位校验和
-    uint16_t surgent;                     //16位紧急数据偏移量
-    uint8_t options[12];                  //Windows 12byte options
 };
 
 struct HelloTcpHeader {
@@ -150,13 +127,12 @@ int getAvaliablePort() {
 static const string HelloDataC("Hello Server");
 static const size_t HelloDataLengthC(12);
 static const size_t IosPacketLengthC(sizeof(IpHeader) + sizeof(IosTcpHeader));
-static const size_t WinPacketLengthC(sizeof(IpHeader) + sizeof(WindowsTcpHeader));
 static const size_t HelloPacketLengthC(sizeof(IpHeader) + sizeof(HelloTcpHeader) + HelloDataLengthC);
 static const size_t HelloForHttpPacketLengthC(sizeof(IpHeader) + sizeof(HelloTcpHeader) + 155);
 
 struct ContextInfo {
     bool isHelp;
-    bool isWin;
+    bool isDebug;
     bool isHttp;
     bool isDisableRST;
     bool isNotNeedRevc;
@@ -174,30 +150,27 @@ struct ContextInfo {
     int sendSockFd;
     IpHeader *ipHeader;
     IosTcpHeader *iosTcpHeader;
-    WindowsTcpHeader *winTcpHeader;
     HelloTcpHeader *helloTcpHeader;
     sockaddr_in remoteAddr;
     uint8_t checksumBuffer[1024];
     uint8_t iosPacket[IosPacketLengthC];
-    uint8_t winPacket[WinPacketLengthC];
     uint8_t helloPacket[HelloPacketLengthC];
     uint8_t helloForHttpPacket[HelloForHttpPacketLengthC];
     PsdHeader psdHeader;
 
     ContextInfo()
-            : isHelp(false), isWin(true), isHttp(true), isDisableRST(false), isNotNeedRevc(true),
+            : isHelp(false), isDebug(false), isHttp(true), isDisableRST(false), isNotNeedRevc(true),
               ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
-              iosTcpHeader(NULL), winTcpHeader(NULL),
+              iosTcpHeader(NULL),
               helloTcpHeader(NULL) {
         bzero(&remoteAddr, sizeof(sockaddr_in));
         bzero(checksumBuffer, sizeof(checksumBuffer));
         bzero(iosPacket, sizeof(iosPacket));
-        bzero(winPacket, sizeof(winPacket));
         bzero(helloPacket, sizeof(helloPacket));
         bzero(helloForHttpPacket, sizeof(helloForHttpPacket));
-        bzero(psdHeader, sizeof(psdHeader));
+        bzero(&psdHeader, sizeof(psdHeader));
     }
 
     ~ContextInfo() {
@@ -219,40 +192,29 @@ struct ContextInfo {
 void showUsage() {
     cout << "Usage: Simulator Version: " << SIMULATOR_VERSION << endl;
     cout << "Options:" << endl;
+    cout << " -h, --help                Print this message and exit." << endl;
+    cout << " -p, --debug               Print debug log, optional, default false." << endl;
     cout << " -x, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
     cout << " -s                        String, the source IP addrss, must be specified." << endl;
     cout << " -d                        String, the destination IP addrss, must be specified." << endl;
-    cout << " -l, --sport                  Int, the source port, optional, default will be automatically assigned."
-         << endl;
+    cout << " -l, --sport                  Int, the source port, optional, default will be automatically assigned." << endl;
     cout << " -r, --dport                  Int, the destination port, must be specified." << endl;
-    cout
-            << " -w, --win                   Bool, using windows TCP header options of the raw socket, optional, default true."
-            << endl;
-    cout
-            << " -i, --ios                   Bool, using ios TCP header options of the raw socket, optional, default false."
-            << endl;
-    cout
-            << " -t, --tcp                   Bool, using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet."
-            << endl;
-    cout << " -h, --help                Print this message and exit." << endl;
+    cout << " -t, --tcp                   Bool, using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet." << endl;
     cout << "Examples:" << endl;
-    cout << " ./Simulator -w -s 1.0.0.1 -d 2.0.0.2 -r 8888" << endl;
-    cout << " ./Simulator -w -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888" << endl;
-    cout << " ./Simulator -i -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888 -t" << endl;
-    cout << " ./Simulator --ios -s 1.0.0.1 -d 2.0.0.2 --sport 6666--dport 8888 --tcp" << endl << endl;
+    cout << " ./Simulator -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888 -t" << endl;
+    cout << " ./Simulator -s 1.0.0.1 -d 2.0.0.2 --sport 6666--dport 8888 --tcp" << endl << endl;
 }
 
 int parseOpt(int argc, char *argv[], ContextInfo &context) {
     static struct option longOpts[] = {
-            {"ios",   no_argument,       NULL, 'i'},
-            {"win",   no_argument,       NULL, 'w'},
             {"tcp",   no_argument,       NULL, 't'},
+            {"debug", no_argument,       NULL, 'p'},
             {"help",  no_argument,       NULL, 'h'},
             {"s",     required_argument, NULL, 's'},
             {"d",     required_argument, NULL, 'd'},
             {"sport", required_argument, NULL, 'l'},
             {"dport", required_argument, NULL, 'r'},
-            {"ttl",   required_argument, NULL, 'x'}
+            {"ttl",   required_argument, NULL, 'x'},
     };
 
     int optIndex = 0;
@@ -263,14 +225,11 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
         }
 
         switch (optIndex) {
-            case 'i':
-                context.isWin = false;
-                break;
-            case 'w':
-                context.isWin = true;
-                break;
             case 't':
                 context.isHttp = false;
+                break;
+            case 'p':
+                context.isDebug = true;
                 break;
             case 's':
                 context.srcIp = string(optarg);
@@ -585,131 +544,7 @@ int sendIosAckPacket(ContextInfo &context) {
     return 0;
 }
 
-int sendWindowsSynPacket(ContextInfo &context) {
-    bzero(context.winPacket, sizeof(context.winPacket));
-    context.ipHeader = (IpHeader *) context.winPacket;
-    context.winTcpHeader = (WindowsTcpHeader *) (context.winPacket + sizeof(IpHeader));
-
-    /*设置IP首部*/
-    context.ipHeader->headerLength = 5;
-    context.ipHeader->ipVersion = 4;
-    context.ipHeader->tos = 0;
-    context.ipHeader->totalLength = htons(WinPacketLengthC);
-    context.ipHeader->ident = htons(0);
-    context.ipHeader->off = htons(0x4000);
-    context.ipHeader->ttl = context.ipHeaderTTL;
-    context.ipHeader->proto = IPPROTO_TCP;
-    context.ipHeader->srcIp = inet_addr(context.srcIp.c_str());
-    context.ipHeader->destIp = inet_addr(context.destIp.c_str());
-    context.ipHeader->checksum = checkSum((uint16_t *) context.winPacket,
-                                          sizeof(IpHeader));  //计算IP首部的校验和，必须在其他字段都赋值后再赋值该字段，赋值前为0
-
-    /*设置TCP首部*/
-    uint16_t tcpHeaderLength = sizeof(WindowsTcpHeader);
-    context.winTcpHeader->srcPort = htons(context.srcPort);
-    context.winTcpHeader->destPort = htons(context.destPort);
-    context.winTcpHeader->seq = htonl(context.seqNo);
-    context.winTcpHeader->ack = htons(context.ackNo);
-    context.winTcpHeader->headerLength = tcpHeaderLength / 4;
-    context.winTcpHeader->offset = 0;
-    context.winTcpHeader->flag = 0x02;                                                              //SYN置位
-    context.winTcpHeader->winSize = htons(65535);
-    context.winTcpHeader->surgent = htons(0);
-    memcpy(context.winTcpHeader->options, WindowsTcpOptions, sizeof(WindowsTcpOptions));
-
-    /*设置tcp伪首部，用于计算TCP报文段校验和*/
-    bzero(&context.psdHeader, sizeof(context.psdHeader));
-    context.psdHeader.srcAddr = inet_addr(context.srcIp.c_str());   //源IP地址
-    context.psdHeader.destAddr = inet_addr(context.destIp.c_str()); //目的IP地址
-    context.psdHeader.mbz = 0;
-    context.psdHeader.proto = IPPROTO_TCP;
-    context.psdHeader.tcpHeaderAndDataLength = htons(tcpHeaderLength);
-
-    bzero(&context.checksumBuffer, sizeof(context.checksumBuffer));
-    memcpy(context.checksumBuffer, &context.psdHeader, sizeof(context.psdHeader));
-    memcpy(context.checksumBuffer + sizeof(context.psdHeader), context.winTcpHeader, sizeof(WindowsTcpHeader));
-    context.winTcpHeader->checksum = checkSum((uint16_t *) context.checksumBuffer,
-                                              sizeof(context.psdHeader) + sizeof(WindowsTcpHeader));
-
-    int send = sendto(context.sendSockFd, context.winPacket, htons(context.ipHeader->totalLength), 0,
-                      (sockaddr *) &context.remoteAddr,
-                      sizeof(context.remoteAddr));
-    if (send < 0) {
-        printf("SYN packet send failed, ret=%d\n", send);
-        return -1;
-    }
-
-    context.lastSeqNo = context.seqNo;
-    context.lastAckNo = context.ackNo;
-    printf("Client -----> SYN -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo, context.lastAckNo);
-    return 0;
-}
-
-int sendWindowsAckPacket(ContextInfo &context) {
-    bzero(context.winPacket, sizeof(context.winPacket));
-    context.ipHeader = (IpHeader *) context.winPacket;
-    context.winTcpHeader = (WindowsTcpHeader *) (context.winPacket + sizeof(IpHeader));
-
-    /*设置IP首部*/
-    context.ipHeader->headerLength = 5;
-    context.ipHeader->ipVersion = 4;
-    context.ipHeader->tos = 0;
-    context.ipHeader->totalLength = htons(WinPacketLengthC);
-    context.ipHeader->ident = htons(13543); // random()
-    context.ipHeader->off = htons(0x4000);
-    context.ipHeader->ttl = 64;
-    context.ipHeader->proto = IPPROTO_TCP;
-    context.ipHeader->srcIp = inet_addr(context.srcIp.c_str());
-    context.ipHeader->destIp = inet_addr(context.destIp.c_str());
-    context.ipHeader->checksum = checkSum((uint16_t *) context.winPacket,
-                                          sizeof(IpHeader));  //计算IP首部的校验和，必须在其他字段都赋值后再赋值该字段，赋值前为0
-
-    /*设置TCP首部*/
-    uint32_t seqNo = context.lastAckNo;
-    uint32_t ackNo = context.lastSeqNo + 1;
-    uint16_t tcpHeaderLength = sizeof(WindowsTcpHeader);
-    context.winTcpHeader->srcPort = htons(context.srcPort);
-    context.winTcpHeader->destPort = htons(context.destPort);
-    context.winTcpHeader->seq = htonl(seqNo);
-    context.winTcpHeader->ack = ntohl(ackNo);
-    context.winTcpHeader->headerLength = tcpHeaderLength / 4;
-    context.winTcpHeader->offset = 0;
-    context.winTcpHeader->flag = 0x10;                                                              //ACK置位
-    context.winTcpHeader->winSize = htons(1026);
-    context.winTcpHeader->surgent = htons(0);
-    memcpy(context.winTcpHeader->options, WindowsTcpOptions, sizeof(WindowsTcpOptions));
-
-    /*设置tcp伪首部，用于计算TCP报文段校验和*/
-    bzero(&context.psdHeader, sizeof(context.psdHeader));
-    context.psdHeader.srcAddr = inet_addr(context.srcIp.c_str());                   //源IP地址
-    context.psdHeader.destAddr = inet_addr(context.destIp.c_str());                 //目的IP地址
-    context.psdHeader.mbz = 0;
-    context.psdHeader.proto = 6;
-    context.psdHeader.tcpHeaderAndDataLength = htons(tcpHeaderLength);
-
-    bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
-    memcpy(context.checksumBuffer, &context.psdHeader, sizeof(context.psdHeader));
-    memcpy(context.checksumBuffer + sizeof(context.psdHeader), context.winTcpHeader, sizeof(WindowsTcpHeader));
-    context.winTcpHeader->checksum = checkSum((uint16_t *) context.checksumBuffer,
-                                              sizeof(context.psdHeader) + sizeof(WindowsTcpHeader));
-
-    /*发送ACK报文段*/
-    int send = sendto(context.sendSockFd, context.winPacket, htons(context.ipHeader->totalLength), 0,
-                      (sockaddr *) &context.remoteAddr,
-                      sizeof(context.remoteAddr));
-    if (send < 0) {
-        printf("ACK packet send failed, ret=%d\n", send);
-        return -1;
-    }
-
-    context.lastSeqNo = seqNo;
-    context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
-    return 0;
-}
-
-int sendHelloPacket(ContextInfo &context) {
+int sendHelloPacketForTcp(ContextInfo &context) {
     bzero(context.helloPacket, sizeof(context.helloPacket));
     context.ipHeader = (IpHeader *) context.helloPacket;
     context.helloTcpHeader = (HelloTcpHeader *) (context.helloPacket + sizeof(IpHeader));
@@ -1291,7 +1126,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cout << "Using " << (context.isWin ? "Windows" : "IOS") << " TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic" : "TCP traffic") << (context.isNotNeedRevc ? ", do not verify the response packet." : ".") << "\nsrcIp="
+    cout << "Using IOS TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic" : "TCP traffic") << (context.isNotNeedRevc ? ", do not verify the response packet." : ".") << "\nsrcIp="
          << context.srcIp << ", destIp=" << context.destIp << ", srcPort="
          << context.srcPort << ", destPort=" << context.destPort << endl;
 
@@ -1301,30 +1136,17 @@ int main(int argc, char *argv[]) {
 
     disableRST(context);
     cout << "****************************************************************************" << endl;
-    if (context.isWin) {
-        if (-1 == sendWindowsSynPacket(context)) {
-            return -1;
-        }
 
-        if (-1 == recvAndCheckSynAckPacket(context)) {
-            return -1;
-        }
+    if (-1 == sendIosSynPacket(context)) {
+        return -1;
+    }
 
-        if (-1 == sendWindowsAckPacket(context)) {
-            return -1;
-        }
-    } else {
-        if (-1 == sendIosSynPacket(context)) {
-            return -1;
-        }
+    if (-1 == recvAndCheckSynAckPacket(context)) {
+        return -1;
+    }
 
-        if (-1 == recvAndCheckSynAckPacket(context)) {
-            return -1;
-        }
-
-        if (-1 == sendIosAckPacket(context)) {
-            return -1;
-        }
+    if (-1 == sendIosAckPacket(context)) {
+        return -1;
     }
 
     printf("     ---------------------------------     \n");
@@ -1334,7 +1156,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
     } else {
-        if (-1 == sendHelloPacket(context)) {
+        if (-1 == sendHelloPacketForTcp(context)) {
             return -1;
         }
     }

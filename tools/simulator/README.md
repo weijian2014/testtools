@@ -3,6 +3,7 @@
     --tcp using non-split tcp mode
 
 # Build Simulator:
+    apt-get install build-essential
     CURR_DIR=`pwd`
     mkdir -p /tmp/simulator_build
     cd /tmp/simulator_build
