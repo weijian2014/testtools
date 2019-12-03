@@ -692,7 +692,7 @@ int sendHelloPacketForHttp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = httpDataLength;
-    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
+    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u, helloServerHttpDataLength=%u\n", seqNo, ackNo, httpDataLength);
     return 0;
 }
 
@@ -702,7 +702,7 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
     uint32_t ackPacketAckNo = 0;
 
     while (1) {
-        if (context.isVerify) {
+        if (!context.isVerify) {
             ackPacketSeqNo = context.lastAckNo;
             ackPacketAckNo = (context.lastSeqNo + context.sendHelloDataLength);
         } else {
@@ -937,7 +937,7 @@ int recvAndCheckFinalAckPacket(ContextInfo &context) {
     uint32_t finalAckPacketAckNo = 0;
 
     while (1) {
-        if (context.isVerify) {
+        if (!context.isVerify) {
             finalAckPacketSeqNo = context.lastAckNo;
             finalAckPacketAckNo = (context.lastSeqNo + 1);
         } else {
@@ -1148,13 +1148,17 @@ int main(int argc, char *argv[]) {
         if (-1 == sendHelloPacketForHttp(context)) {
             return -1;
         }
+        if (-1 == sendHelloPacketForHttp(context)) {
+            return -1;
+        }
     } else {
         if (-1 == sendHelloPacketForTcp(context)) {
             return -1;
         }
+        if (-1 == sendHelloPacketForTcp(context)) {
+            return -1;
+        }
     }
-
-    sleep(1);
 
     // HelloServerACK packet and HelloClient packet
     if (-1 == recvAndCheckHelloServerAckAndHelloClientPacket(context)) {
