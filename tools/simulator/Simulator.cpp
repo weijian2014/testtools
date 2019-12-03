@@ -13,7 +13,7 @@
 
 using namespace std;
 
-static const uint8_t IosTcpOptions[24] = {
+static const uint8_t IosSynPacketTcpOptions[24] = {
         0x02, 0x04, 0x05, 0xb4,
         0x01,
         0x03, 0x03, 0x07,
@@ -135,7 +135,7 @@ struct ContextInfo {
     bool isDebug;
     bool isHttp;
     bool isDisableRST;
-    bool isNotNeedRevc;
+    bool isVerify;
     uint8_t ipHeaderTTL;
     string srcIp;
     string destIp;
@@ -159,7 +159,7 @@ struct ContextInfo {
     PsdHeader psdHeader;
 
     ContextInfo()
-            : isHelp(false), isDebug(false), isHttp(true), isDisableRST(false), isNotNeedRevc(true),
+            : isHelp(false), isDebug(false), isHttp(true), isDisableRST(false), isVerify(false),
               ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
@@ -194,12 +194,13 @@ void showUsage() {
     cout << "Options:" << endl;
     cout << " -h, --help                Print this message and exit." << endl;
     cout << " -p, --debug               Print debug log, optional, default false." << endl;
+    cout << " -v, --verify              Verify the packets received from the server, optional, default false." << endl;
+    cout << " -t, --tcp                 Using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet." << endl;
     cout << " -x, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
     cout << " -s                        String, the source IP addrss, must be specified." << endl;
     cout << " -d                        String, the destination IP addrss, must be specified." << endl;
     cout << " -l, --sport                  Int, the source port, optional, default will be automatically assigned." << endl;
     cout << " -r, --dport                  Int, the destination port, must be specified." << endl;
-    cout << " -t, --tcp                   Bool, using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet." << endl;
     cout << "Examples:" << endl;
     cout << " ./Simulator -s 1.0.0.1 -d 2.0.0.2 -l 6666 -r 8888 -t" << endl;
     cout << " ./Simulator -s 1.0.0.1 -d 2.0.0.2 --sport 6666--dport 8888 --tcp" << endl << endl;
@@ -207,29 +208,36 @@ void showUsage() {
 
 int parseOpt(int argc, char *argv[], ContextInfo &context) {
     static struct option longOpts[] = {
-            {"tcp",   no_argument,       NULL, 't'},
-            {"debug", no_argument,       NULL, 'p'},
             {"help",  no_argument,       NULL, 'h'},
+            {"debug", no_argument,       NULL, 'p'},
+            {"verify", no_argument,      NULL, 'v'},
+            {"tcp",   no_argument,       NULL, 't'},
+            {"ttl",   required_argument, NULL, 'x'},
             {"s",     required_argument, NULL, 's'},
             {"d",     required_argument, NULL, 'd'},
             {"sport", required_argument, NULL, 'l'},
-            {"dport", required_argument, NULL, 'r'},
-            {"ttl",   required_argument, NULL, 'x'},
+            {"dport", required_argument, NULL, 'r'}
     };
 
     int optIndex = 0;
     for (;;) {
-        optIndex = getopt_long(argc, argv, "iwths:d:l:r:x:", longOpts, NULL);
+        optIndex = getopt_long(argc, argv, "hpvts:d:l:r:x:", longOpts, NULL);
         if (-1 == optIndex) {
             break;
         }
 
         switch (optIndex) {
+            case 'p':
+                context.isDebug = true;
+                break;
+            case 'v':
+                context.isVerify = true;
+                break;
             case 't':
                 context.isHttp = false;
                 break;
-            case 'p':
-                context.isDebug = true;
+            case 'x':
+                context.ipHeaderTTL = atoi(optarg);
                 break;
             case 's':
                 context.srcIp = string(optarg);
@@ -242,9 +250,6 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
                 break;
             case 'r':
                 context.destPort = atoi(optarg);
-                break;
-            case 'x':
-                context.ipHeaderTTL = atoi(optarg);
                 break;
             case 'h':
             default:
@@ -367,7 +372,7 @@ int sendIosSynPacket(ContextInfo &context) {
     context.iosTcpHeader->flag = 0x02;                                                      //SYN置位
     context.iosTcpHeader->winSize = htons(65535);
     context.iosTcpHeader->surgent = htons(0);
-    memcpy(context.iosTcpHeader->options, IosTcpOptions, sizeof(IosTcpOptions));
+    memcpy(context.iosTcpHeader->options, IosSynPacketTcpOptions, sizeof(IosSynPacketTcpOptions));
 
     /*设置tcp伪首部，用于计算TCP报文段校验和*/
     bzero(&context.psdHeader, sizeof(context.psdHeader));
@@ -393,7 +398,7 @@ int sendIosSynPacket(ContextInfo &context) {
 
     context.lastSeqNo = context.seqNo;
     context.lastAckNo = context.ackNo;
-    printf("Client -----> SYN -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo, context.lastAckNo);
+    printf("1 Client -----> SYN -----> Server ok, SeqNo=%u, AckNo=%u\n", context.seqNo, context.ackNo);
     return 0;
 }
 
@@ -451,31 +456,29 @@ int recvAndCheckSynAckPacket(ContextInfo &context) {
 
         uint16_t ipHeaderChecksum = checkSum((uint16_t *) synAckPacket, ipHeaderLength);
         uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
-        (void) ipHeaderChecksum;
-        (void) tcpHeaderChecksum;
 
-#if 0
-        //将接受的IP数据报输出
-        printf("Receive SYN+ACK packet %d bytes, hex stream:", recvByte);
-        for (int i = 0; i < recvByte; i++) {
-            if (i % 16 == 0) {
-                printf("\n\t");
+        if (context.isDebug)
+        {
+            //将接受的IP数据报输出
+            printf("Receive SYN+ACK packet %d bytes, hex stream:", recvByte);
+            for (int i = 0; i < recvByte; i++) {
+                if (i % 16 == 0) {
+                    printf("\n\t");
+                }
+                printf("%02x ", synAckPacket[i]);
             }
-            printf("%02x ", synAckPacket[i]);
-        }
 
-        printf("\nReceive SYN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
-               "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n",
-               ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
-               tcpTotalLength, tcpHeaderChecksum, synAckPacketSeqNo, synAckPacketAckNo);
-#endif
+            printf("\nReceive SYN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
+                "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
+                "synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n",
+                ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
+                tcpTotalLength, tcpHeaderChecksum, synAckPacketSeqNo, synAckPacketAckNo);
+        }
 
         context.synAckPacketSeqNo = synAckPacketSeqNo;
         context.lastSeqNo = synAckPacketSeqNo;
         context.lastAckNo = synAckPacketAckNo;
-        printf("Client <----- SYN+ACK <----- Server ok, synAckPacketSeqNo=%u, lastSeqNo=%u, lastAckNo=%u\n",
-               context.synAckPacketSeqNo, context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
+        printf("2 Client <----- SYN+ACK <----- Server ok, synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n", synAckPacketSeqNo, synAckPacketAckNo);
         return 0;
     }
 }
@@ -512,7 +515,7 @@ int sendIosAckPacket(ContextInfo &context) {
     context.iosTcpHeader->flag = 0x10;                                                         //ACK置位
     context.iosTcpHeader->winSize = htons(1026);
     context.iosTcpHeader->surgent = htons(0);
-    memcpy(context.iosTcpHeader->options, IosTcpOptions, sizeof(IosTcpOptions));
+    memcpy(context.iosTcpHeader->options, IosSynPacketTcpOptions, sizeof(IosSynPacketTcpOptions));
 
     /*设置tcp伪首部，用于计算TCP报文段校验和*/
     bzero(&context.psdHeader, sizeof(context.psdHeader));
@@ -539,8 +542,7 @@ int sendIosAckPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
+    printf("3 Client -----> ACK -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -606,8 +608,7 @@ int sendHelloPacketForTcp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = HelloDataLengthC;
-    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
+    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -691,8 +692,7 @@ int sendHelloPacketForHttp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = httpDataLength;
-    printf("Client -----> Hello Server -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
+    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -702,7 +702,7 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
     uint32_t ackPacketAckNo = 0;
 
     while (1) {
-        if (context.isNotNeedRevc) {
+        if (context.isVerify) {
             ackPacketSeqNo = context.lastAckNo;
             ackPacketAckNo = (context.lastSeqNo + context.sendHelloDataLength);
         } else {
@@ -774,31 +774,29 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
 
             uint16_t ipHeaderChecksum = checkSum((uint16_t *) ackPacket, ipHeaderLength);
             uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
-            (void) ipHeaderChecksum;
-            (void) tcpHeaderChecksum;
-        }
 
-#if 0
-        //将接受的IP数据报输出
-        printf("Receive Hello ACK packet %d bytes, hex stream:", recvByte);
-        for (int i = 0; i < recvByte; i++) {
-            if (i % 16 == 0) {
-                printf("\n\t");
+            if (context.isDebug)
+            {
+                //将接受的IP数据报输出
+                printf("Receive Hello ACK packet %d bytes, hex stream:", recvByte);
+                for (int i = 0; i < recvByte; i++) {
+                    if (i % 16 == 0) {
+                        printf("\n\t");
+                    }
+                    printf("%02x ", ackPacket[i]);
+                }
+
+                printf("\nReceive Hello ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
+                    "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
+                    "ackPacketSeqNo=%u, ackPacketAckNo=%u\n",
+                    ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
+                    tcpTotalLength, tcpHeaderChecksum, ackPacketSeqNo, ackPacketAckNo);
             }
-            printf("%02x ", ackPacket[i]);
         }
-
-        printf("\nReceive Hello ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
-               "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "ackPacketSeqNo=%u, ackPacketAckNo=%u\n",
-               ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
-               tcpTotalLength, tcpHeaderChecksum, ackPacketSeqNo, ackPacketAckNo);
-#endif
 
         context.lastSeqNo = ackPacketSeqNo;
         context.lastAckNo = ackPacketAckNo;
-        printf("Client <----- Hello Client <----- Server ok, lastSeqNo=%u, lastAckNo=%u\n",
-               context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
+        printf("Client <----- Hello Client <----- Server ok, SeqNo=%u, AckNo=%u\n", ackPacketSeqNo, ackPacketAckNo);
         return 0;
     }
 }
@@ -867,8 +865,7 @@ int sendHelloClientAckPacketToServer(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> Hello Client ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
+    printf("Client -----> Hello Client ACK -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -930,8 +927,7 @@ int sendFinalPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> FIN+ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n", context.lastSeqNo,
-           context.lastAckNo - context.synAckPacketSeqNo);
+    printf("1 Client -----> FIN+ACK -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -941,7 +937,7 @@ int recvAndCheckFinalAckPacket(ContextInfo &context) {
     uint32_t finalAckPacketAckNo = 0;
 
     while (1) {
-        if (context.isNotNeedRevc) {
+        if (context.isVerify) {
             finalAckPacketSeqNo = context.lastAckNo;
             finalAckPacketAckNo = (context.lastSeqNo + 1);
         } else {
@@ -1003,31 +999,29 @@ int recvAndCheckFinalAckPacket(ContextInfo &context) {
 
             uint16_t ipHeaderChecksum = checkSum((uint16_t *) finalAckPacket, ipHeaderLength);
             uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
-            (void) ipHeaderChecksum;
-            (void) tcpHeaderChecksum;
-        }
 
-#if 0
-        //将接受的IP数据报输出
-        printf("Receive FIN+ACK packet %d bytes, hex stream:", recvByte);
-        for (int i = 0; i < recvByte; i++) {
-            if (i % 16 == 0) {
-                printf("\n\t");
+            if (context.isDebug)
+            {
+                //将接受的IP数据报输出
+                printf("Receive FIN+ACK packet %d bytes, hex stream:", recvByte);
+                for (int i = 0; i < recvByte; i++) {
+                    if (i % 16 == 0) {
+                        printf("\n\t");
+                    }
+                    printf("%02x ", finalAckPacket[i]);
+                }
+
+                printf("\nReceive FIN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
+                    "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
+                    "finalAckPacketSeqNo=%u, finalAckPacketAckNo=%u\n",
+                    ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
+                    tcpTotalLength, tcpHeaderChecksum, finalAckPacketSeqNo, finalAckPacketAckNo);
             }
-            printf("%02x ", finalAckPacket[i]);
         }
-
-        printf("\nReceive FIN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
-               "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-               "finalAckPacketSeqNo=%u, finalAckPacketAckNo=%u\n",
-               ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
-               tcpTotalLength, tcpHeaderChecksum, finalAckPacketSeqNo, finalAckPacketAckNo);
-#endif
 
         context.lastSeqNo = finalAckPacketSeqNo;
         context.lastAckNo = finalAckPacketAckNo;
-        printf("Client <----- FIN+ACK <----- Server ok, lastSeqNo=%u, lastAckNo=%u\n",
-               context.lastSeqNo - context.synAckPacketSeqNo, context.lastAckNo);
+        printf("2 Client <----- FIN+ACK <----- Server ok, SeqNo=%u, AckNo=%u\n", finalAckPacketSeqNo, finalAckPacketAckNo);
         return 0;
     }
 }
@@ -1090,8 +1084,7 @@ int sendLastAckPacket(ContextInfo &context) {
 
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
-    printf("Client -----> ACK -----> Server ok, lastSeqNo=%u, lastAckNo=%u\n",
-           context.lastSeqNo, context.lastAckNo - context.synAckPacketSeqNo);
+    printf("3 Client -----> ACK -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
     return 0;
 }
 
@@ -1126,9 +1119,9 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cout << "Using IOS TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic" : "TCP traffic") << (context.isNotNeedRevc ? ", do not verify the response packet." : ".") << "\nsrcIp="
-         << context.srcIp << ", destIp=" << context.destIp << ", srcPort="
-         << context.srcPort << ", destPort=" << context.destPort << endl;
+    cout << "Using IOS TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic, " : "TCP traffic, ") 
+         << (context.isVerify ? "verify the packets received from the server, " : "do not verify the packets received from the server, ") 
+         << "localAddress=" << context.srcIp << ":" << context.srcPort << ", remoteAddress=" << context.destIp << ":" << context.destPort << endl;
 
     if (-1 == createRawSocket(context)) {
         return -1;
@@ -1168,6 +1161,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    sleep(2);
+
     // HelloClientAck
     if (-1 == sendHelloClientAckPacketToServer(context)) {
         return -1;
@@ -1180,7 +1175,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    sleep(1);
+    sleep(2);
     if (-1 == recvAndCheckFinalAckPacket(context)) {
         return -1;
     }
