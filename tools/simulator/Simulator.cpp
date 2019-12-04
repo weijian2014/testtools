@@ -128,12 +128,10 @@ static const string HelloDataC("Hello Server");
 static const size_t HelloDataLengthC(12);
 static const size_t IosPacketLengthC(sizeof(IpHeader) + sizeof(IosTcpHeader));
 static const size_t HelloPacketLengthC(sizeof(IpHeader) + sizeof(HelloTcpHeader) + HelloDataLengthC);
-static const size_t HelloForHttpPacketLengthC(sizeof(IpHeader) + sizeof(HelloTcpHeader) + 155);
 
 struct ContextInfo {
     bool isHelp;
     bool isDebug;
-    bool isHttp;
     bool isDisableRST;
     bool isVerify;
     uint8_t ipHeaderTTL;
@@ -155,11 +153,10 @@ struct ContextInfo {
     uint8_t checksumBuffer[1024];
     uint8_t iosPacket[IosPacketLengthC];
     uint8_t helloPacket[HelloPacketLengthC];
-    uint8_t helloForHttpPacket[HelloForHttpPacketLengthC];
     PsdHeader psdHeader;
 
     ContextInfo()
-            : isHelp(false), isDebug(false), isHttp(true), isDisableRST(false), isVerify(false),
+            : isHelp(false), isDebug(false), isDisableRST(false), isVerify(false),
               ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
@@ -169,7 +166,6 @@ struct ContextInfo {
         bzero(checksumBuffer, sizeof(checksumBuffer));
         bzero(iosPacket, sizeof(iosPacket));
         bzero(helloPacket, sizeof(helloPacket));
-        bzero(helloForHttpPacket, sizeof(helloForHttpPacket));
         bzero(&psdHeader, sizeof(psdHeader));
     }
 
@@ -195,8 +191,7 @@ void showUsage() {
     cout << " -h, --help                Print this message and exit." << endl;
     cout << " -p, --debug               Print debug log, optional, default false." << endl;
     cout << " -v, --verify              Verify the packets received from the server, optional, default false." << endl;
-    cout << " -t, --tcp                 Using TCP packet of raw socket, for non-split tcp mode, optional, default false, will using HTTP packet." << endl;
-    cout << " -x, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
+    cout << " -t, --ttl                    Int, the TTL of SYNC packet, optional, default 64." << endl;
     cout << " -s                        String, the source IP addrss, must be specified." << endl;
     cout << " -d                        String, the destination IP addrss, must be specified." << endl;
     cout << " -l, --sport                  Int, the source port, optional, default will be automatically assigned." << endl;
@@ -211,8 +206,7 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
             {"help",  no_argument,       NULL, 'h'},
             {"debug", no_argument,       NULL, 'p'},
             {"verify", no_argument,      NULL, 'v'},
-            {"tcp",   no_argument,       NULL, 't'},
-            {"ttl",   required_argument, NULL, 'x'},
+            {"ttl",   required_argument, NULL, 't'},
             {"s",     required_argument, NULL, 's'},
             {"d",     required_argument, NULL, 'd'},
             {"sport", required_argument, NULL, 'l'},
@@ -221,7 +215,7 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
 
     int optIndex = 0;
     for (;;) {
-        optIndex = getopt_long(argc, argv, "hpvts:d:l:r:x:", longOpts, NULL);
+        optIndex = getopt_long(argc, argv, "hpvt:s:d:l:r:", longOpts, NULL);
         if (-1 == optIndex) {
             break;
         }
@@ -234,9 +228,6 @@ int parseOpt(int argc, char *argv[], ContextInfo &context) {
                 context.isVerify = true;
                 break;
             case 't':
-                context.isHttp = false;
-                break;
-            case 'x':
                 context.ipHeaderTTL = atoi(optarg);
                 break;
             case 's':
@@ -608,91 +599,7 @@ int sendHelloPacketForTcp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = HelloDataLengthC;
-    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u, HelloServerPacketDataLength=%u\n", seqNo, ackNo, HelloDataLengthC);
-    return 0;
-}
-
-int sendHelloPacketForHttp(ContextInfo &context) {
-    bzero(context.helloForHttpPacket, sizeof(context.helloForHttpPacket));
-    context.ipHeader = (IpHeader *) context.helloForHttpPacket;
-    context.helloTcpHeader = (HelloTcpHeader *) (context.helloForHttpPacket + sizeof(IpHeader));
-    uint8_t *pData = context.helloForHttpPacket + sizeof(IpHeader) + sizeof(HelloTcpHeader);
-
-    char httpData[256];
-    bzero(httpData, sizeof(httpData));
-    int httpDataLength = sprintf(httpData,
-                                 "GET / HTTP/1.1\r\n"
-                                 "Host: %s:%d\r\n"
-                                 "User-Agent: Go-http-client/1.1\r\n"
-                                 "Content-Length: %zu\r\n"
-                                 "Clientsenddata: %s\r\n"
-                                 "Accept-Encoding: gzip\r\n"
-                                 "\r\n"
-                                 "%s",
-                                 context.destIp.c_str(),
-                                 context.destPort,
-                                 HelloDataLengthC,
-                                 HelloDataC.c_str(),
-                                 HelloDataC.c_str());
-
-//    printf("HttpDataLength=%d, HttpData=\n%s\n", httpDataLength, httpData);
-
-    /*设置IP首部*/
-    context.ipHeader->headerLength = 5;
-    context.ipHeader->ipVersion = 4;
-    context.ipHeader->tos = 0;
-    context.ipHeader->totalLength = htons(sizeof(IpHeader) + sizeof(HelloTcpHeader) + httpDataLength);
-    context.ipHeader->ident = htons(13543); // random()
-    context.ipHeader->off = htons(0x4000);
-    context.ipHeader->ttl = 64;
-    context.ipHeader->proto = IPPROTO_TCP;
-    context.ipHeader->srcIp = inet_addr(context.srcIp.c_str());
-    context.ipHeader->destIp = inet_addr(context.destIp.c_str());
-    context.ipHeader->checksum = checkSum((uint16_t *) context.helloForHttpPacket, sizeof(IpHeader));
-
-    /*设置TCP首部*/
-    uint32_t seqNo = context.lastSeqNo;
-    uint32_t ackNo = context.lastAckNo;
-    uint16_t tcpHeaderLength = sizeof(HelloTcpHeader);
-    context.helloTcpHeader->srcPort = htons(context.srcPort);
-    context.helloTcpHeader->destPort = htons(context.destPort);
-    context.helloTcpHeader->seq = htonl(seqNo);
-    context.helloTcpHeader->ack = ntohl(ackNo);
-    context.helloTcpHeader->headerLength = tcpHeaderLength / 4;
-    context.helloTcpHeader->offset = 0;
-    context.helloTcpHeader->flag = 0x18;                                             //PSH, ACK置位
-    context.helloTcpHeader->winSize = htons(1026);
-    context.helloTcpHeader->surgent = htons(0);
-    memcpy(pData, httpData, httpDataLength);                                         //应用层数据
-
-    /*设置tcp伪首部，用于计算TCP报文段校验和*/
-    bzero(&context.psdHeader, sizeof(context.psdHeader));
-    context.psdHeader.srcAddr = inet_addr(context.srcIp.c_str());                   //源IP地址
-    context.psdHeader.destAddr = inet_addr(context.destIp.c_str());                 //目的IP地址
-    context.psdHeader.mbz = 0;
-    context.psdHeader.proto = 6;
-    context.psdHeader.tcpHeaderAndDataLength = htons(tcpHeaderLength + httpDataLength);
-
-    bzero(context.checksumBuffer, sizeof(context.checksumBuffer));
-    memcpy(context.checksumBuffer, &context.psdHeader, sizeof(context.psdHeader));
-    memcpy(context.checksumBuffer + sizeof(context.psdHeader), context.helloTcpHeader, sizeof(HelloTcpHeader));
-    memcpy(context.checksumBuffer + sizeof(context.psdHeader) + sizeof(HelloTcpHeader), httpData,
-           httpDataLength);
-    context.helloTcpHeader->checksum = checkSum((uint16_t *) context.checksumBuffer,
-                                                sizeof(context.psdHeader) + sizeof(HelloTcpHeader) + httpDataLength);
-
-    int send = sendto(context.sendSockFd, context.helloForHttpPacket, htons(context.ipHeader->totalLength), 0,
-                      (sockaddr *) &context.remoteAddr,
-                      sizeof(context.remoteAddr));
-    if (send < 0) {
-        printf("Hello packet send failed, ret=%d\n", send);
-        return -1;
-    }
-
-    context.lastSeqNo = seqNo;
-    context.lastAckNo = ackNo;
-    context.sendHelloDataLength = httpDataLength;
-    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u, helloServerHttpDataLength=%u\n", seqNo, ackNo, httpDataLength);
+    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u, HelloServerPacketDataLength=%lu\n", seqNo, ackNo, HelloDataLengthC);
     return 0;
 }
 
@@ -745,33 +652,18 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
             ackPacketAckNo = ntohl(*((int32_t *) (ackPacket + ipHeaderLength + 8)));
             uint8_t flag = ackPacket[13 + ipHeaderLength];
             uint8_t tcpFlag = (flag & 0x18);
-            uint8_t httpAckFlag = (flag & 0x10);
 
             // Hello Client packet
-            if (!context.isHttp) {
-                if (tcpFlag != 0x18) {
-                    continue;
-                }
+            if (tcpFlag != 0x18) {
+                continue;
+            }
 
-                if (ackPacketSeqNo != context.lastAckNo) {
-                    continue;
-                }
+            if (ackPacketSeqNo != context.lastAckNo) {
+                continue;
+            }
 
-                if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
-                    continue;
-                }
-            } else {
-                if (tcpFlag != 0x10) {
-                    continue;
-                }
-
-                if (ackPacketSeqNo != context.lastAckNo) {
-                    continue;
-                }
-
-                if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
-                    continue;
-                }
+            if (ackPacketAckNo != (context.lastSeqNo + context.sendHelloDataLength)) {
+                continue;
             }
 
             uint16_t ipHeaderChecksum = checkSum((uint16_t *) ackPacket, ipHeaderLength);
@@ -825,12 +717,7 @@ int sendHelloClientAckPacketToServer(ContextInfo &context) {
 
     /*设置TCP首部*/
     uint32_t seqNo = context.lastAckNo;
-    uint32_t ackNo = 0;
-    if (!context.isHttp) {
-        ackNo = context.lastSeqNo + context.sendHelloDataLength;
-    } else {
-        ackNo = context.lastSeqNo + 130;
-    }
+    uint32_t ackNo = context.lastSeqNo + context.sendHelloDataLength;
 
     uint16_t tcpHeaderLength = sizeof(HelloTcpHeader);
     context.helloTcpHeader->srcPort = htons(context.srcPort);
@@ -1123,7 +1010,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cout << "Using IOS TCP header options of the raw socket, that is a " << (context.isHttp ? "HTTP traffic, " : "TCP traffic, ") 
+    cout << "Using IOS TCP header options of the raw socket, " 
          << (context.isVerify ? "verify the packets received from the server, " : "do not verify the packets received from the server, ") 
          << "localAddress=" << context.srcIp << ":" << context.srcPort << ", remoteAddress=" << context.destIp << ":" << context.destPort << endl;
 
@@ -1148,14 +1035,8 @@ int main(int argc, char *argv[]) {
 
     printf("     ---------------------------------     \n");
 
-    if (context.isHttp) {
-        if (-1 == sendHelloPacketForHttp(context)) {
-            return -1;
-        }
-    } else {
-        if (-1 == sendHelloPacketForTcp(context)) {
-            return -1;
-        }
+    if (-1 == sendHelloPacketForTcp(context)) {
+        return -1;
     }
 
     // HelloServerACK packet and HelloClient packet
@@ -1163,7 +1044,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    sleep(2);
+    sleep(1);
 
     // HelloClientAck
     if (-1 == sendHelloClientAckPacketToServer(context)) {
