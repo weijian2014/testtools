@@ -608,7 +608,7 @@ int sendHelloPacketForTcp(ContextInfo &context) {
     context.lastSeqNo = seqNo;
     context.lastAckNo = ackNo;
     context.sendHelloDataLength = HelloDataLengthC;
-    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u\n", seqNo, ackNo);
+    printf("Client -----> Hello Server -----> Server ok, SeqNo=%u, AckNo=%u, HelloServerPacketDataLength=%u\n", seqNo, ackNo, HelloDataLengthC);
     return 0;
 }
 
@@ -700,11 +700,13 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
     uint8_t ackPacket[1024];
     uint32_t ackPacketSeqNo = 0;
     uint32_t ackPacketAckNo = 0;
+    uint32_t helloClientPacketDataLength = 0;
 
     while (1) {
         if (!context.isVerify) {
             ackPacketSeqNo = context.lastAckNo;
             ackPacketAckNo = (context.lastSeqNo + context.sendHelloDataLength);
+            helloClientPacketDataLength = 12;
         } else {
             bzero(ackPacket, sizeof(ackPacket));
             //接收Hello ACK报文
@@ -792,11 +794,13 @@ int recvAndCheckHelloServerAckAndHelloClientPacket(ContextInfo &context) {
                     ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
                     tcpTotalLength, tcpHeaderChecksum, ackPacketSeqNo, ackPacketAckNo);
             }
+
+            helloClientPacketDataLength = tcpTotalLength - tcpHeaderLength;
         }
 
         context.lastSeqNo = ackPacketSeqNo;
         context.lastAckNo = ackPacketAckNo;
-        printf("Client <----- Hello Client <----- Server ok, SeqNo=%u, AckNo=%u\n", ackPacketSeqNo, ackPacketAckNo);
+        printf("Client <----- Hello Client <----- Server ok, SeqNo=%u, AckNo=%u, HelloClientPacketDataLength=%u\n", ackPacketSeqNo, ackPacketAckNo, helloClientPacketDataLength);
         return 0;
     }
 }
@@ -1119,7 +1123,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cout << "Using IOS TCP header options of the raw socket.\nThat is a " << (context.isHttp ? "HTTP traffic, " : "TCP traffic, ") 
+    cout << "Using IOS TCP header options of the raw socket, that is a " << (context.isHttp ? "HTTP traffic, " : "TCP traffic, ") 
          << (context.isVerify ? "verify the packets received from the server, " : "do not verify the packets received from the server, ") 
          << "localAddress=" << context.srcIp << ":" << context.srcPort << ", remoteAddress=" << context.destIp << ":" << context.destPort << endl;
 
@@ -1148,13 +1152,7 @@ int main(int argc, char *argv[]) {
         if (-1 == sendHelloPacketForHttp(context)) {
             return -1;
         }
-        if (-1 == sendHelloPacketForHttp(context)) {
-            return -1;
-        }
     } else {
-        if (-1 == sendHelloPacketForTcp(context)) {
-            return -1;
-        }
         if (-1 == sendHelloPacketForTcp(context)) {
             return -1;
         }

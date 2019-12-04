@@ -12,10 +12,17 @@
     settings---GO---Go Modules(vgo)---勾选 Enable Go Modules(vgo) integration  #开启Go Modules
     settings---GO---Go Modules(vgo)---proxy中填入https://goproxy.io            #开启代理
 
-# 项目中使用Go Modules
+# 项目中使用Go Modules, 并构建项目
+    echo "export GOPROXY=https://goproxy.io" >> /etc/.profile
+    echo "export GO111MODULE=on" >> /etc/.profile
+    source /etc/.profile
     cd testtools
     go mod init testtools
     go mod tidy
+    cd server
+    go build .
+    cd ../client
+    go build .
 
 # go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
     require github.com/lucas-clemente/quic-go 0810051

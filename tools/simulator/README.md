@@ -10,7 +10,6 @@
     cmake ${CURR_DIR}
     make
 
-
 # Usage: Simulator
     Options:
      -s                        String, the source IP addrss, must be specified.
