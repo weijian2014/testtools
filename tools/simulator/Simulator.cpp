@@ -1141,9 +1141,18 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    sleep(2);
+    if (!context.isVerify)
+    {
+        sleep(1);
+    }
+
     if (-1 == recvAndCheckFinalAckPacket(context)) {
         return -1;
+    }
+
+    if (!context.isVerify)
+    {
+        sleep(1);
     }
 
     if (-1 == sendLastAckPacket(context)) {
