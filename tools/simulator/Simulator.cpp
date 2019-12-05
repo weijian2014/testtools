@@ -1124,7 +1124,10 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    sleep(1);
+    if (!context.isVerify)
+    {
+        sleep(1);
+    }
 
     // HelloClientAck
     if (-1 == sendHelloClientAckPacketToServer(context)) {
