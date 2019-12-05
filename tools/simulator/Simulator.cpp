@@ -14,15 +14,21 @@
 using namespace std;
 
 static const uint8_t IosSynPacketTcpOptions[24] = {
-        0x02, 0x04, 0x05, 0xb4,
-        0x01,
-        0x03, 0x03, 0x07,
-        0x01,
-        0x01,
-        0x08, 0x0a, 0x8a, 0x4f, 0xe5, 0xb0, 0x00, 0x00, 0x00, 0x00,
-        0x04, 0x02,
-        0x00,
-        0x00,
+    0x02, 0x04, 0x05, 0xb4,
+    0x01,
+    0x03, 0x03, 0x07,
+    0x01,
+    0x01,
+    0x08, 0x0a, 0x8a, 0x4f, 0xe5, 0xb0, 0x00, 0x00, 0x00, 0x00,
+    0x04, 0x02,
+    0x00,
+    0x00,
+};
+
+static uint8_t IosAckPacketTcpOptions[12] = {
+    0x01,
+    0x01,
+    0x08, 0x0a, 0x8a, 0x4f, 0xe6, 0x56, 0xb4, 0x0f, 0x50, 0xad,
 };
 
 //IP首部
@@ -145,6 +151,7 @@ struct ContextInfo {
     uint32_t lastSeqNo;
     uint32_t lastAckNo;
     uint32_t sendHelloDataLength;
+    uint32_t synAckPacketTimestampValue;
     int sendSockFd;
     IpHeader *ipHeader;
     IosTcpHeader *iosTcpHeader;
@@ -157,7 +164,7 @@ struct ContextInfo {
 
     ContextInfo()
             : isHelp(false), isDebug(false), isDisableRST(false), isVerify(false),
-              ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0),
+              ipHeaderTTL(64), srcIp(""), destIp(""), srcPort(0), destPort(0), seqNo(0), synAckPacketTimestampValue(0),
               ackNo(0), synAckPacketSeqNo(0), lastSeqNo(0), lastAckNo(0), sendHelloDataLength(0), sendSockFd(-1),
               ipHeader(NULL),
               iosTcpHeader(NULL),
@@ -395,6 +402,8 @@ int sendIosSynPacket(ContextInfo &context) {
 
 int recvAndCheckSynAckPacket(ContextInfo &context) {
     uint8_t synAckPacket[1024];
+    uint32_t synAckPacketTimestampValue = 0;
+    uint32_t synAckPacketTimestampReply = 0;
     while (1) {
         bzero(synAckPacket, sizeof(synAckPacket));
         //接收SYN+ACK报文
@@ -448,6 +457,71 @@ int recvAndCheckSynAckPacket(ContextInfo &context) {
         uint16_t ipHeaderChecksum = checkSum((uint16_t *) synAckPacket, ipHeaderLength);
         uint16_t tcpHeaderChecksum = checkSum((uint16_t *) context.checksumBuffer, 12 + tcpTotalLength);
 
+        static const uint8_t TimestampKind = 8;
+        uint8_t* synAckPacketOption = synAckPacket + ipHeaderLength + 20;
+        uint8_t synAckPacketOptionLen = tcpTotalLength - 20;
+        uint8_t kind = *synAckPacketOption;
+        while (0 < synAckPacketOptionLen) {
+            if (TimestampKind != kind)
+            {
+                switch (kind)
+                {
+                case 0: {
+                    synAckPacketOption += 1;
+                    synAckPacketOptionLen -= 1;
+                    break;
+                }
+                case 1: {
+                    synAckPacketOption += 1;
+                    synAckPacketOptionLen -= 1;
+                    break;
+                }
+                case 2: {
+                    synAckPacketOption += 4;
+                    synAckPacketOptionLen -= 4;
+                    break;
+                }
+                case 3: {
+                    synAckPacketOption += 3;
+                    synAckPacketOptionLen -= 3;
+                    break;
+                }
+                case 4: {
+                    synAckPacketOption += 2;
+                    synAckPacketOptionLen -= 2;
+                    break;
+                }
+                case 5: {
+                    uint8_t len = *(synAckPacketOption+1);
+                    synAckPacketOption += len;
+                    synAckPacketOptionLen -= len;
+                    break;
+                }
+                case 19: {
+                    synAckPacketOption += 19;
+                    synAckPacketOptionLen -= 19;
+                    break;
+                }
+                case 28: {
+                    synAckPacketOption += 4;
+                    synAckPacketOptionLen -= 4;
+                    break;
+                }
+                default:
+                    printf("Receive SYN+ACK packet, invalid kind=%d\n", kind);
+                    return -1;
+                }
+
+                kind = *(synAckPacketOption);
+                continue;
+            }
+
+            synAckPacketTimestampValue = ntohl(*((uint32_t *) (synAckPacketOption + 2)));
+            synAckPacketTimestampReply = ntohl(*((uint32_t *) (synAckPacketOption + 2 + 6)));
+            context.synAckPacketTimestampValue = synAckPacketTimestampValue;
+            break;
+        }
+
         if (context.isDebug)
         {
             //将接受的IP数据报输出
@@ -461,9 +535,10 @@ int recvAndCheckSynAckPacket(ContextInfo &context) {
 
             printf("\nReceive SYN+ACK packet info:\n\tipHeaderLength=%d, ipTotalLength=%d, ipHeaderChecksum=%d\n\t"
                 "tcpHeaderLength=%d, tcpTotalLength=%d, tcpHeaderChecksum=%d\n\t"
-                "synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n",
+                "synAckPacketSeqNo=%u, synAckPacketAckNo=%u\n\tsynAckPacketTimestampValue=%u, synAckPacketTimestampReply=%u\n",
                 ipHeaderLength, ipTotalLength, ipHeaderChecksum, tcpHeaderLength,
-                tcpTotalLength, tcpHeaderChecksum, synAckPacketSeqNo, synAckPacketAckNo);
+                tcpTotalLength, tcpHeaderChecksum, synAckPacketSeqNo, synAckPacketAckNo,
+                synAckPacketTimestampValue, synAckPacketTimestampReply);
         }
 
         context.synAckPacketSeqNo = synAckPacketSeqNo;
@@ -496,7 +571,7 @@ int sendIosAckPacket(ContextInfo &context) {
                                           sizeof(IpHeader));  //计算IP首部的校验和，必须在其他字段都赋值后再赋值该字段，赋值前为0
 
     /*设置TCP首部*/
-    uint16_t tcpHeaderLength = sizeof(IosTcpHeader);
+    uint16_t tcpHeaderLength = sizeof(IosTcpHeader) - 12;                                            // TCP fixed header length 20 + 12 byte Options
     context.iosTcpHeader->srcPort = htons(context.srcPort);
     context.iosTcpHeader->destPort = htons(context.destPort);
     context.iosTcpHeader->seq = htonl(seqNo);
@@ -506,7 +581,12 @@ int sendIosAckPacket(ContextInfo &context) {
     context.iosTcpHeader->flag = 0x10;                                                         //ACK置位
     context.iosTcpHeader->winSize = htons(1026);
     context.iosTcpHeader->surgent = htons(0);
-    memcpy(context.iosTcpHeader->options, IosSynPacketTcpOptions, sizeof(IosSynPacketTcpOptions));
+
+    /*三次握手中的最后的ACK，Option中的Timestamp Echo Reply值必须是收到的SYN+ACK包中Option的Timestamp Value值，不然有些操作系统会回RST包*/
+    uint8_t* ackPacketOptionTimestampsValue = IosAckPacketTcpOptions + 8;
+    uint32_t* valueTmp = (uint32_t*)ackPacketOptionTimestampsValue;
+    *valueTmp = ntohl(context.synAckPacketTimestampValue);
+    memcpy(context.iosTcpHeader->options, IosAckPacketTcpOptions, sizeof(IosAckPacketTcpOptions));
 
     /*设置tcp伪首部，用于计算TCP报文段校验和*/
     bzero(&context.psdHeader, sizeof(context.psdHeader));
