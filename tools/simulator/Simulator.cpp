@@ -1161,7 +1161,10 @@ int main(int argc, char *argv[]) {
 
     cout << "****************************************************************************" << endl;
 
-    sleep(1);
+    if (!context.isVerify)
+    {
+        sleep(1);
+    }
     cout << "successful" << endl;
     return 0;
 }
