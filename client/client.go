@@ -12,7 +12,7 @@ var (
 	sendToServerIpAddress      string
 )
 
-func init() {
+func StartClient() {
 	err := checkJsonConfig()
 	if nil != err {
 		panic(err)
@@ -27,9 +27,7 @@ func init() {
 	if nil != err {
 		panic(err)
 	}
-}
 
-func StartClient() {
 	if common.FlagInfos.UsingTcp {
 		sendByTcp()
 		return

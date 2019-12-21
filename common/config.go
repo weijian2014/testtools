@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	CurrDir                    = ""
-	JsonConfigs            		*JsonConfig = nil
-	FlagInfos					*FlagInfo = nil
+	CurrDir					string
+	JsonConfigs				*JsonConfig
+	FlagInfos				FlagInfo
 )
 
 func init() {

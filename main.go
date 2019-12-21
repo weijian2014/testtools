@@ -15,7 +15,7 @@ func init() {
 	// common option
 	flag.BoolVar(&common.FlagInfos.IsHelp, "h", false, "Show help")
 	flag.StringVar(&common.FlagInfos.ConfigFileFullPath, "f", common.CurrDir+"/config.json", "The path of config.json file, support for absolute and relative paths")
-	flag.BoolVar(&common.FlagInfos.IsServer, "server", false, "As server running")
+	flag.BoolVar(&common.FlagInfos.IsServer, "server", false, "As server running, default as client")
 
 	// client option
 	flag.StringVar(&common.FlagInfos.ClientBindIpAddress, "b", "", "The ip address of client bind\n"+
