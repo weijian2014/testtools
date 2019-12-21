@@ -10,7 +10,7 @@ import (
 )
 
 func sendByDns() {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(common.JsonConfigs.ClientBindIpAddress)}
+	localAddr := &net.UDPAddr{IP: net.ParseIP(common.FlagInfos.ClientBindIpAddress)}
 	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.JsonConfigs.ServerDnsListenPort)}
 	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
 	defer conn.Close()
@@ -19,7 +19,7 @@ func sendByDns() {
 	}
 
 	var questionType dnsmessage.Type
-	if false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ":") {
+	if false == strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") {
 		questionType = dnsmessage.TypeA
 	} else {
 		questionType = dnsmessage.TypeAAAA
@@ -44,7 +44,7 @@ func sendByDns() {
 		},
 	}
 
-	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.JsonConfigs.ClientBindIpAddress, remoteAddr)
+	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.FlagInfos.ClientBindIpAddress, remoteAddr)
 	if 0 != common.FlagInfos.WaitingSeconds {
 		fmt.Printf("Dns client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)

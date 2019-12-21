@@ -8,7 +8,7 @@ import (
 )
 
 func sendByUdp() {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(common.JsonConfigs.ClientBindIpAddress)}
+	localAddr := &net.UDPAddr{IP: net.ParseIP(common.FlagInfos.ClientBindIpAddress)}
 	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.FlagInfos.SentToServerPort)}
 	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
 	defer conn.Close()
@@ -16,7 +16,7 @@ func sendByUdp() {
 		panic(fmt.Sprintf("Udp client dial with %v failed, err : %v\n", remoteAddr, err.Error()))
 	}
 
-	fmt.Printf("Udp client bind on %v, will sent data to %v\n", common.JsonConfigs.ClientBindIpAddress, remoteAddr)
+	fmt.Printf("Udp client bind on %v, will sent data to %v\n", common.FlagInfos.ClientBindIpAddress, remoteAddr)
 	if 0 != common.FlagInfos.WaitingSeconds {
 		fmt.Printf("Udp client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)

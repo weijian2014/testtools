@@ -12,7 +12,7 @@ import (
 )
 
 func sendByHttp() {
-	localAddr, err := net.ResolveIPAddr("ip", common.JsonConfigs.ClientBindIpAddress)
+	localAddr, err := net.ResolveIPAddr("ip", common.FlagInfos.ClientBindIpAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func sendByHttp() {
 		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.JsonConfigs.ClientBindIpAddress, reqeustUrl)
+	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -72,7 +72,7 @@ func sendByHttp() {
 }
 
 func sendByHttps() {
-	localAddr, err := net.ResolveIPAddr("ip", common.JsonConfigs.ClientBindIpAddress)
+	localAddr, err := net.ResolveIPAddr("ip", common.FlagInfos.ClientBindIpAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ func sendByHttps() {
 		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.JsonConfigs.ClientBindIpAddress, reqeustUrl)
+	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {

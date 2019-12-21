@@ -75,6 +75,7 @@ func StartServer() {
 	HttpServerGuide(common.JsonConfigs.ServerHttpListenPort1)
 	HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPort1)
 	printDnsServerEntrys()
+	fmt.Printf("\nJson config: %+v\n\n", common.JsonConfigs)
 
 	for {
 		time.Sleep(time.Duration(5) * time.Second)

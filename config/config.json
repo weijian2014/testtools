@@ -17,14 +17,14 @@
   "ServerIeeeQuicListenPort2": 2006,
   "ServerDnsListenPort": 153,
   "ServerDnsAEntrys": {
-    "www.google.com": "1.0.0.1",
-    "www.qq.com": "1.0.0.2",
-    "www.cnblogs.com": "1.0.0.3"
+    "www.google.com": "1.1.1.1",
+    "www.qq.com": "2.2.2.2",
+    "www.cnblogs.com": "3.3.3.3"
   },
   "ServerDns4AEntrys": {
-    "www.google.com": "fe80::f64d:30ff:fea9:2b89",
-    "www.qq.com": "fe80::f64d:30ff:fea9:2b81",
-    "www.cnblogs.com": "fe80::f64d:30ff:fea9:2b88"
+    "www.google.com": "1111::1111:1111:1111:1111",
+    "www.qq.com": "2222::2222:2222:2222:2222",
+    "www.cnblogs.com": "3333::3333:3333:3333:3333"
   },
   "ServerSendData": "Hello Client",
   "__ClientConfig__": "__ClientConfig__",
