@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ import (
 func startDnsServer(serverName string) {
 	saveDnsEntrys()
 
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, common.Configs.ServerDnsListenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, common.JsonConfigs.ServerDnsListenPort)
 	udp, err := net.ResolveUDPAddr("udp", serverAddress)
 	if err != nil {
 		panic(err)
@@ -30,7 +30,7 @@ func startDnsServer(serverName string) {
 
 	for {
 		// receive
-		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, remoteAddress, err := conn.ReadFromUDP(recvBuffer)
 		if err != nil {
 			fmt.Printf("%v server[%v]----Dns client[%v] receive failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
@@ -171,7 +171,7 @@ func checkDomainName(domainName string) error {
 
 func saveDnsEntrys() {
 	// 读取配置文件中的A记录到map<domainName, IPv4>
-	aEntryMap := common.Configs.ServerDnsAEntrys.(map[string]interface{})
+	aEntryMap := common.JsonConfigs.ServerDnsAEntrys.(map[string]interface{})
 	dnsAEntrys = make(map[string]string, len(aEntryMap)+1)
 	for domainName, ip := range aEntryMap {
 		if nil != checkDomainName(domainName) {
@@ -188,7 +188,7 @@ func saveDnsEntrys() {
 	dnsAEntrys["www.example.com."] = "127.0.0.1"
 
 	// 读取配置文件中的AAAA记录到map<domainName, IPv6>
-	aaaaEntryMap := common.Configs.ServerDns4AEntrys.(map[string]interface{})
+	aaaaEntryMap := common.JsonConfigs.ServerDns4AEntrys.(map[string]interface{})
 	dns4AEntrys = make(map[string]string, len(aaaaEntryMap)+1)
 	for domainName, ip := range aaaaEntryMap {
 		if nil != checkDomainName(domainName) {

@@ -10,9 +10,8 @@ import (
 
 var (
 	CurrDir                    = ""
-	IsHelp                     = false
-	ConfigFileFullPath         = ""
-	Configs            *Config = nil
+	JsonConfigs            		*JsonConfig = nil
+	FlagInfos					*FlagInfo = nil
 )
 
 func init() {
@@ -28,7 +27,7 @@ func init() {
 	CurrDir = filepath.Dir(absFullPath)
 }
 
-type Config struct {
+type JsonConfig struct {
 	// Common Config
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
 	// Server Config
@@ -57,8 +56,27 @@ type Config struct {
 	ClientSendData          string `json:"ClientSendData"`
 }
 
+type FlagInfo struct {
+	// common option
+	IsHelp				  bool
+	IsServer			  bool
+	ConfigFileFullPath	  string
+	// client option
+	UsingTcp              bool
+	UsingUdp              bool
+	UsingHttp             bool
+	UsingHttps            bool
+	UsingGoogleQuic       bool
+	UsingIEEEQuic         bool
+	UsingDns              bool
+	ClientBindIpAddress   string
+	SentToServerPort      uint16
+	WaitingSeconds        uint64
+	ClientSendNumbers     uint64
+}
+
 // 读取json配置文件
-func LoadConfigFile(filePath string) (*Config, error) {
+func LoadConfigFile(filePath string) (*JsonConfig, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
@@ -70,7 +88,7 @@ func LoadConfigFile(filePath string) (*Config, error) {
 		return nil, err
 	}
 
-	c := &Config{}
+	c := &JsonConfig{}
 	if err := json.Unmarshal(cData, c); nil != err {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"crypto/rand"
@@ -13,7 +13,7 @@ import (
 )
 
 func startGQuicServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
 	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), &quic.Config{
 		Versions: []quic.VersionNumber{
 			quic.VersionGQUIC39,
@@ -47,7 +47,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 
 	for {
 		// receive
-		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, err = stream.Read(recvBuffer)
 		if err != nil {
 			if "NO_ERROR" == err.Error() || "EOF" == err.Error() || "PeerGoingAway:" == err.Error() {
@@ -59,14 +59,14 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 		}
 
 		// send
-		n, err := stream.Write([]byte(common.Configs.ServerSendData))
+		n, err := stream.Write([]byte(common.JsonConfigs.ServerSendData))
 		if nil != err {
 			fmt.Printf("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 			return
 		}
 
 		fmt.Printf("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
-			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
+			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
 	fmt.Printf("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())

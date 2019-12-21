@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func startTcpServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
 	listener, err := net.Listen("tcp", serverAddress)
 	if err != nil {
 		panic(err)
@@ -31,7 +31,7 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 	defer conn.Close()
 	for {
 		// receive
-		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		n, err := conn.Read(recvBuffer)
 		if err != nil {
 			if "NO_ERROR" == err.Error() {
@@ -47,13 +47,13 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 		}
 
 		// send
-		_, err = conn.Write([]byte(common.Configs.ServerSendData))
+		_, err = conn.Write([]byte(common.JsonConfigs.ServerSendData))
 		if nil != err {
 			fmt.Printf("%v server[%v]----Tcp client[%v] send failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 			break
 		}
 
-		fmt.Printf("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.Configs.ServerSendData)
+		fmt.Printf("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
 	fmt.Printf("%v server[%v]----Tcp client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())

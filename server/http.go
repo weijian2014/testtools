@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ var (
 )
 
 func startHttpServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
 	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
@@ -70,7 +70,7 @@ func startHttpsServer(listenPort uint16, serverName string) {
 		isGenerateCert = true
 	}
 
-	serverAddress := fmt.Sprintf("%v:%v", common.Configs.ServerListenHost, listenPort)
+	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
 	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	if !isRegistered {
@@ -98,9 +98,9 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send
-	w.Write([]byte(common.Configs.ServerSendData))
+	w.Write([]byte(common.JsonConfigs.ServerSendData))
 	w.Write([]byte("\n"))
-	fmt.Printf("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.Configs.ServerSendData)
+	fmt.Printf("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.JsonConfigs.ServerSendData)
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
@@ -199,8 +199,8 @@ func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 	return nil
 }
 
-func printHttpServerGuide(listenPort uint16) {
-	ip := net.ParseIP(common.Configs.ClientSendToIpv4Address)
+func HttpServerGuide(listenPort uint16) {
+	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
 	fmt.Printf("Http server use guide:\n")
 	fmt.Printf("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
 	fmt.Printf("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
@@ -208,8 +208,8 @@ func printHttpServerGuide(listenPort uint16) {
 	fmt.Printf("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
-func printHttpsServerGuide(listenPort uint16) {
-	ip := net.ParseIP(common.Configs.ClientSendToIpv4Address)
+func HttpsServerGuide(listenPort uint16) {
+	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
 	fmt.Printf("Https server certificate has been generated in the %v directory\n", certificatePath)
 	fmt.Printf("Https server use guide:\n")
 	fmt.Printf("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)

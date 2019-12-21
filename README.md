@@ -13,9 +13,13 @@
     settings---GO---Go Modules(vgo)---proxy中填入https://goproxy.io            #开启代理
 
 # 项目中使用Go Modules, 并构建项目
-    echo "export GOPROXY=https://goproxy.io" >> /etc/.profile
-    echo "export GO111MODULE=on" >> /etc/.profile
-    source /etc/.profile
+    mkdir -p /opt/go/gopath
+    echo "export PATH=${PATH}:/opt/go" >> ~/.profile
+    echo "export GOROOT=/opt/go" >> ~/.profile
+    echo "export GOPATH=/opt/go/gopath" >> ~/.profile
+    echo "export GOPROXY=https://goproxy.io" >> ~/.profile
+    echo "export GO111MODULE=on" >> ~/.profile
+    source ~/.profile
     cd testtools
     go mod init testtools
     go mod tidy

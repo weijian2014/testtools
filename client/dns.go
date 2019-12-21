@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 )
 
 func sendByDns() {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(common.Configs.ClientBindIpAddress)}
-	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.Configs.ServerDnsListenPort)}
+	localAddr := &net.UDPAddr{IP: net.ParseIP(common.JsonConfigs.ClientBindIpAddress)}
+	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.JsonConfigs.ServerDnsListenPort)}
 	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
 	defer conn.Close()
 	if err != nil {
@@ -18,7 +18,7 @@ func sendByDns() {
 	}
 
 	var questionType dnsmessage.Type
-	if false == strings.Contains(common.Configs.ClientBindIpAddress, ":") {
+	if false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ":") {
 		questionType = dnsmessage.TypeA
 	} else {
 		questionType = dnsmessage.TypeAAAA
@@ -43,8 +43,10 @@ func sendByDns() {
 		},
 	}
 
-	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.Configs.ClientBindIpAddress, remoteAddr)
-	for i := 1; i <= clientSendNumbers; i++ {
+	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.JsonConfigs.ClientBindIpAddress, remoteAddr)
+
+	var i uint64
+	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send
 		packed, err := requestMessage.Pack()
 		if nil != err {
@@ -58,7 +60,7 @@ func sendByDns() {
 		}
 
 		// receive
-		recvBuffer := make([]byte, common.Configs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, err = conn.Read(recvBuffer)
 		if err != nil {
 			fmt.Printf("Udp client[%v]----Udp server[%v] receive failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())

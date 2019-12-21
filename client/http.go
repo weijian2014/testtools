@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"crypto/tls"
@@ -12,7 +12,7 @@ import (
 )
 
 func sendByHttp() {
-	localAddr, err := net.ResolveIPAddr("ip", common.Configs.ClientBindIpAddress)
+	localAddr, err := net.ResolveIPAddr("ip", common.JsonConfigs.ClientBindIpAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -36,21 +36,23 @@ func sendByHttp() {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("http://%s:%d", sendToServerIpAddress, sentToServerPort)
+		reqeustUrl = fmt.Sprintf("http://%s:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	} else {
-		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, sentToServerPort)
+		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.Configs.ClientBindIpAddress, reqeustUrl)
-	for i := 1; i <= clientSendNumbers; i++ {
+	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.JsonConfigs.ClientBindIpAddress, reqeustUrl)
+
+	var i uint64
+	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
 		client := &http.Client{Transport: tr}
-		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.Configs.ClientSendData))
+		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
 		if err != nil {
 			fmt.Printf("Http client new request failed, times[%d], err : %v\n", i, err.Error())
 			return
 		}
-		req.Header.Add("ClientSendData", common.Configs.ClientSendData)
+		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -65,12 +67,12 @@ func sendByHttp() {
 			return
 		}
 
-		fmt.Printf("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.Configs.ClientSendData, body)
+		fmt.Printf("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }
 
 func sendByHttps() {
-	localAddr, err := net.ResolveIPAddr("ip", common.Configs.ClientBindIpAddress)
+	localAddr, err := net.ResolveIPAddr("ip", common.JsonConfigs.ClientBindIpAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -97,21 +99,23 @@ func sendByHttps() {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("https://%s:%d", sendToServerIpAddress, sentToServerPort)
+		reqeustUrl = fmt.Sprintf("https://%s:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	} else {
-		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, sentToServerPort)
+		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.Configs.ClientBindIpAddress, reqeustUrl)
-	for i := 1; i <= clientSendNumbers; i++ {
+	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.JsonConfigs.ClientBindIpAddress, reqeustUrl)
+
+	var i uint64
+	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
 		client := &http.Client{Transport: tr}
-		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.Configs.ClientSendData))
+		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
 		if err != nil {
 			fmt.Printf("Https client new request failed, times[%d], err : %v\n", i, err.Error())
 			return
 		}
-		req.Header.Add("ClientSendData", common.Configs.ClientSendData)
+		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -126,6 +130,6 @@ func sendByHttps() {
 			return
 		}
 
-		fmt.Printf("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.Configs.ClientSendData, body)
+		fmt.Printf("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }
