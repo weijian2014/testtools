@@ -6,6 +6,7 @@ import (
 	"github.com/lucas-clemente/quic-go"
 	"net"
 	"testtools/common"
+	"time"
 )
 
 func sendByGQuic(serverName string) {
@@ -35,7 +36,10 @@ func sendByGQuic(serverName string) {
 	}
 
 	fmt.Printf("%v client bind on %v, will sent data to %v\n", serverName, common.JsonConfigs.ClientBindIpAddress, remoteAddr)
-
+	if 0 != common.FlagInfos.WaitingSeconds {
+		fmt.Printf("%v client waiting %v...\n", serverName, common.FlagInfos.WaitingSeconds)
+		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
+	}
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send

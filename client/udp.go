@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"testtools/common"
+	"time"
 )
 
 func sendByUdp() {
@@ -16,7 +17,10 @@ func sendByUdp() {
 	}
 
 	fmt.Printf("Udp client bind on %v, will sent data to %v\n", common.JsonConfigs.ClientBindIpAddress, remoteAddr)
-	
+	if 0 != common.FlagInfos.WaitingSeconds {
+		fmt.Printf("Udp client waiting %v...\n", common.FlagInfos.WaitingSeconds)
+		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
+	}
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send

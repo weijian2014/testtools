@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"testtools/common"
+	"time"
 )
 
 func sendByDns() {
@@ -44,7 +45,10 @@ func sendByDns() {
 	}
 
 	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.JsonConfigs.ClientBindIpAddress, remoteAddr)
-
+	if 0 != common.FlagInfos.WaitingSeconds {
+		fmt.Printf("Dns client waiting %v...\n", common.FlagInfos.WaitingSeconds)
+		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
+	}
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send

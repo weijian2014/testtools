@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	sendToServerIpAddress      string
+	sendToServerIpAddress string
 )
 
 func StartClient() {
@@ -68,12 +68,18 @@ func checkJsonConfig() error {
 	if nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress) ||
 		false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ".") ||
 		false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ":") {
-		return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress))
+		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
+			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
+			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress))
+		}
 	}
 
 	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address) ||
 		false == strings.Contains(common.JsonConfigs.ClientSendToIpv4Address, ".") {
-		return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address))
+		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
+			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
+			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address))
+		}
 	}
 
 	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv6Address) ||
@@ -104,13 +110,13 @@ func checkFlags() error {
 }
 
 func parsePort() error {
-	if !common.FlagInfos.UsingTcp && 
-	!common.FlagInfos.UsingUdp && 
-	!common.FlagInfos.UsingHttp && 
-	!common.FlagInfos.UsingHttps && 
-	!common.FlagInfos.UsingGoogleQuic && 
-	!common.FlagInfos.UsingIEEEQuic && 
-	!common.FlagInfos.UsingDns {
+	if !common.FlagInfos.UsingTcp &&
+		!common.FlagInfos.UsingUdp &&
+		!common.FlagInfos.UsingHttp &&
+		!common.FlagInfos.UsingHttps &&
+		!common.FlagInfos.UsingGoogleQuic &&
+		!common.FlagInfos.UsingIEEEQuic &&
+		!common.FlagInfos.UsingDns {
 		if 0 == common.FlagInfos.SentToServerPort {
 			return errors.New("Please use one of options: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport")
 		} else {

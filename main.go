@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"testtools/client"
 	"testtools/common"
 	"testtools/server"
-	"testtools/client"
 )
 
 func init() {
@@ -29,7 +29,7 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.UsingIEEEQuic, "iquic", false, "Using IEEE QUIC protocol, unavailable")
 	flag.BoolVar(&common.FlagInfos.UsingDns, "dns", false, "Using DNS protocol")
 	flag.UintVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, gQuic and iQuic protocols")
-	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, only support TCP protocol")
+	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, gQuic and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, gQuic and iQuic protocols")
 	flag.Parse()
 

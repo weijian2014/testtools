@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	CurrDir					string
-	JsonConfigs				*JsonConfig
-	FlagInfos				FlagInfo
+	CurrDir     string
+	JsonConfigs *JsonConfig
+	FlagInfos   FlagInfo
 )
 
 func init() {
@@ -58,21 +58,21 @@ type JsonConfig struct {
 
 type FlagInfo struct {
 	// common option
-	IsHelp				  bool
-	IsServer			  bool
-	ConfigFileFullPath	  string
+	IsHelp             bool
+	IsServer           bool
+	ConfigFileFullPath string
 	// client option
-	UsingTcp              bool
-	UsingUdp              bool
-	UsingHttp             bool
-	UsingHttps            bool
-	UsingGoogleQuic       bool
-	UsingIEEEQuic         bool
-	UsingDns              bool
-	ClientBindIpAddress   string
-	SentToServerPort      uint16
-	WaitingSeconds        uint64
-	ClientSendNumbers     uint64
+	UsingTcp            bool
+	UsingUdp            bool
+	UsingHttp           bool
+	UsingHttps          bool
+	UsingGoogleQuic     bool
+	UsingIEEEQuic       bool
+	UsingDns            bool
+	ClientBindIpAddress string
+	SentToServerPort    uint16
+	WaitingSeconds      uint64
+	ClientSendNumbers   uint64
 }
 
 // 读取json配置文件

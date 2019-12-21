@@ -21,7 +21,6 @@ func sendByTcp() {
 		fmt.Printf("Tcp client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
 	}
-
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send
