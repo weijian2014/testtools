@@ -65,26 +65,25 @@ func StartClient() {
 }
 
 func checkJsonConfig() error {
-	if nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress) ||
-		false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ".") ||
-		false == strings.Contains(common.JsonConfigs.ClientBindIpAddress, ":") {
+	if nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress).To4() &&
+		nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress).To16() {
 		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
 			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
 			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress))
 		}
 	}
 
-	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address) ||
-		false == strings.Contains(common.JsonConfigs.ClientSendToIpv4Address, ".") {
+	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address).To4() {
 		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
 			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
 			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address))
 		}
 	}
 
-	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv6Address) ||
-		false == strings.Contains(common.JsonConfigs.ClientSendToIpv6Address, ":") {
-		return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.JsonConfigs.ClientSendToIpv6Address))
+	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv6Address).To16() {
+		if "::1" != common.JsonConfigs.ClientBindIpAddress {
+			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.JsonConfigs.ClientSendToIpv6Address))
+		}
 	}
 
 	return nil

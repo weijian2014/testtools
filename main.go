@@ -36,7 +36,16 @@ func init() {
 	common.FlagInfos.SentToServerPort = uint16(tmpSentToServerPort)
 	_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
 	if os.IsNotExist(err) {
-		common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/../config/config.json"
+		common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/config/config.json"
+		_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
+		if os.IsNotExist(err) {
+			common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/../config/config.json"
+		}
+
+		_, err = os.Stat(common.FlagInfos.ConfigFileFullPath)
+		if os.IsNotExist(err) {
+			panic(fmt.Sprintf("Please using -f option specifying a configuration file"))
+		}
 	}
 
 	common.JsonConfigs, err = common.LoadConfigFile(common.FlagInfos.ConfigFileFullPath)

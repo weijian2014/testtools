@@ -23,9 +23,6 @@
     cd testtools
     go mod init testtools
     go mod tidy
-    cd server
-    go build .
-    cd ../client
     go build .
 
 # go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
