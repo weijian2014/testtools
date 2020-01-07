@@ -28,6 +28,7 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.UsingGoogleQuic, "gquic", false, "Using Google QUIC protocol")
 	flag.BoolVar(&common.FlagInfos.UsingIEEEQuic, "iquic", false, "Using IEEE QUIC protocol, unavailable")
 	flag.BoolVar(&common.FlagInfos.UsingDns, "dns", false, "Using DNS protocol")
+	flag.BoolVar(&common.FlagInfos.UsingClientBindIpAddressRange, "range", false, "Using Client bind ip address range")
 	flag.UintVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, gQuic and iQuic protocols")
 	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, gQuic and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, gQuic and iQuic protocols")

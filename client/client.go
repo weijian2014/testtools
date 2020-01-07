@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	sendToServerIpAddress string
+	sendToServerIpAddress    string
+	clientBindIpAddressRange []string
 )
 
 func StartClient() {
@@ -28,38 +29,104 @@ func StartClient() {
 		panic(err)
 	}
 
+	if common.FlagInfos.UsingClientBindIpAddressRange {
+		err = parseClientBindIpAddressRange()
+		if nil != err {
+			panic(err)
+		}
+
+		fmt.Printf("Using client ip address range to binding, count [%v], range [%v]~[%v]\n",
+			len(clientBindIpAddressRange), clientBindIpAddressRange[0], clientBindIpAddressRange[len(clientBindIpAddressRange)-1])
+	}
+
 	if common.FlagInfos.UsingTcp {
-		sendByTcp()
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByTcp()
+			}
+		} else {
+			sendByTcp()
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingUdp {
-		sendByUdp()
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByUdp()
+			}
+		} else {
+			sendByUdp()
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingHttp {
-		sendByHttp()
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByHttp()
+			}
+		} else {
+			sendByHttp()
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingHttps {
-		sendByHttps()
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByHttps()
+			}
+		} else {
+			sendByHttps()
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingGoogleQuic {
-		sendByGQuic("gQuic")
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByGQuic("gQuic")
+			}
+		} else {
+			sendByGQuic("gQuic")
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingIEEEQuic {
-		sendByGQuic("iQuic")
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByGQuic("iQuic")
+			}
+		} else {
+			sendByGQuic("iQuic")
+		}
+
 		return
 	}
 
 	if common.FlagInfos.UsingDns {
-		sendByDns()
+		if common.FlagInfos.UsingClientBindIpAddressRange {
+			for _, bindIp := range clientBindIpAddressRange {
+				common.FlagInfos.ClientBindIpAddress = bindIp
+				sendByDns()
+			}
+		} else {
+			sendByDns()
+		}
+
 		return
 	}
 }
@@ -87,6 +154,39 @@ func checkJsonConfig() error {
 	}
 
 	return nil
+}
+
+func parseClientBindIpAddressRange() error {
+	if 0 == len(common.JsonConfigs.ClientBindIpAddressRange) {
+		return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddressRange is invalid"))
+	}
+
+	ip, ipnet, err := net.ParseCIDR(common.JsonConfigs.ClientBindIpAddressRange)
+	if err != nil {
+		return err
+	}
+
+	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); incIp(ip) {
+		ipStrings := strings.Split(ip.String(), ".")
+		if "0" != ipStrings[3] {
+			clientBindIpAddressRange = append(clientBindIpAddressRange, ip.String())
+		}
+	}
+
+	if 0 == len(clientBindIpAddressRange) {
+		return errors.New(fmt.Sprintf("parse common.JsonConfigs.ClientBindIpAddressRange[%v] fail", common.JsonConfigs.ClientBindIpAddressRange))
+	}
+
+	return nil
+}
+
+func incIp(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
+	}
 }
 
 func checkFlags() error {

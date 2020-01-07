@@ -50,10 +50,11 @@ type JsonConfig struct {
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`
 	ServerSendData    string      `json:"ServerSendData"`
 	// Client Config
-	ClientBindIpAddress     string `json:"ClientBindIpAddress"`
-	ClientSendToIpv4Address string `json:"ClientSendToIpv4Address"`
-	ClientSendToIpv6Address string `json:"ClientSendToIpv6Address"`
-	ClientSendData          string `json:"ClientSendData"`
+	ClientBindIpAddress      string `json:"ClientBindIpAddress"`
+	ClientBindIpAddressRange string `json:"ClientBindIpAddressRange"`
+	ClientSendToIpv4Address  string `json:"ClientSendToIpv4Address"`
+	ClientSendToIpv6Address  string `json:"ClientSendToIpv6Address"`
+	ClientSendData           string `json:"ClientSendData"`
 }
 
 type FlagInfo struct {
@@ -62,17 +63,18 @@ type FlagInfo struct {
 	IsServer           bool
 	ConfigFileFullPath string
 	// client option
-	UsingTcp            bool
-	UsingUdp            bool
-	UsingHttp           bool
-	UsingHttps          bool
-	UsingGoogleQuic     bool
-	UsingIEEEQuic       bool
-	UsingDns            bool
-	ClientBindIpAddress string
-	SentToServerPort    uint16
-	WaitingSeconds      uint64
-	ClientSendNumbers   uint64
+	UsingTcp                      bool
+	UsingUdp                      bool
+	UsingHttp                     bool
+	UsingHttps                    bool
+	UsingGoogleQuic               bool
+	UsingIEEEQuic                 bool
+	UsingDns                      bool
+	UsingClientBindIpAddressRange bool
+	ClientBindIpAddress           string
+	SentToServerPort              uint16
+	WaitingSeconds                uint64
+	ClientSendNumbers             uint64
 }
 
 // 读取json配置文件
