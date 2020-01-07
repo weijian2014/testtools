@@ -9,10 +9,17 @@ import (
 )
 
 var (
-	uploadPath      = ""
-	certificatePath = ""
-	dnsAEntrys      map[string]string
-	dns4AEntrys     map[string]string
+	uploadPath       = ""
+	certificatePath  = ""
+	dnsAEntrys       map[string]string
+	dns4AEntrys      map[string]string
+	serverTcpTimes   uint64 = 0
+	serverUdpTimes   uint64 = 0
+	serverHttpTimes  uint64 = 0
+	serverHttpsTimes uint64 = 0
+	serverGQuicTimes uint64 = 0
+	serverIQuicTimes uint64 = 0
+	serverDnsTimes   uint64 = 0
 )
 
 func init() {
@@ -78,7 +85,9 @@ func StartServer() {
 	fmt.Printf("\nJson config: %+v\n\n", common.JsonConfigs)
 
 	for {
-		time.Sleep(time.Duration(5) * time.Second)
+		time.Sleep(time.Duration(60) * time.Second)
+		fmt.Printf("Service Statistics:\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
+			serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
 	}
 }
 

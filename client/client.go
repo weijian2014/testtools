@@ -41,12 +41,9 @@ func StartClient() {
 
 	if common.FlagInfos.UsingTcp {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			for _, bindIp := range clientBindIpAddressRange {
-				common.FlagInfos.ClientBindIpAddress = bindIp
-				sendByTcp()
-			}
+			sendTcpByRange()
 		} else {
-			sendByTcp()
+			sendByTcp(common.FlagInfos.ClientBindIpAddress)
 		}
 
 		return
@@ -167,8 +164,7 @@ func parseClientBindIpAddressRange() error {
 	}
 
 	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); incIp(ip) {
-		ipStrings := strings.Split(ip.String(), ".")
-		if "0" != ipStrings[3] {
+		if !net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address).IsMulticast() {
 			clientBindIpAddressRange = append(clientBindIpAddressRange, ip.String())
 		}
 	}

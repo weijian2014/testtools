@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/lucas-clemente/quic-go"
 	"math/big"
+	"strings"
 	"testtools/common"
 )
 
@@ -67,6 +68,12 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 
 		fmt.Printf("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
 			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
+	}
+
+	if strings.Contains(serverName, "gQuic") {
+		serverGQuicTimes++
+	} else {
+		serverIQuicTimes++
 	}
 
 	fmt.Printf("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())

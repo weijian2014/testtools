@@ -53,8 +53,13 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 			break
 		}
 
-		fmt.Printf("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
+		if !common.FlagInfos.UsingClientBindIpAddressRange {
+			fmt.Printf("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
+		}
 	}
 
-	fmt.Printf("%v server[%v]----Tcp client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())
+	serverTcpTimes++
+	if !common.FlagInfos.UsingClientBindIpAddressRange {
+		fmt.Printf("%v server[%v]----Tcp client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())
+	}
 }

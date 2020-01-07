@@ -100,6 +100,13 @@ func index(w http.ResponseWriter, r *http.Request) {
 	// send
 	w.Write([]byte(common.JsonConfigs.ServerSendData))
 	w.Write([]byte("\n"))
+
+	if "Http" == prefix {
+		serverHttpTimes++
+	} else {
+		serverHttpsTimes++
+	}
+
 	fmt.Printf("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.JsonConfigs.ServerSendData)
 }
 

@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func sendByTcp() {
-	localAddr := &net.TCPAddr{IP: net.ParseIP(common.FlagInfos.ClientBindIpAddress)}
+func sendByTcp(localIp string) {
+	localAddr := &net.TCPAddr{IP: net.ParseIP(localIp)}
 	remoteAddr := &net.TCPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.FlagInfos.SentToServerPort)}
 	conn, err := net.DialTCP("tcp", localAddr, remoteAddr)
 	defer conn.Close()
@@ -16,7 +16,10 @@ func sendByTcp() {
 		panic(fmt.Sprintf("Tcp client connect to %v failed, err : %v\n", remoteAddr, err.Error()))
 	}
 
-	fmt.Printf("Tcp client bind on %v, will sent data to %v\n", common.FlagInfos.ClientBindIpAddress, remoteAddr)
+	if !common.FlagInfos.UsingClientBindIpAddressRange {
+		fmt.Printf("Tcp client bind on %v, will sent data to %v\n", localIp, remoteAddr)
+	}
+
 	if 0 != common.FlagInfos.WaitingSeconds {
 		fmt.Printf("Tcp client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
@@ -38,6 +41,8 @@ func sendByTcp() {
 			return
 		}
 
-		fmt.Printf("Tcp client[%v]----Tcp server[%v], times[%d]:\n\tsend: %s\n\trecv: %s\n", conn.LocalAddr(), conn.RemoteAddr(), i, common.JsonConfigs.ClientSendData, recvBuffer[:n])
+		if !common.FlagInfos.UsingClientBindIpAddressRange {
+			fmt.Printf("Tcp client[%v]----Tcp server[%v], times[%d]:\n\tsend: %s\n\trecv: %s\n", conn.LocalAddr(), conn.RemoteAddr(), i, common.JsonConfigs.ClientSendData, recvBuffer[:n])
+		}
 	}
 }
