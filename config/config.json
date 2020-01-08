@@ -31,7 +31,7 @@
   "ServerSendData": "Hello Client",
   "__ClientConfig__": "__ClientConfig__",
   "ClientBindIpAddress": "0.0.0.0",
-  "ClientBindIpAddressRange": "1.0.0.0/8",
+  "ClientBindIpAddressRange": "1.0.0.0/10",
   "ClientRangeModeThreadNumber": 100,
   "ClientSendToIpv4Address": "0.0.0.0",
   "ClientSendToIpv6Address": "::1",
