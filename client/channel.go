@@ -1,20 +1,24 @@
 package client
 
 import (
-	"sync"
+	"fmt"
+	"strconv"
 	"sync/atomic"
 	"testtools/common"
 	"time"
 )
 
 var (
-	channels       []chan string
-	wg             *sync.WaitGroup
-	totalSendTimes uint64 = 0
-	sleepTime      int64  = 3
+	channels                       []chan string
+	totalSendTimes                 uint64 = 0
+	sleepTime                      int64  = 1
+	clientBindIpAddressRangeLength uint64 = 0
+	undoneChannels                 int64  = 0
 )
 
 func sendByRange(protocolType int) {
+	clientBindIpAddressRangeLength = uint64(len(clientBindIpAddressRange))
+	undoneChannels = int64(common.JsonConfigs.ClientRangeModeChannelNumber)
 	start := time.Now().Unix()
 	preChannel()
 
@@ -52,15 +56,29 @@ func sendByRange(protocolType int) {
 		common.Fatal("Unknown protocol type %v\n", protocolType)
 	}
 
-	time.Sleep(time.Duration(sleepTime) * time.Second)
-	wg.Wait()
-	end := time.Now().Unix() - sleepTime
-	common.Error("Send by range done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse: %v\n\tchannel number: %v\n\tclient ip number: %v\n\ttotal send times: %v\n",
-		start, end, (end - start), common.JsonConfigs.ClientRangeModeChannelNumber, len(clientBindIpAddressRange), totalSendTimes)
+	for {
+		if 0 != atomic.LoadInt64(&undoneChannels) {
+			var total uint64 = totalSendTimes
+			completed, err := strconv.ParseFloat(fmt.Sprintf("%.2f", float32(total)/float32(clientBindIpAddressRangeLength)*100), 64)
+			if nil != err {
+				panic(err)
+			}
+			end := time.Now().Unix()
+			common.Error("Doing...\n\tsend times: %v\n\tunsend times: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n",
+				total, clientBindIpAddressRangeLength-total, completed, end-start)
+			time.Sleep(time.Duration(sleepTime) * time.Second)
+			continue
+		} else {
+			break
+		}
+	}
+
+	end := time.Now().Unix()
+	common.Error("Done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tchannel number: %v\n\tclient ip number: %v\n\ttotal send times: %v\n",
+		start, end, end-start, common.JsonConfigs.ClientRangeModeChannelNumber, clientBindIpAddressRangeLength, totalSendTimes)
 }
 
 func preChannel() {
-	wg = &sync.WaitGroup{}
 	var channelBufferSize uint64 = (uint64(len(clientBindIpAddressRange)) / common.JsonConfigs.ClientRangeModeChannelNumber) + 3
 
 	var i uint64
@@ -82,8 +100,6 @@ func preChannel() {
 }
 
 func doTcp(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -95,12 +111,11 @@ func doTcp(index uint64) {
 		atomic.AddUint64(&totalSendTimes, 1)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doUdp(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -111,12 +126,11 @@ func doUdp(index uint64) {
 		sendByUdp(ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doHttp(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -127,12 +141,11 @@ func doHttp(index uint64) {
 		sendByHttp(ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doHttps(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -143,12 +156,11 @@ func doHttps(index uint64) {
 		sendByHttps(ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doGQuic(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -159,12 +171,11 @@ func doGQuic(index uint64) {
 		sendByGQuic("gQuic", ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doIQuic(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -175,12 +186,11 @@ func doIQuic(index uint64) {
 		sendByGQuic("iQuic", ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
 
 func doDns(index uint64) {
-	defer wg.Done()
-	wg.Add(1)
 	ch := channels[index]
 	for {
 		ip := <-ch
@@ -191,5 +201,6 @@ func doDns(index uint64) {
 		sendByDns(ip)
 	}
 
+	atomic.AddInt64(&undoneChannels, -1)
 	defer close(ch)
 }
