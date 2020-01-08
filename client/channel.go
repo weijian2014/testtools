@@ -11,6 +11,7 @@ var (
 	channels       []chan string
 	wg             *sync.WaitGroup
 	totalSendTimes uint64 = 0
+	sleepTime      int64  = 3
 )
 
 func sendByRange(protocolType int) {
@@ -51,9 +52,9 @@ func sendByRange(protocolType int) {
 		common.Fatal("Unknown protocol type %v\n", protocolType)
 	}
 
-	time.Sleep(time.Duration(3) * time.Second)
+	time.Sleep(time.Duration(sleepTime) * time.Second)
 	wg.Wait()
-	end := time.Now().Unix()
+	end := time.Now().Unix() - sleepTime
 	common.Error("Send by range done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse: %v\n\tchannel number: %v\n\tclient ip number: %v\n\ttotal send times: %v\n",
 		start, end, (end - start), common.JsonConfigs.ClientRangeModeChannelNumber, len(clientBindIpAddressRange), totalSendTimes)
 }
