@@ -25,7 +25,7 @@ func startGQuicServer(listenPort uint16, serverName string) {
 		panic(err)
 	}
 
-	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		session, err := listener.Accept()

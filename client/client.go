@@ -35,7 +35,7 @@ func StartClient() {
 			panic(err)
 		}
 
-		common.Fatal("Using client ip address range to binding, count [%v], range [%v]~[%v]\n",
+		common.Error("Using client ip address range to binding, count [%v], range [%v]~[%v]\n",
 			len(clientBindIpAddressRange), clientBindIpAddressRange[0], clientBindIpAddressRange[len(clientBindIpAddressRange)-1])
 	}
 

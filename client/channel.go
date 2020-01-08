@@ -22,7 +22,7 @@ func sendTcpByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send tcp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send tcp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendUdpByRange() {
@@ -36,7 +36,7 @@ func sendUdpByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send udp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send udp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendHttpByRange() {
@@ -50,7 +50,7 @@ func sendHttpByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send http by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send http by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendHttpsByRange() {
@@ -64,7 +64,7 @@ func sendHttpsByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send https by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send https by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendGQuicByRange() {
@@ -78,7 +78,7 @@ func sendGQuicByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send gquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send gquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendIQuicByRange() {
@@ -92,7 +92,7 @@ func sendIQuicByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send iquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send iquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendDnsByRange() {
@@ -106,7 +106,7 @@ func sendDnsByRange() {
 
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Fatal("Send dns by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send dns by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func preChannel() {

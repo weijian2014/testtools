@@ -26,7 +26,7 @@ func startDnsServer(serverName string) {
 		panic(err)
 	}
 
-	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		// receive
@@ -121,19 +121,19 @@ func startDnsServer(serverName string) {
 
 func printDnsServerEntrys() {
 	if 0 != len(dnsAEntrys) {
-		common.Fatal("Dns server a record:\n")
+		common.Error("Dns server a record:\n")
 	}
 	for k, v := range dnsAEntrys {
-		common.Fatal("\t%v ---- %v\n", k, v)
+		common.Error("\t%v ---- %v\n", k, v)
 	}
 
 	if 0 != len(dns4AEntrys) {
-		common.Fatal("Dns server aaaa record:\n")
+		common.Error("Dns server aaaa record:\n")
 	}
 	for k, v := range dns4AEntrys {
-		common.Fatal("\t%v ---- %v\n", k, v)
+		common.Error("\t%v ---- %v\n", k, v)
 	}
-	common.Fatal("\n")
+	common.Error("\n")
 }
 
 func checkDomainName(domainName string) error {
