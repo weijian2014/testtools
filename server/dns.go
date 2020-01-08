@@ -113,7 +113,7 @@ func startDnsServer(serverName string) {
 
 		tmp = strings.TrimRight(tmp, ", ")
 
-		serverDnsTimes++
+		serverDnsCount++
 		common.Info("%v server[%v]----Dns client[%v]:\n\tquestion: %+v\n\t answers: %+v\n",
 			serverName, conn.LocalAddr(), remoteAddress, requestMessage.Questions, tmp)
 	}

@@ -102,9 +102,9 @@ func index(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("\n"))
 
 	if "Http" == prefix {
-		serverHttpTimes++
+		serverHttpCount++
 	} else {
-		serverHttpsTimes++
+		serverHttpsCount++
 	}
 
 	common.Info("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.JsonConfigs.ServerSendData)

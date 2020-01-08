@@ -31,14 +31,14 @@ func StartClient() {
 	}
 
 	if common.FlagInfos.UsingClientBindIpAddressRange {
-		clientBindIpAddressRangeLength = uint64(len(clientBindIpAddressRange))
 		err = parseClientBindIpAddressRange()
+		clientBindIpAddressRangeLength = uint64(len(clientBindIpAddressRange))
 		if nil != err {
 			panic(err)
 		}
 
-		common.Error("Using client ip address range to binding, client ip number [%v], range [%v]~[%v], channel number %v\n",
-			len(clientBindIpAddressRange), clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeChannelNumber)
+		common.Error("Using range mode, client ip count [%v], range [%v]~[%v], channel count %v\n",
+			clientBindIpAddressRangeLength, clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeChannelNumber)
 	}
 
 	if common.FlagInfos.UsingTcp {

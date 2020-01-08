@@ -71,9 +71,9 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 	}
 
 	if strings.Contains(serverName, "gQuic") {
-		serverGQuicTimes++
+		serverGQuicCount++
 	} else {
-		serverIQuicTimes++
+		serverIQuicCount++
 	}
 
 	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())

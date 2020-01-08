@@ -10,7 +10,7 @@ import (
 
 var (
 	channels       []chan string
-	totalSendTimes uint64 = 0
+	totalSendCount uint64 = 0
 	sleepTime      int64  = 5
 	undoneChannels int64  = 0
 )
@@ -56,13 +56,13 @@ func sendByRange(protocolType int) {
 
 	for {
 		if 0 != atomic.LoadInt64(&undoneChannels) {
-			var total uint64 = totalSendTimes
+			var total uint64 = totalSendCount
 			completed, err := strconv.ParseFloat(fmt.Sprintf("%.2f", float32(total)/float32(clientBindIpAddressRangeLength)*100), 64)
 			if nil != err {
 				panic(err)
 			}
 			end := time.Now().Unix()
-			common.Error("Doing...(interval %v second)\n\tsend times: %v\n\tunsend times: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n",
+			common.Error("Doing...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n",
 				sleepTime, total, clientBindIpAddressRangeLength-total, completed, end-start)
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 			continue
@@ -72,8 +72,8 @@ func sendByRange(protocolType int) {
 	}
 
 	end := time.Now().Unix()
-	common.Error("Done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tchannel number: %v\n\tclient ip number: %v\n\ttotal send times: %v\n",
-		start, end, end-start, common.JsonConfigs.ClientRangeModeChannelNumber, clientBindIpAddressRangeLength, totalSendTimes)
+	common.Error("Done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tchannel count: %v\n\tclient ip count: %v\n\ttotal send count: %v\n",
+		start, end, end-start, common.JsonConfigs.ClientRangeModeChannelNumber, clientBindIpAddressRangeLength, totalSendCount)
 }
 
 func preChannel() {
@@ -84,11 +84,11 @@ func preChannel() {
 		channels = append(channels, make(chan string, channelBufferSize))
 	}
 
-	var sendTimes uint64 = 0
+	var sendCount uint64 = 0
 	var channelIndex uint64 = 0
 	for _, bindIp := range clientBindIpAddressRange {
-		sendTimes++
-		channelIndex = sendTimes % common.JsonConfigs.ClientRangeModeChannelNumber
+		sendCount++
+		channelIndex = sendCount % common.JsonConfigs.ClientRangeModeChannelNumber
 		channels[channelIndex] <- bindIp
 	}
 
@@ -106,7 +106,7 @@ func doTcp(index uint64) {
 		}
 
 		sendByTcp(ip)
-		atomic.AddUint64(&totalSendTimes, 1)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
