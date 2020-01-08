@@ -87,7 +87,7 @@ func StartServer() {
 	var sleepInterval uint64 = 15
 	for {
 		time.Sleep(time.Duration(sleepInterval) * time.Second)
-		common.Error("Service Statistics(interval=%v):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
+		common.Error("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
 			sleepInterval, serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
 	}
 }
