@@ -38,7 +38,7 @@ func StartClient() {
 		}
 
 		common.Error("Using range mode, client ip count [%v], range [%v]~[%v], channel count %v\n",
-			clientBindIpAddressRangeLength, clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeChannelNumber)
+			clientBindIpAddressRangeLength, clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeThreadNumber)
 	}
 
 	if common.FlagInfos.UsingTcp {

@@ -52,12 +52,12 @@ type JsonConfig struct {
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`
 	ServerSendData    string      `json:"ServerSendData"`
 	// Client Config
-	ClientBindIpAddress          string `json:"ClientBindIpAddress"`
-	ClientBindIpAddressRange     string `json:"ClientBindIpAddressRange"`
-	ClientRangeModeChannelNumber uint64 `json:"ClientRangeModeChannelNumber"`
-	ClientSendToIpv4Address      string `json:"ClientSendToIpv4Address"`
-	ClientSendToIpv6Address      string `json:"ClientSendToIpv6Address"`
-	ClientSendData               string `json:"ClientSendData"`
+	ClientBindIpAddress         string `json:"ClientBindIpAddress"`
+	ClientBindIpAddressRange    string `json:"ClientBindIpAddressRange"`
+	ClientRangeModeThreadNumber uint64 `json:"ClientRangeModeThreadNumber"`
+	ClientSendToIpv4Address     string `json:"ClientSendToIpv4Address"`
+	ClientSendToIpv6Address     string `json:"ClientSendToIpv6Address"`
+	ClientSendData              string `json:"ClientSendData"`
 }
 
 type FlagInfo struct {

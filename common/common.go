@@ -27,6 +27,27 @@ const (
 	DnsProtocolType
 )
 
+func ProtocolToString(protocol int) string {
+	switch protocol {
+	case TcpProtocolType:
+		return "Tcp"
+	case UdpProtocolType:
+		return "Udp"
+	case HttpProtocolType:
+		return "Http"
+	case HttpsProtocolType:
+		return "Https"
+	case GQuicProtocolType:
+		return "gQuic"
+	case IQuicProtocolType:
+		return "iQuic"
+	case DnsProtocolType:
+		return "Dns"
+	default:
+		return ""
+	}
+}
+
 func IsLocalIP(ip string) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
