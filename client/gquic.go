@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func sendByGQuic(serverName string) {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(common.FlagInfos.ClientBindIpAddress)}
+func sendByGQuic(serverName string, localIp string) {
+	localAddr := &net.UDPAddr{IP: net.ParseIP(localIp)}
 	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.FlagInfos.SentToServerPort)}
 	udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: localAddr.IP, Port: localAddr.Port})
 	if err != nil {
@@ -34,7 +34,7 @@ func sendByGQuic(serverName string) {
 		panic(fmt.Sprintf("%v client[%v]----Quic server[%v] open stream failed, err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), err.Error()))
 	}
 
-	common.Info("%v client bind on %v, will sent data to %v\n", serverName, common.FlagInfos.ClientBindIpAddress, remoteAddr)
+	common.Info("%v client bind on %v, will sent data to %v\n", serverName, localIp, remoteAddr)
 	if 0 != common.FlagInfos.WaitingSeconds {
 		common.Info("%v client waiting %v...\n", serverName, common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)

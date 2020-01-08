@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-func sendByHttp() {
-	localAddr, err := net.ResolveIPAddr("ip", common.FlagInfos.ClientBindIpAddress)
+func sendByHttp(localIp string) {
+	localAddr, err := net.ResolveIPAddr("ip", localIp)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func sendByHttp() {
 		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	common.Info("Http client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
+	common.Info("Http client bind on %v, will reqeust to %v\n", localIp, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -71,8 +71,8 @@ func sendByHttp() {
 	}
 }
 
-func sendByHttps() {
-	localAddr, err := net.ResolveIPAddr("ip", common.FlagInfos.ClientBindIpAddress)
+func sendByHttps(localIp string) {
+	localAddr, err := net.ResolveIPAddr("ip", localIp)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ func sendByHttps() {
 		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	common.Info("Https client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
+	common.Info("Https client bind on %v, will reqeust to %v\n", localIp, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
