@@ -9,15 +9,13 @@ import (
 )
 
 var (
-	channels                       []chan string
-	totalSendTimes                 uint64 = 0
-	sleepTime                      int64  = 5
-	clientBindIpAddressRangeLength uint64 = 0
-	undoneChannels                 int64  = 0
+	channels       []chan string
+	totalSendTimes uint64 = 0
+	sleepTime      int64  = 5
+	undoneChannels int64  = 0
 )
 
 func sendByRange(protocolType int) {
-	clientBindIpAddressRangeLength = uint64(len(clientBindIpAddressRange))
 	undoneChannels = int64(common.JsonConfigs.ClientRangeModeChannelNumber)
 	start := time.Now().Unix()
 	preChannel()
@@ -79,7 +77,7 @@ func sendByRange(protocolType int) {
 }
 
 func preChannel() {
-	var channelBufferSize uint64 = (uint64(len(clientBindIpAddressRange)) / common.JsonConfigs.ClientRangeModeChannelNumber) + 3
+	var channelBufferSize uint64 = (clientBindIpAddressRangeLength / common.JsonConfigs.ClientRangeModeChannelNumber) + 3
 
 	var i uint64
 	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
