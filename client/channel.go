@@ -62,8 +62,14 @@ func sendByRange(protocolType int) {
 				panic(err)
 			}
 			end := time.Now().Unix()
-			common.Error("Doing...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n",
-				sleepTime, total, clientBindIpAddressRangeLength-total, completed, end-start)
+			diff := end - start
+			if 0 == diff {
+				time.Sleep(time.Duration(sleepTime) * time.Second)
+				continue
+			}
+
+			common.Error("Doing...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tprogress rate: %v%%\n\tsend count per second: %v\n\ttime elapse(second): %v\n",
+				sleepTime, total, clientBindIpAddressRangeLength-total, completed, total/uint64(diff), diff)
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 			continue
 		} else {

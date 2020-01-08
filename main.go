@@ -56,7 +56,11 @@ func init() {
 }
 
 func main() {
-	common.LoggerInit(common.JsonConfigs.CommonLogLevel, common.JsonConfigs.CommonLogRoll, "")
+	var logLevel int = common.JsonConfigs.CommonLogLevel
+	if !common.FlagInfos.IsServer && !common.FlagInfos.UsingClientBindIpAddressRange {
+		logLevel = 0
+	}
+	common.LoggerInit(logLevel, common.JsonConfigs.CommonLogRoll, "")
 
 	if common.FlagInfos.IsHelp {
 		flag.Usage()
