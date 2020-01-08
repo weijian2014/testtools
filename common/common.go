@@ -17,6 +17,16 @@ import (
 	"time"
 )
 
+const (
+	TcpProtocolType int = iota
+	UdpProtocolType
+	HttpProtocolType
+	HttpsProtocolType
+	GQuicProtocolType
+	IQuicProtocolType
+	DnsProtocolType
+)
+
 func IsLocalIP(ip string) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

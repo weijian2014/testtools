@@ -2,115 +2,65 @@ package client
 
 import (
 	"sync"
+	"sync/atomic"
 	"testtools/common"
 	"time"
 )
 
 var (
-	channels []chan string
-	wg       sync.WaitGroup
+	channels       []chan string
+	wg             *sync.WaitGroup
+	totalSendTimes uint64 = 0
 )
 
-func sendTcpByRange() {
+func sendByRange(protocolType int) {
 	start := time.Now().Unix()
 	preChannel()
 
 	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doTcp(i)
+	switch protocolType {
+	case common.TcpProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doTcp(i)
+		}
+	case common.UdpProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doUdp(i)
+		}
+	case common.HttpProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doHttp(i)
+		}
+	case common.HttpsProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doHttps(i)
+		}
+	case common.GQuicProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doGQuic(i)
+		}
+	case common.IQuicProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doIQuic(i)
+		}
+	case common.DnsProtocolType:
+		for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+			go doDns(i)
+		}
+	default:
+		common.Fatal("Unknown protocol type %v\n", protocolType)
 	}
 
+	time.Sleep(time.Duration(3) * time.Second)
 	wg.Wait()
 	end := time.Now().Unix()
-	common.Error("Send tcp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendUdpByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doUdp(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send udp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendHttpByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doHttp(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send http by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendHttpsByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doHttps(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send https by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendGQuicByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doGQuic(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send gquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendIQuicByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doIQuic(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send iquic by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
-}
-
-func sendDnsByRange() {
-	start := time.Now().Unix()
-	preChannel()
-
-	var i uint64
-	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
-		go doDns(i)
-	}
-
-	wg.Wait()
-	end := time.Now().Unix()
-	common.Error("Send dns by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
+	common.Error("Send by range done\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse: %v\n\tchannel number: %v\n\tclient ip number: %v\n\ttotal send times: %v\n",
+		start, end, (end - start), common.JsonConfigs.ClientRangeModeChannelNumber, len(clientBindIpAddressRange), totalSendTimes)
 }
 
 func preChannel() {
-	var channelBufferSize uint64 = (uint64(len(clientBindIpAddressRange)) / common.JsonConfigs.ClientRangeModeChannelNumber) + 2
+	wg = &sync.WaitGroup{}
+	var channelBufferSize uint64 = (uint64(len(clientBindIpAddressRange)) / common.JsonConfigs.ClientRangeModeChannelNumber) + 3
 
 	var i uint64
 	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
@@ -141,9 +91,10 @@ func doTcp(index uint64) {
 		}
 
 		sendByTcp(ip)
+		atomic.AddUint64(&totalSendTimes, 1)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doUdp(index uint64) {
@@ -159,7 +110,7 @@ func doUdp(index uint64) {
 		sendByUdp(ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doHttp(index uint64) {
@@ -175,7 +126,7 @@ func doHttp(index uint64) {
 		sendByHttp(ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doHttps(index uint64) {
@@ -191,7 +142,7 @@ func doHttps(index uint64) {
 		sendByHttps(ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doGQuic(index uint64) {
@@ -207,7 +158,7 @@ func doGQuic(index uint64) {
 		sendByGQuic("gQuic", ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doIQuic(index uint64) {
@@ -223,7 +174,7 @@ func doIQuic(index uint64) {
 		sendByGQuic("iQuic", ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }
 
 func doDns(index uint64) {
@@ -239,5 +190,5 @@ func doDns(index uint64) {
 		sendByDns(ip)
 	}
 
-	close(ch)
+	defer close(ch)
 }

@@ -41,7 +41,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingTcp {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendTcpByRange()
+			sendByRange(common.TcpProtocolType)
 		} else {
 			sendByTcp(common.FlagInfos.ClientBindIpAddress)
 		}
@@ -51,7 +51,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingUdp {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendUdpByRange()
+			sendByRange(common.UdpProtocolType)
 		} else {
 			sendByUdp(common.FlagInfos.ClientBindIpAddress)
 		}
@@ -61,7 +61,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingHttp {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendHttpByRange()
+			sendByRange(common.HttpProtocolType)
 		} else {
 			sendByHttp(common.FlagInfos.ClientBindIpAddress)
 		}
@@ -71,7 +71,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingHttps {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendHttpsByRange()
+			sendByRange(common.HttpsProtocolType)
 		} else {
 			sendByHttps(common.FlagInfos.ClientBindIpAddress)
 		}
@@ -81,7 +81,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingGoogleQuic {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendGQuicByRange()
+			sendByRange(common.GQuicProtocolType)
 		} else {
 			sendByGQuic("gQuic", common.FlagInfos.ClientBindIpAddress)
 		}
@@ -91,7 +91,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingIEEEQuic {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendIQuicByRange()
+			sendByRange(common.IQuicProtocolType)
 		} else {
 			sendByGQuic("iQuic", common.FlagInfos.ClientBindIpAddress)
 		}
@@ -101,7 +101,7 @@ func StartClient() {
 
 	if common.FlagInfos.UsingDns {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendDnsByRange()
+			sendByRange(common.DnsProtocolType)
 		} else {
 			sendByDns(common.FlagInfos.ClientBindIpAddress)
 		}
