@@ -68,8 +68,8 @@ func sendByRange(protocolType int) {
 				continue
 			}
 
-			common.Error("Doing...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tprogress rate: %v%%\n\tsend count per second: %v\n\ttime elapse(second): %v\n",
-				sleepTime, total, clientBindIpAddressRangeLength-total, completed, total/uint64(diff), diff)
+			common.Error("Doing...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tchannel count: %v\n\tprogress rate: %v%%\n\tsend count per second: %v\n\ttime elapse(second): %v\n",
+				sleepTime, total, clientBindIpAddressRangeLength - total, common.JsonConfigs.ClientRangeModeChannelNumber, completed, total/uint64(diff), diff)
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 			continue
 		} else {
@@ -128,6 +128,7 @@ func doUdp(index uint64) {
 		}
 
 		sendByUdp(ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
@@ -143,6 +144,7 @@ func doHttp(index uint64) {
 		}
 
 		sendByHttp(ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
@@ -158,6 +160,7 @@ func doHttps(index uint64) {
 		}
 
 		sendByHttps(ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
@@ -173,6 +176,7 @@ func doGQuic(index uint64) {
 		}
 
 		sendByGQuic("gQuic", ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
@@ -188,6 +192,7 @@ func doIQuic(index uint64) {
 		}
 
 		sendByGQuic("iQuic", ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
@@ -203,6 +208,7 @@ func doDns(index uint64) {
 		}
 
 		sendByDns(ip)
+		atomic.AddUint64(&totalSendCount, 1)
 	}
 
 	atomic.AddInt64(&undoneChannels, -1)
