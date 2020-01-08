@@ -11,7 +11,7 @@ import (
 var (
 	channels                       []chan string
 	totalSendTimes                 uint64 = 0
-	sleepTime                      int64  = 1
+	sleepTime                      int64  = 5
 	clientBindIpAddressRangeLength uint64 = 0
 	undoneChannels                 int64  = 0
 )

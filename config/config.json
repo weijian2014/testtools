@@ -32,7 +32,7 @@
   "__ClientConfig__": "__ClientConfig__",
   "ClientBindIpAddress": "0.0.0.0",
   "ClientBindIpAddressRange": "1.0.0.0/10",
-  "ClientRangeModeChannelNumber": 20,
+  "ClientRangeModeChannelNumber": 50,
   "ClientSendToIpv4Address": "0.0.0.0",
   "ClientSendToIpv6Address": "::1",
   "ClientSendData": "Hello Server"

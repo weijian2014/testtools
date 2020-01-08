@@ -84,7 +84,7 @@ func StartServer() {
 	printDnsServerEntrys()
 	common.Error("\nJson config: %+v\n\n", common.JsonConfigs)
 
-	var sleepInterval uint64 = 10
+	var sleepInterval uint64 = 15
 	for {
 		time.Sleep(time.Duration(sleepInterval) * time.Second)
 		common.Error("Service Statistics(interval=%v):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
