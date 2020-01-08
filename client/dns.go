@@ -44,9 +44,9 @@ func sendByDns() {
 		},
 	}
 
-	fmt.Printf("Dns client bind on %v, will sent query to %v\n", common.FlagInfos.ClientBindIpAddress, remoteAddr)
+	common.Info("Dns client bind on %v, will sent query to %v\n", common.FlagInfos.ClientBindIpAddress, remoteAddr)
 	if 0 != common.FlagInfos.WaitingSeconds {
-		fmt.Printf("Dns client waiting %v...\n", common.FlagInfos.WaitingSeconds)
+		common.Info("Dns client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
 	}
 	var i uint64
@@ -54,36 +54,36 @@ func sendByDns() {
 		// send
 		packed, err := requestMessage.Pack()
 		if nil != err {
-			fmt.Printf("Dns client[%v]----Dns server[%v] pack failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
-			return
+			common.Warn("Dns client[%v]----Dns server[%v] pack failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
+			continue
 		}
 		_, err = conn.Write(packed)
 		if err != nil {
-			fmt.Printf("Dns client[%v]----Dns server[%v] send failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
-			return
+			common.Warn("Dns client[%v]----Dns server[%v] send failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
+			continue
 		}
 
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, err = conn.Read(recvBuffer)
 		if err != nil {
-			fmt.Printf("Udp client[%v]----Udp server[%v] receive failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
-			return
+			common.Warn("Udp client[%v]----Udp server[%v] receive failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err.Error())
+			continue
 		}
 		var responseMessage dnsmessage.Message
 		err = responseMessage.Unpack(recvBuffer)
 		if nil != err {
-			fmt.Printf("Dns client[%v]----Dns server[%v] unpack failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
-			return
+			common.Warn("Dns client[%v]----Dns server[%v] unpack failed, times[%d], err : %v\n", conn.LocalAddr(), conn.RemoteAddr(), i, err)
+			continue
 		}
 
 		if dnsmessage.TypeA == questionType {
 			ipv4 := responseMessage.Answers[0].Body.GoString()
-			fmt.Printf("Dns client[%v]----Dns server[%v], times[%d]:\n\tquestion: %+v\n\tanswers: %+v\n",
+			common.Info("Dns client[%v]----Dns server[%v], times[%d]:\n\tquestion: %+v\n\tanswers: %+v\n",
 				conn.LocalAddr(), conn.RemoteAddr(), i, requestMessage.Questions[0], ipv4)
 		} else {
 			ipv6 := responseMessage.Answers[0].Body.GoString()
-			fmt.Printf("Dns client[%v]----Dns server[%v], times[%d]:\n\tquestion: %+v\n\t answers: %+v\n",
+			common.Info("Dns client[%v]----Dns server[%v], times[%d]:\n\tquestion: %+v\n\t answers: %+v\n",
 				conn.LocalAddr(), conn.RemoteAddr(), i, requestMessage.Questions[0], ipv6)
 		}
 	}

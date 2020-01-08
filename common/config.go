@@ -29,8 +29,8 @@ func init() {
 
 type JsonConfig struct {
 	// Common Config
-	CommonLogLevel	int `json:"CommonLogLevel"`
-	CommonLogRoll int `json:"CommonLogRoll"`
+	CommonLogLevel            int    `json:"CommonLogLevel"`
+	CommonLogRoll             int    `json:"CommonLogRoll"`
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
 	// Server Config
 	ServerListenHost            string `json:"ServerListenHost"`

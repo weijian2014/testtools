@@ -2,8 +2,8 @@ package common
 
 import (
 	"io"
-	"os"
 	"log"
+	"os"
 )
 
 var (

@@ -1,9 +1,9 @@
 package client
 
 import (
-	"fmt"
 	"sync"
 	"testtools/common"
+	"time"
 )
 
 var (
@@ -12,6 +12,7 @@ var (
 )
 
 func sendTcpByRange() {
+	start := time.Now().Unix()
 	preChannel()
 
 	var i uint64
@@ -20,10 +21,12 @@ func sendTcpByRange() {
 	}
 
 	wg.Wait()
-	fmt.Printf("Send tcp by range done\n")
+	end := time.Now().Unix()
+	common.Fatal("Send tcp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func sendUdpByRange() {
+	start := time.Now().Unix()
 	preChannel()
 
 	var i uint64
@@ -32,7 +35,8 @@ func sendUdpByRange() {
 	}
 
 	wg.Wait()
-	fmt.Printf("Send tcp by range done\n")
+	end := time.Now().Unix()
+	common.Fatal("Send udp by range done, start timestamp %v, end timestamp %v, time elapse %v \n", start, end, (end - start))
 }
 
 func preChannel() {

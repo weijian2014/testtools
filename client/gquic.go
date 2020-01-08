@@ -34,9 +34,9 @@ func sendByGQuic(serverName string) {
 		panic(fmt.Sprintf("%v client[%v]----Quic server[%v] open stream failed, err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), err.Error()))
 	}
 
-	fmt.Printf("%v client bind on %v, will sent data to %v\n", serverName, common.FlagInfos.ClientBindIpAddress, remoteAddr)
+	common.Info("%v client bind on %v, will sent data to %v\n", serverName, common.FlagInfos.ClientBindIpAddress, remoteAddr)
 	if 0 != common.FlagInfos.WaitingSeconds {
-		fmt.Printf("%v client waiting %v...\n", serverName, common.FlagInfos.WaitingSeconds)
+		common.Info("%v client waiting %v...\n", serverName, common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)
 	}
 	var i uint64
@@ -44,18 +44,18 @@ func sendByGQuic(serverName string) {
 		// send
 		_, err = stream.Write([]byte(common.JsonConfigs.ClientSendData))
 		if err != nil {
-			fmt.Printf("%v client[%v]----Quic server[%v] send failed, times[%d], err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, err.Error())
-			return
+			common.Warn("%v client[%v]----Quic server[%v] send failed, times[%d], err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, err.Error())
+			continue
 		}
 
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		n, err := stream.Read(recvBuffer)
 		if err != nil {
-			fmt.Printf("%v client[%v]----Quic server[%v] receive failed, times[%d], err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, err.Error())
-			return
+			common.Warn("%v client[%v]----Quic server[%v] receive failed, times[%d], err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, err.Error())
+			continue
 		}
 
-		fmt.Printf("%v client[%v]----Quic server[%v], times[%d]:\n\tsend: %s\n\trecv: %s\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, common.JsonConfigs.ClientSendData, recvBuffer[:n])
+		common.Info("%v client[%v]----Quic server[%v], times[%d]:\n\tsend: %s\n\trecv: %s\n", serverName, session.LocalAddr(), session.RemoteAddr(), i, common.JsonConfigs.ClientSendData, recvBuffer[:n])
 	}
 }

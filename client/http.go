@@ -41,7 +41,7 @@ func sendByHttp() {
 		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Http client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
+	common.Info("Http client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -49,25 +49,25 @@ func sendByHttp() {
 		client := &http.Client{Transport: tr}
 		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
 		if err != nil {
-			fmt.Printf("Http client new request failed, times[%d], err : %v\n", i, err.Error())
-			return
+			common.Warn("Http client new request failed, times[%d], err : %v\n", i, err.Error())
+			continue
 		}
 		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf("Http client request to %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
-			return
+			common.Warn("Http client request to %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
+			continue
 		}
 
 		// receive response
 		body, err := ioutil.ReadAll(resp.Body)
 		if nil != err {
-			fmt.Printf("Http client response from %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
-			return
+			common.Warn("Http client response from %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
+			continue
 		}
 
-		fmt.Printf("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }
 
@@ -104,7 +104,7 @@ func sendByHttps() {
 		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
 	}
 
-	fmt.Printf("Https client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
+	common.Info("Https client bind on %v, will reqeust to %v\n", common.FlagInfos.ClientBindIpAddress, reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -112,24 +112,24 @@ func sendByHttps() {
 		client := &http.Client{Transport: tr}
 		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
 		if err != nil {
-			fmt.Printf("Https client new request failed, times[%d], err : %v\n", i, err.Error())
-			return
+			common.Warn("Https client new request failed, times[%d], err : %v\n", i, err.Error())
+			continue
 		}
 		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf("Https client request to %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
-			return
+			common.Warn("Https client request to %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
+			continue
 		}
 
 		// receive response
 		body, err := ioutil.ReadAll(resp.Body)
 		if nil != err {
-			fmt.Printf("Https client response from %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
-			return
+			common.Warn("Https client response from %v failed, times[%d], err : %v\n", reqeustUrl, i, err.Error())
+			continue
 		}
 
-		fmt.Printf("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }

@@ -88,7 +88,7 @@ func StartServer() {
 	for {
 		time.Sleep(time.Duration(sleepInterval) * time.Second)
 		common.Fatal("Service Statistics(interval=%v):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
-		sleepInterval, serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
+			sleepInterval, serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
 	}
 }
 
