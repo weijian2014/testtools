@@ -37,7 +37,7 @@ func StartClient() {
 			panic(err)
 		}
 
-		common.Error("Using range mode, client ip count [%v], range [%v]~[%v], channel count %v\n",
+		common.Error("Using range mode, client ip count [%v], range [%v]~[%v], thread count %v\n",
 			clientBindIpAddressRangeLength, clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeThreadNumber)
 	}
 

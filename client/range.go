@@ -67,7 +67,7 @@ func sendByRange(protocolType int) {
 				continue
 			}
 
-			common.Error("Doing %v...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tchannel count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n\tsend count per second: %v\n",
+			common.Error("Doing %v...(interval %v second)\n\tsend count: %v\n\tunsend count: %v\n\tthread count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n\tsend count per second: %v\n",
 				protocolName, sleepSeconds, total, clientBindIpAddressRangeLength-total, common.JsonConfigs.ClientRangeModeThreadNumber, completed, diff, total/uint64(diff))
 			time.Sleep(time.Duration(sleepSeconds) * time.Second)
 			continue
@@ -79,10 +79,10 @@ func sendByRange(protocolType int) {
 	end := time.Now().Unix()
 	diff := end - start
 	if 0 == diff {
-		common.Error("%v done:\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tchannel count: %v\n\tclient ip count: %v\n\ttotal send count: %v\n",
+		common.Error("%v done:\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tthread count: %v\n\tclient ip count: %v\n\ttotal send count: %v\n",
 			protocolName, start, end, diff, common.JsonConfigs.ClientRangeModeThreadNumber, clientBindIpAddressRangeLength, totalSendCount)
 	} else {
-		common.Error("%v done:\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tchannel count: %v\n\tclient ip count: %v\n\ttotal send count: %v\n\tsend count per second: %v\n",
+		common.Error("%v done:\n\tstart timestamp: %v\n\tend timestamp: %v\n\ttime elapse(second): %v\n\tthread count: %v\n\tclient ip count: %v\n\ttotal send count: %v\n\tsend count per second: %v\n",
 			protocolName, start, end, diff, common.JsonConfigs.ClientRangeModeThreadNumber, clientBindIpAddressRangeLength, totalSendCount, totalSendCount/uint64(diff))
 	}
 
