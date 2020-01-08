@@ -1,5 +1,7 @@
 {
   "__CommonConfig__": "__CommonConfig__",
+  "CommonLogLevel": 1,
+  "CommonLogRoll": 50000,
   "CommonRecvBufferSizeBytes": 512,
   "__ServerConfig__": "__ServerConfig__",
   "ServerListenHost": "0.0.0.0",

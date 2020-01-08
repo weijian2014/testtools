@@ -56,11 +56,13 @@ func init() {
 }
 
 func main() {
+	common.LoggerInit(common.JsonConfigs.CommonLogLevel, common.JsonConfigs.CommonLogRoll, "")
+
 	if common.FlagInfos.IsHelp {
 		flag.Usage()
 		server.HttpServerGuide(common.JsonConfigs.ServerHttpListenPort1)
 		server.HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPort1)
-		fmt.Printf("\nJson config: %+v\n\n", common.JsonConfigs)
+		common.Debug("\nJson config: %+v\n\n", common.JsonConfigs)
 		return
 	}
 

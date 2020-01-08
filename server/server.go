@@ -82,12 +82,13 @@ func StartServer() {
 	HttpServerGuide(common.JsonConfigs.ServerHttpListenPort1)
 	HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPort1)
 	printDnsServerEntrys()
-	fmt.Printf("\nJson config: %+v\n\n", common.JsonConfigs)
+	common.Fatal("\nJson config: %+v\n\n", common.JsonConfigs)
 
+	var sleepInterval uint64 = 60
 	for {
-		time.Sleep(time.Duration(60) * time.Second)
-		fmt.Printf("Service Statistics:\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
-			serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
+		time.Sleep(time.Duration(sleepInterval) * time.Second)
+		common.Fatal("Service Statistics(interval=%v):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
+		sleepInterval, serverTcpTimes, serverUdpTimes, serverHttpTimes, serverHttpsTimes, serverGQuicTimes, serverIQuicTimes, serverDnsTimes)
 	}
 }
 

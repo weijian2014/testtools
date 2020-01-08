@@ -51,12 +51,9 @@ func StartClient() {
 
 	if common.FlagInfos.UsingUdp {
 		if common.FlagInfos.UsingClientBindIpAddressRange {
-			for _, bindIp := range clientBindIpAddressRange {
-				common.FlagInfos.ClientBindIpAddress = bindIp
-				sendByUdp()
-			}
+			sendUdpByRange()
 		} else {
-			sendByUdp()
+			sendByUdp(common.FlagInfos.ClientBindIpAddress)
 		}
 
 		return

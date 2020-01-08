@@ -23,6 +23,18 @@ func sendTcpByRange() {
 	fmt.Printf("Send tcp by range done\n")
 }
 
+func sendUdpByRange() {
+	preChannel()
+
+	var i uint64
+	for i = 0; i < common.JsonConfigs.ClientRangeModeChannelNumber; i++ {
+		go doUdp(i)
+	}
+
+	wg.Wait()
+	fmt.Printf("Send tcp by range done\n")
+}
+
 func preChannel() {
 	var channelBufferSize uint64 = (uint64(len(clientBindIpAddressRange)) / common.JsonConfigs.ClientRangeModeChannelNumber) + 2
 
@@ -55,6 +67,22 @@ func doTcp(index uint64) {
 		}
 
 		sendByTcp(ip)
+	}
+
+	close(ch)
+}
+
+func doUdp(index uint64) {
+	defer wg.Done()
+	wg.Add(1)
+	ch := channels[index]
+	for {
+		ip := <-ch
+		if "end" == ip {
+			break
+		}
+
+		sendByUdp(ip)
 	}
 
 	close(ch)

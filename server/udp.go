@@ -19,25 +19,25 @@ func startUdpServer(listenPort uint16, serverName string) {
 		panic(err)
 	}
 
-	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, remoteAddress, err := conn.ReadFromUDP(recvBuffer)
 		if err != nil {
-			fmt.Printf("%v server[%v]----Udp client[%v] receive failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Udp client[%v] receive failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 
 		// send
 		n, err := conn.WriteToUDP([]byte(common.JsonConfigs.ServerSendData), remoteAddress)
 		if err != nil {
-			fmt.Printf("%v server[%v]----Udp client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Udp client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 
-		fmt.Printf("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
+		common.Info("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
 	serverUdpTimes++

@@ -25,12 +25,12 @@ func startGQuicServer(listenPort uint16, serverName string) {
 		panic(err)
 	}
 
-	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		session, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("%v server accept fail, err: %v\n", serverName, err)
+			common.Warn("%v server accept fail, err: %v\n", serverName, err)
 			continue
 		}
 
@@ -42,7 +42,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 	stream, err := sess.AcceptStream()
 	defer stream.Close()
 	if err != nil {
-		fmt.Printf("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+		common.Warn("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 		return
 	}
 
@@ -55,18 +55,18 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 				break
 			}
 
-			fmt.Printf("%v server[%v]----Quic client[%v] receive failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+			common.Warn("%v server[%v]----Quic client[%v] receive failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 			return
 		}
 
 		// send
 		n, err := stream.Write([]byte(common.JsonConfigs.ServerSendData))
 		if nil != err {
-			fmt.Printf("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+			common.Warn("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 			return
 		}
 
-		fmt.Printf("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
+		common.Info("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
 			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
@@ -76,7 +76,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 		serverIQuicTimes++
 	}
 
-	fmt.Printf("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
+	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
 }
 
 // Setup a bare-bones TLS config for the server

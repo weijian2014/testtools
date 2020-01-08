@@ -32,7 +32,6 @@ func sendByGQuic(serverName string) {
 	defer stream.Close()
 	if err != nil {
 		panic(fmt.Sprintf("%v client[%v]----Quic server[%v] open stream failed, err : %v\n", serverName, session.LocalAddr(), session.RemoteAddr(), err.Error()))
-		return
 	}
 
 	fmt.Printf("%v client bind on %v, will sent data to %v\n", serverName, common.FlagInfos.ClientBindIpAddress, remoteAddr)

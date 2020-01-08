@@ -26,28 +26,28 @@ func startDnsServer(serverName string) {
 		panic(err)
 	}
 
-	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	for {
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
 		_, remoteAddress, err := conn.ReadFromUDP(recvBuffer)
 		if err != nil {
-			fmt.Printf("%v server[%v]----Dns client[%v] receive failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Dns client[%v] receive failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 
 		var requestMessage dnsmessage.Message
 		err = requestMessage.Unpack(recvBuffer)
 		if nil != err {
-			fmt.Printf("%v server[%v]----Dns client[%v] unpack failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Dns client[%v] unpack failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 
 		//fmt.Printf("Dns server[%v]----Dns client[%v], recv msg:\n\t%+v\n", conn.LocalAddr(), remoteAddress, requestMessage)
 		questionCount := len(requestMessage.Questions)
 		if 0 == questionCount {
-			fmt.Printf("%v server[%v]----Dns client[%v] question count is zero\n", serverName, conn.LocalAddr(), remoteAddress)
+			common.Warn("%v server[%v]----Dns client[%v] question count is zero\n", serverName, conn.LocalAddr(), remoteAddress)
 			continue
 		} else {
 			requestMessage.Header.Response = true
@@ -102,38 +102,38 @@ func startDnsServer(serverName string) {
 		// send
 		packed, err := requestMessage.Pack()
 		if nil != err {
-			fmt.Printf("%v server[%v]----Dns client[%v] pack failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Dns client[%v] pack failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 		_, err = conn.WriteToUDP(packed, remoteAddress)
 		if err != nil {
-			fmt.Printf("%v server[%v]----Dns client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+			common.Warn("%v server[%v]----Dns client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
 			continue
 		}
 
 		tmp = strings.TrimRight(tmp, ", ")
 
 		serverDnsTimes++
-		fmt.Printf("%v server[%v]----Dns client[%v]:\n\tquestion: %+v\n\t answers: %+v\n",
+		common.Info("%v server[%v]----Dns client[%v]:\n\tquestion: %+v\n\t answers: %+v\n",
 			serverName, conn.LocalAddr(), remoteAddress, requestMessage.Questions, tmp)
 	}
 }
 
 func printDnsServerEntrys() {
 	if 0 != len(dnsAEntrys) {
-		fmt.Printf("Dns server a record:\n")
+		common.Fatal("Dns server a record:\n")
 	}
 	for k, v := range dnsAEntrys {
-		fmt.Printf("\t%v ---- %v\n", k, v)
+		common.Fatal("\t%v ---- %v\n", k, v)
 	}
 
 	if 0 != len(dns4AEntrys) {
-		fmt.Printf("Dns server aaaa record:\n")
+		common.Fatal("Dns server aaaa record:\n")
 	}
 	for k, v := range dns4AEntrys {
-		fmt.Printf("\t%v ---- %v\n", k, v)
+		common.Fatal("\t%v ---- %v\n", k, v)
 	}
-	fmt.Printf("\n")
+	common.Fatal("\n")
 }
 
 func checkDomainName(domainName string) error {

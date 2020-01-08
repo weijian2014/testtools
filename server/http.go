@@ -18,7 +18,7 @@ var (
 
 func startHttpServer(listenPort uint16, serverName string) {
 	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
 	if !isRegistered {
@@ -71,7 +71,7 @@ func startHttpsServer(listenPort uint16, serverName string) {
 	}
 
 	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	fmt.Printf("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.Fatal("%v server startup, listen on %v\n", serverName, serverAddress)
 
 	if !isRegistered {
 		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
@@ -107,7 +107,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		serverHttpsTimes++
 	}
 
-	fmt.Printf("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.JsonConfigs.ServerSendData)
+	common.Info("%v server[%v]----%v client[%v]:\n\trecv: %s\n\tsend: %s\n", prefix, r.Host, prefix, remoteAddr, recvBuffer, common.JsonConfigs.ServerSendData)
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	io.Copy(f, file)
 	w.Write([]byte("Get upload page ok:\n\t"))
 	fmt.Fprintf(w, "File [%v] upload to [%v] ok", handler.Filename, uploadPath+handler.Filename)
-	fmt.Printf("File [%v] upload to [%v] ok\n", handler.Filename, uploadPath+handler.Filename)
+	common.Info("File [%v] upload to [%v] ok\n", handler.Filename, uploadPath+handler.Filename)
 }
 
 func list(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +139,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 	files, err := listDir(uploadPath, "")
 	if nil != err {
 		w.Write([]byte(fmt.Sprintf("\tList downloadable file names fail, %v", err.Error())))
-		fmt.Printf("List downloadable file names fail, %v\n", err.Error())
+		common.Warn("List downloadable file names fail, %v\n", err.Error())
 		return
 	}
 
@@ -156,7 +156,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(listFile))
 	}
 
-	fmt.Printf("Get list page ok\n")
+	common.Info("Get list page ok\n")
 }
 
 // 获取指定目录下的所有文件，不进入下一级目录搜索，可以匹配后缀过滤。
@@ -208,19 +208,19 @@ func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 
 func HttpServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
-	fmt.Printf("Http server use guide:\n")
-	fmt.Printf("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
-	fmt.Printf("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
-	fmt.Printf("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	fmt.Printf("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
+	common.Fatal("Http server use guide:\n")
+	common.Fatal("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
+	common.Fatal("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	common.Fatal("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.Fatal("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
 func HttpsServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
-	fmt.Printf("Https server certificate has been generated in the %v directory\n", certificatePath)
-	fmt.Printf("Https server use guide:\n")
-	fmt.Printf("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
-	fmt.Printf("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
-	fmt.Printf("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	fmt.Printf("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
+	common.Fatal("Https server certificate has been generated in the %v directory\n", certificatePath)
+	common.Fatal("Https server use guide:\n")
+	common.Fatal("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
+	common.Fatal("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	common.Fatal("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.Fatal("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
 }
