@@ -53,6 +53,7 @@ func sendByRange(protocolType int) {
 	}
 
 	protocolName := common.ProtocolToString(protocolType)
+	var lastSendCount uint64 = 0
 	for {
 		if 0 != atomic.LoadInt64(&undoneGoroutines) {
 			var totalSend uint64 = totalSendCount
@@ -66,9 +67,10 @@ func sendByRange(protocolType int) {
 				continue
 			}
 
-			common.Error("%v doing...(interval %v second)\n\tthread count: %v\n\tsend count: %v\n\tunsend count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n\tsend count per second: %v\n",
-				protocolName, sleepSeconds, common.JsonConfigs.ClientRangeModeThreadNumber, totalSend, clientBindIpAddressRangeLength-totalSend, completed, diff, totalSend/uint64(diff))
+			common.Error("%v doing...(interval %v second)\n\tthread count: %v\n\tsend count: %v(+%v)\n\tunsend count: %v\n\tprogress rate: %v%%\n\ttime elapse(second): %v\n\tsend count per second: %v\n",
+				protocolName, sleepSeconds, common.JsonConfigs.ClientRangeModeThreadNumber, totalSend, totalSend-lastSendCount, clientBindIpAddressRangeLength-totalSend, completed, diff, totalSend/uint64(diff))
 			time.Sleep(time.Duration(sleepSeconds) * time.Second)
+			lastSendCount = totalSend
 			continue
 		} else {
 			break
