@@ -6,16 +6,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
-	"github.com/lucas-clemente/quic-go"
 	"math/big"
 	"strings"
 	"testtools/common"
+
+	"github.com/lucas-clemente/quic-go"
 )
 
-func startGQuicServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	listener, err := quic.ListenAddr(serverAddress, generateQuicTLSConfig(), &quic.Config{
+func startGQuicServer(serverName string, listenAddr *common.IpAndPort) {
+	listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), &quic.Config{
 		Versions: []quic.VersionNumber{
 			quic.VersionGQUIC39,
 			quic.VersionGQUIC43,
@@ -25,7 +24,7 @@ func startGQuicServer(listenPort uint16, serverName string) {
 		panic(err)
 	}
 
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	for {
 		session, err := listener.Accept()

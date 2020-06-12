@@ -1,19 +1,17 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"testtools/common"
 )
 
-func startTcpServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	listener, err := net.Listen("tcp", serverAddress)
+func startTcpServer(serverName string, listenAddr *common.IpAndPort) {
+	listener, err := net.Listen("tcp", listenAddr.String())
 	if err != nil {
 		panic(err)
 	}
 
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	for {
 		conn, err := listener.Accept()

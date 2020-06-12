@@ -1,25 +1,23 @@
 package server
 
 import (
-	"fmt"
 	"net"
 	"testtools/common"
 )
 
-func startUdpServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	udp, err := net.ResolveUDPAddr("udp", serverAddress)
+func startUdpServer(serverName string, listenAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
 	if err != nil {
 		panic(err)
 	}
 
-	conn, err := net.ListenUDP("udp", udp)
+	conn, err := net.ListenUDP("udp", lAddr)
 	defer conn.Close()
 	if err != nil {
 		panic(err)
 	}
 
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	for {
 		// receive

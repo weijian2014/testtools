@@ -51,120 +51,138 @@ func StartServer() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
-	go startTcpServer(common.JsonConfigs.ServerTcpListenPort1, "Tcp-1")
-	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startTcpServer(common.JsonConfigs.ServerTcpListenPort2, "Tcp-2")
+	listenAddr := &common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
+
+	// Start Tcp server
+	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
+		listenAddr.Port = uint16(port)
+		go startTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startUdpServer(common.JsonConfigs.ServerUdpListenPort1, "Udp-1")
-	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startUdpServer(common.JsonConfigs.ServerUdpListenPort2, "Udp-2")
+	// Start Udp server
+	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
+		listenAddr.Port = uint16(port)
+		go startUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpServer(common.JsonConfigs.ServerHttpListenPort1, "Http-1")
-	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startHttpServer(common.JsonConfigs.ServerHttpListenPort2, "Http-2")
+	// Start Http server
+	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
+		listenAddr.Port = uint16(port)
+		go startHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	go startHttpsServer(common.JsonConfigs.ServerHttpsListenPort1, "Https-1")
-	time.Sleep(time.Duration(5) * time.Millisecond)
-	go startHttpsServer(common.JsonConfigs.ServerHttpsListenPort2, "Https-1")
+	// Start Https server
+	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
+		listenAddr.Port = uint16(port)
+		go startHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	go startGQuicServer(common.JsonConfigs.ServerGoogleQuicListenPort1, "gQuic-1")
-	time.Sleep(time.Duration(10) * time.Millisecond)
-	go startGQuicServer(common.JsonConfigs.ServerGoogleQuicListenPort2, "gQuic-2")
+	// Start GoogleQuic server
+	for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
+		listenAddr.Port = uint16(port)
+		go startGQuicServer(fmt.Sprintf("GoogleQuicServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(10) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	go startDnsServer("Dns")
+	// Start IeeeQuic server
+	// for port range common.JsonConfigs.ServerIeeeQuicListenPorts {
+	//  listenAddr.Port = uint16(port)
+	// 	go startGQuicServer(fmt.Sprintf("IeeeQuicServer-%v", port), listenAddr)
+	// 	time.Sleep(time.Duration(10) * time.Millisecond)
+	// }
+	// time.Sleep(time.Duration(400) * time.Millisecond)
+
+	// Start Dns server
+	if 0 != len(common.JsonConfigs.ServerTcpListenPorts) {
+		saveDnsEntrys()
+	}
+	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
+		listenAddr.Port = uint16(port)
+		go startDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	HttpServerGuide(common.JsonConfigs.ServerHttpListenPort1)
-	HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPort1)
+	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
+		HttpServerGuide(80)
+	} else {
+		HttpServerGuide(common.JsonConfigs.ServerHttpListenPorts[0])
+	}
+
+	if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
+		HttpsServerGuide(443)
+	} else {
+		HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPorts[0])
+	}
+
 	printDnsServerEntrys()
-	common.Error("\nJson config: %+v\n\n", common.JsonConfigs)
+	common.System("\nJson config: %+v\n\n", common.JsonConfigs)
 
-	var sleepInterval uint64 = 15
+	var sleepInterval uint64 = 60 * 60
 	for {
 		time.Sleep(time.Duration(sleepInterval) * time.Second)
-		common.Error("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
+		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
 			sleepInterval, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverGQuicCount, serverIQuicCount, serverDnsCount)
 	}
 }
 
 func checkJsonConfig() error {
-	if "" != common.JsonConfigs.ServerListenHost &&
-		"localhost" != common.JsonConfigs.ServerListenHost &&
-		"0.0.0.0" != common.JsonConfigs.ServerListenHost &&
-		"127.0.0.1" != common.JsonConfigs.ServerListenHost &&
-		"::" != common.JsonConfigs.ServerListenHost {
-		isLocal, err := common.IsLocalIP(common.JsonConfigs.ServerListenHost)
-		if nil != err {
-			return err
-		} else if !isLocal {
-			return errors.New(fmt.Sprintf("ServerListenHost[%v] is not local address of config.json file", common.JsonConfigs.ServerListenHost))
+	// Tcp
+	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
 		}
 	}
 
-	if 0 > common.JsonConfigs.ServerTcpListenPort1 || 65535 < common.JsonConfigs.ServerTcpListenPort1 {
-		return errors.New(fmt.Sprintf("ServerTcpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerTcpListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerTcpListenPort2 || 65535 < common.JsonConfigs.ServerTcpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerTcpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerTcpListenPort2))
-	}
-	if common.JsonConfigs.ServerTcpListenPort1 == common.JsonConfigs.ServerTcpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerTcpListenPort has to be different of config.json file"))
+	// Udp
+	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
-	if 0 > common.JsonConfigs.ServerUdpListenPort1 || 65535 < common.JsonConfigs.ServerUdpListenPort1 {
-		return errors.New(fmt.Sprintf("ServerUdpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerUdpListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerUdpListenPort2 || 65535 < common.JsonConfigs.ServerUdpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerUdpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerUdpListenPort2))
-	}
-	if common.JsonConfigs.ServerUdpListenPort1 == common.JsonConfigs.ServerUdpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerUdpListenPort has to be different of config.json file"))
+	// Http
+	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
-	if 0 > common.JsonConfigs.ServerHttpListenPort1 || 65535 < common.JsonConfigs.ServerHttpListenPort1 {
-		return errors.New(fmt.Sprintf("ServerHttpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerHttpListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerHttpListenPort2 || 65535 < common.JsonConfigs.ServerHttpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerHttpListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerHttpListenPort2))
-	}
-	if common.JsonConfigs.ServerHttpListenPort1 == common.JsonConfigs.ServerHttpListenPort2 {
-		return errors.New(fmt.Sprintf("ServerHttpListenPort has to be different of config.json file"))
+	// Https
+	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
-	if 0 > common.JsonConfigs.ServerHttpsListenPort1 || 65535 < common.JsonConfigs.ServerHttpsListenPort1 {
-		return errors.New(fmt.Sprintf("ServerHttpsListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerHttpsListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerHttpsListenPort2 || 65535 < common.JsonConfigs.ServerHttpsListenPort2 {
-		return errors.New(fmt.Sprintf("ServerHttpsListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerHttpsListenPort2))
-	}
-	if common.JsonConfigs.ServerHttpsListenPort1 == common.JsonConfigs.ServerHttpsListenPort2 {
-		return errors.New(fmt.Sprintf("ServerHttpsListenPort has to be different of config.json file"))
+	// Google Quic
+	for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
-	if 0 > common.JsonConfigs.ServerGoogleQuicListenPort1 || 65535 < common.JsonConfigs.ServerGoogleQuicListenPort1 {
-		return errors.New(fmt.Sprintf("ServerGoogleQuicListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerGoogleQuicListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerGoogleQuicListenPort2 || 65535 < common.JsonConfigs.ServerGoogleQuicListenPort2 {
-		return errors.New(fmt.Sprintf("ServerGoogleQuicListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerGoogleQuicListenPort2))
-	}
-
-	if 0 > common.JsonConfigs.ServerIeeeQuicListenPort1 || 65535 < common.JsonConfigs.ServerIeeeQuicListenPort1 {
-		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerIeeeQuicListenPort1))
-	}
-	if 0 > common.JsonConfigs.ServerIeeeQuicListenPort2 || 65535 < common.JsonConfigs.ServerIeeeQuicListenPort2 {
-		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerIeeeQuicListenPort2))
-	}
-	if common.JsonConfigs.ServerIeeeQuicListenPort1 == common.JsonConfigs.ServerIeeeQuicListenPort2 {
-		return errors.New(fmt.Sprintf("ServerIeeeQuicListenPort has to be different of config.json file"))
+	// Ieee Quic
+	for _, port := range common.JsonConfigs.ServerIeeeQuicListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
-	if 0 > common.JsonConfigs.ServerDnsListenPort || 65535 < common.JsonConfigs.ServerDnsListenPort {
-		return errors.New(fmt.Sprintf("ServerDnsListenPort[%v] invalid of config.json file", common.JsonConfigs.ServerDnsListenPort))
+	// Dns
+	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
+		if 0 > port || 65535 < port {
+			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+		}
 	}
 
 	return nil

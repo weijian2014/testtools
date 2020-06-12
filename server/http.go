@@ -16,9 +16,8 @@ var (
 	isGenerateCert = false
 )
 
-func startHttpServer(listenPort uint16, serverName string) {
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+func startHttpServer(serverName string, listenAddr *common.IpAndPort) {
+	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
 	if !isRegistered {
@@ -31,10 +30,10 @@ func startHttpServer(listenPort uint16, serverName string) {
 		isRegistered = true
 	}
 
-	http.ListenAndServe(serverAddress, nil)
+	http.ListenAndServe(listenAddr.String(), nil)
 }
 
-func startHttpsServer(listenPort uint16, serverName string) {
+func startHttpsServer(serverName string, listenAddr *common.IpAndPort) {
 	_, err := os.Stat(certificatePath)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(certificatePath, os.ModePerm)
@@ -70,8 +69,7 @@ func startHttpsServer(listenPort uint16, serverName string) {
 		isGenerateCert = true
 	}
 
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, listenPort)
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	if !isRegistered {
 		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
@@ -83,7 +81,7 @@ func startHttpsServer(listenPort uint16, serverName string) {
 		isRegistered = true
 	}
 
-	http.ListenAndServeTLS(serverAddress, crtFullPath, keyFullPath, nil)
+	http.ListenAndServeTLS(listenAddr.String(), crtFullPath, keyFullPath, nil)
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -208,19 +206,19 @@ func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 
 func HttpServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
-	common.Error("Http server use guide:\n")
-	common.Error("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
-	common.Error("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
-	common.Error("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	common.Error("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
+	common.System("Http server use guide:\n")
+	common.System("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
+	common.System("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	common.System("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.System("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
 func HttpsServerGuide(listenPort uint16) {
 	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
-	common.Error("Https server certificate has been generated in the %v directory\n", certificatePath)
-	common.Error("Https server use guide:\n")
-	common.Error("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
-	common.Error("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
-	common.Error("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	common.Error("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
+	common.System("Https server certificate has been generated in the %v directory\n", certificatePath)
+	common.System("Https server use guide:\n")
+	common.System("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
+	common.System("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
+	common.System("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.System("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
 }

@@ -7,16 +7,24 @@ import (
 	"time"
 )
 
-func sendByTcp(localIp string) {
-	localAddr := &net.TCPAddr{IP: net.ParseIP(localIp)}
-	remoteAddr := &net.TCPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.FlagInfos.SentToServerPort)}
-	conn, err := net.DialTCP("tcp", localAddr, remoteAddr)
-	defer conn.Close()
-	if err != nil {
-		panic(fmt.Sprintf("Tcp client connect to %v failed, err : %v\n", remoteAddr, err.Error()))
+func sendByTcp(localAddr, remoteAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.String())
+	if nil != err {
+		panic(err)
 	}
 
-	common.Info("Tcp client bind on %v, will sent data to %v\n", localIp, remoteAddr)
+	rAddr, err := net.ResolveTCPAddr("tcp", remoteAddr.String())
+	if nil != err {
+		panic(err)
+	}
+
+	conn, err := net.DialTCP("tcp", lAddr, rAddr)
+	defer conn.Close()
+	if err != nil {
+		panic(fmt.Sprintf("Tcp client connect to %v failed, err : %v\n", remoteAddr.String(), err.Error()))
+	}
+
+	common.Info("Tcp client bind on %v, will sent data to %v\n", localAddr.String(), remoteAddr.String())
 
 	if 0 != common.FlagInfos.WaitingSeconds {
 		common.Info("Tcp client waiting %v...\n", common.FlagInfos.WaitingSeconds)

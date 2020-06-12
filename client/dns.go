@@ -2,24 +2,33 @@ package client
 
 import (
 	"fmt"
-	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"strings"
 	"testtools/common"
 	"time"
+
+	"golang.org/x/net/dns/dnsmessage"
 )
 
-func sendByDns(localIp string) {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(localIp)}
-	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.JsonConfigs.ServerDnsListenPort)}
-	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
+func sendByDns(localAddr, remoteAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveUDPAddr("udp", localAddr.String())
+	if nil != err {
+		panic(err)
+	}
+
+	rAddr, err := net.ResolveUDPAddr("udp", remoteAddr.String())
+	if nil != err {
+		panic(err)
+	}
+
+	conn, err := net.DialUDP("udp", lAddr, rAddr)
 	defer conn.Close()
 	if err != nil {
-		panic(fmt.Sprintf("Dns client dial with %v failed, err : %v\n", remoteAddr, err.Error()))
+		panic(fmt.Sprintf("Dns client dial with %v failed, err : %v\n", remoteAddr.String(), err.Error()))
 	}
 
 	var questionType dnsmessage.Type
-	if false == strings.Contains(localIp, ":") {
+	if false == strings.Contains(localAddr.Ip, ":") {
 		questionType = dnsmessage.TypeA
 	} else {
 		questionType = dnsmessage.TypeAAAA
@@ -44,7 +53,7 @@ func sendByDns(localIp string) {
 		},
 	}
 
-	common.Info("Dns client bind on %v, will sent query to %v\n", localIp, remoteAddr)
+	common.Info("Dns client bind on %v, will sent query to %v\n", localAddr.String(), remoteAddr.String())
 	if 0 != common.FlagInfos.WaitingSeconds {
 		common.Info("Dns client waiting %v...\n", common.FlagInfos.WaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.WaitingSeconds) * time.Second)

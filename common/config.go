@@ -2,16 +2,18 @@ package common
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 var (
 	CurrDir     string
-	JsonConfigs *JsonConfig
-	FlagInfos   FlagInfo
+	JsonConfigs *JsonConfigStruct
+	FlagInfos   FlagInfoStruct
 )
 
 func init() {
@@ -27,61 +29,67 @@ func init() {
 	CurrDir = filepath.Dir(absFullPath)
 }
 
-type JsonConfig struct {
+type JsonConfigStruct struct {
 	// Common Config
 	CommonLogLevel            int    `json:"CommonLogLevel"`
 	CommonLogRoll             int    `json:"CommonLogRoll"`
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
+
 	// Server Config
-	ServerListenHost            string `json:"ServerListenHost"`
-	ServerTcpListenPort1        uint16 `json:"ServerTcpListenPort1"`
-	ServerUdpListenPort1        uint16 `json:"ServerUdpListenPort1"`
-	ServerHttpListenPort1       uint16 `json:"ServerHttpListenPort1"`
-	ServerHttpsListenPort1      uint16 `json:"ServerHttpsListenPort1"`
-	ServerGoogleQuicListenPort1 uint16 `json:"ServerGoogleQuicListenPort1"`
-	ServerIeeeQuicListenPort1   uint16 `json:"ServerIeeeQuicListenPort1"`
-	ServerTcpListenPort2        uint16 `json:"ServerTcpListenPort2"`
-	ServerUdpListenPort2        uint16 `json:"ServerUdpListenPort2"`
-	ServerHttpListenPort2       uint16 `json:"ServerHttpListenPort2"`
-	ServerHttpsListenPort2      uint16 `json:"ServerHttpsListenPort2"`
-	ServerGoogleQuicListenPort2 uint16 `json:"ServerGoogleQuicListenPort2"`
-	ServerIeeeQuicListenPort2   uint16 `json:"ServerIeeeQuicListenPort2"`
-	ServerDnsListenPort         uint16 `json:"ServerDnsListenPort"`
+	ServerListenHost            string   `json:"ServerListenHost"`
+	ServerTcpListenPorts        []uint16 `json:"ServerTcpListenPorts"`
+	ServerUdpListenPorts        []uint16 `json:"ServerUdpListenPorts"`
+	ServerHttpListenPorts       []uint16 `json:"ServerHttpListenPorts"`
+	ServerHttpsListenPorts      []uint16 `json:"ServerHttpsListenPorts"`
+	ServerGoogleQuicListenPorts []uint16 `json:"ServerGoogleQuicListenPorts"`
+	ServerIeeeQuicListenPorts   []uint16 `json:"ServerIeeeQuicListenPorts"`
+	ServerDnsListenPorts        []uint16 `json:"ServerDnsListenPorts"`
 	// map[string]interface{}
 	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`
 	ServerSendData    string      `json:"ServerSendData"`
+
 	// Client Config
-	ClientBindIpAddress         string `json:"ClientBindIpAddress"`
-	ClientBindIpAddressRange    string `json:"ClientBindIpAddressRange"`
-	ClientRangeModeThreadNumber uint64 `json:"ClientRangeModeThreadNumber"`
-	ClientSendToIpv4Address     string `json:"ClientSendToIpv4Address"`
-	ClientSendToIpv6Address     string `json:"ClientSendToIpv6Address"`
-	ClientSendData              string `json:"ClientSendData"`
+	ClientBindIpAddress     string `json:"ClientBindIpAddress"`
+	ClientSendToIpv4Address string `json:"ClientSendToIpv4Address"`
+	ClientSendToIpv6Address string `json:"ClientSendToIpv6Address"`
+	ClientSendData          string `json:"ClientSendData"`
 }
 
-type FlagInfo struct {
+type FlagInfoStruct struct {
 	// common option
 	IsHelp             bool
 	IsServer           bool
 	ConfigFileFullPath string
 	// client option
-	UsingTcp                      bool
-	UsingUdp                      bool
-	UsingHttp                     bool
-	UsingHttps                    bool
-	UsingGoogleQuic               bool
-	UsingIEEEQuic                 bool
-	UsingDns                      bool
-	UsingClientBindIpAddressRange bool
-	ClientBindIpAddress           string
-	SentToServerPort              uint16
-	WaitingSeconds                uint64
-	ClientSendNumbers             uint64
+	UsingTcp            bool
+	UsingUdp            bool
+	UsingHttp           bool
+	UsingHttps          bool
+	UsingGoogleQuic     bool
+	UsingIEEEQuic       bool
+	UsingDns            bool
+	ClientBindIpAddress string
+	SentToServerPort    uint16
+	WaitingSeconds      uint64
+	ClientSendNumbers   uint64
+}
+
+type IpAndPort struct {
+	Ip   string
+	Port uint16
+}
+
+func (addr *IpAndPort) String() string {
+	if false == strings.Contains(FlagInfos.ClientBindIpAddress, ":") {
+		return fmt.Sprintf("%v:%v", addr.Ip, addr.Port)
+	} else {
+		return fmt.Sprintf("[%v]:%v", addr.Ip, addr.Port)
+	}
 }
 
 // 读取json配置文件
-func LoadConfigFile(filePath string) (*JsonConfig, error) {
+func LoadConfigFile(filePath string) (*JsonConfigStruct, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
@@ -93,7 +101,7 @@ func LoadConfigFile(filePath string) (*JsonConfig, error) {
 		return nil, err
 	}
 
-	c := &JsonConfig{}
+	c := &JsonConfigStruct{}
 	if err := json.Unmarshal(cData, c); nil != err {
 		return nil, err
 	}

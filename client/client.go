@@ -30,84 +30,47 @@ func StartClient() {
 		panic(err)
 	}
 
-	if common.FlagInfos.UsingClientBindIpAddressRange {
-		err = parseClientBindIpAddressRange()
-		clientBindIpAddressRangeLength = uint64(len(clientBindIpAddressRange))
-		if nil != err {
-			panic(err)
-		}
-
-		common.Error("Using range mode, client ip count [%v], range [%v]~[%v], thread count %v\n",
-			clientBindIpAddressRangeLength, clientBindIpAddressRange[0], clientBindIpAddressRange[clientBindIpAddressRangeLength-1], common.JsonConfigs.ClientRangeModeThreadNumber)
-	}
-
+	localAddr := &common.IpAndPort{Ip: common.FlagInfos.ClientBindIpAddress, Port: 0}
+	remoteAddr := &common.IpAndPort{Ip: sendToServerIpAddress, Port: common.FlagInfos.SentToServerPort}
+	// Tcp
 	if common.FlagInfos.UsingTcp {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.TcpProtocolType)
-		} else {
-			sendByTcp(common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByTcp(localAddr, remoteAddr)
 		return
 	}
 
+	// Udp
 	if common.FlagInfos.UsingUdp {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.UdpProtocolType)
-		} else {
-			sendByUdp(common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByUdp(localAddr, remoteAddr)
 		return
 	}
 
+	// Http
 	if common.FlagInfos.UsingHttp {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.HttpProtocolType)
-		} else {
-			sendByHttp(common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByHttp(localAddr, remoteAddr)
 		return
 	}
 
+	// Https
 	if common.FlagInfos.UsingHttps {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.HttpsProtocolType)
-		} else {
-			sendByHttps(common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByHttps(localAddr, remoteAddr)
 		return
 	}
 
+	// GoogleQuic
 	if common.FlagInfos.UsingGoogleQuic {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.GQuicProtocolType)
-		} else {
-			sendByGQuic("gQuic", common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByGQuic("gQuic", localAddr, remoteAddr)
 		return
 	}
 
+	// IEEEQuic
 	if common.FlagInfos.UsingIEEEQuic {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.IQuicProtocolType)
-		} else {
-			sendByGQuic("iQuic", common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByGQuic("iQuic", localAddr, remoteAddr)
 		return
 	}
 
+	// Dns
 	if common.FlagInfos.UsingDns {
-		if common.FlagInfos.UsingClientBindIpAddressRange {
-			sendByRange(common.DnsProtocolType)
-		} else {
-			sendByDns(common.FlagInfos.ClientBindIpAddress)
-		}
-
+		sendByDns(localAddr, remoteAddr)
 		return
 	}
 }
@@ -137,38 +100,6 @@ func checkJsonConfig() error {
 	return nil
 }
 
-func parseClientBindIpAddressRange() error {
-	if 0 == len(common.JsonConfigs.ClientBindIpAddressRange) {
-		return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddressRange is invalid"))
-	}
-
-	ip, ipnet, err := net.ParseCIDR(common.JsonConfigs.ClientBindIpAddressRange)
-	if err != nil {
-		return err
-	}
-
-	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); incIp(ip) {
-		if !net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address).IsMulticast() {
-			clientBindIpAddressRange = append(clientBindIpAddressRange, ip.String())
-		}
-	}
-
-	if 0 == len(clientBindIpAddressRange) {
-		return errors.New(fmt.Sprintf("parse common.JsonConfigs.ClientBindIpAddressRange[%v] fail", common.JsonConfigs.ClientBindIpAddressRange))
-	}
-
-	return nil
-}
-
-func incIp(ip net.IP) {
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]++
-		if ip[j] > 0 {
-			break
-		}
-	}
-}
-
 func checkFlags() error {
 	if 0 != len(common.FlagInfos.ClientBindIpAddress) &&
 		nil == net.ParseIP(common.FlagInfos.ClientBindIpAddress) {
@@ -195,86 +126,127 @@ func parsePort() error {
 		!common.FlagInfos.UsingHttps &&
 		!common.FlagInfos.UsingGoogleQuic &&
 		!common.FlagInfos.UsingIEEEQuic &&
-		!common.FlagInfos.UsingDns {
-		if 0 == common.FlagInfos.SentToServerPort {
-			return errors.New("Please use one of options: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport")
-		} else {
-			if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerTcpListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerTcpListenPort2 {
+		!common.FlagInfos.UsingDns &&
+		0 == common.FlagInfos.SentToServerPort {
+		common.FlagInfos.UsingHttp = true
+		common.Warn("Please use one of options: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport, default using Http protocol.")
+	}
+
+	if 0 != common.FlagInfos.SentToServerPort {
+		for _, port := range common.JsonConfigs.ServerTcpListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
 				common.FlagInfos.UsingTcp = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerUdpListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerUdpListenPort2 {
-				common.FlagInfos.UsingUdp = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerHttpListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerHttpListenPort2 {
-				common.FlagInfos.UsingHttp = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerHttpsListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerHttpsListenPort2 {
-				common.FlagInfos.UsingHttps = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerGoogleQuicListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerGoogleQuicListenPort2 {
-				common.FlagInfos.UsingGoogleQuic = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerIeeeQuicListenPort1 ||
-				common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerIeeeQuicListenPort2 {
-				common.FlagInfos.UsingIEEEQuic = true
-			} else if common.FlagInfos.SentToServerPort == common.JsonConfigs.ServerDnsListenPort {
-				common.FlagInfos.UsingDns = true
+				return nil
 			}
 		}
+
+		for _, port := range common.JsonConfigs.ServerUdpListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingUdp = true
+				return nil
+			}
+		}
+
+		for _, port := range common.JsonConfigs.ServerHttpListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingHttp = true
+				return nil
+			}
+		}
+
+		for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingHttps = true
+				return nil
+			}
+		}
+
+		for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingGoogleQuic = true
+				return nil
+			}
+		}
+
+		for _, port := range common.JsonConfigs.ServerIeeeQuicListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingIEEEQuic = true
+				return nil
+			}
+		}
+
+		for _, port := range common.JsonConfigs.ServerDnsListenPorts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingDns = true
+				return nil
+			}
+		}
+
+		return errors.New("Please specify a correct destination port using -dport")
+	}
+
+	if common.FlagInfos.UsingTcp {
+		if 0 == len(common.JsonConfigs.ServerTcpListenPorts) {
+			return errors.New("Please configure the [ServerTcpListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerTcpListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingTcp &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerTcpListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerTcpListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerTcpListenPort1
+	if common.FlagInfos.UsingUdp {
+		if 0 == len(common.JsonConfigs.ServerUdpListenPorts) {
+			return errors.New("Please configure the [ServerUdpListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerUdpListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingUdp &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerUdpListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerUdpListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerUdpListenPort1
+	if common.FlagInfos.UsingHttp {
+		if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
+			return errors.New("Please configure the [ServerHttpListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingHttp &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerHttpListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerHttpListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpListenPort1
+	if common.FlagInfos.UsingHttps {
+		if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
+			return errors.New("Please configure the [ServerHttpsListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpsListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingHttps &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerHttpsListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerHttpsListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpsListenPort1
+	if common.FlagInfos.UsingGoogleQuic {
+		if 0 == len(common.JsonConfigs.ServerGoogleQuicListenPorts) {
+			return errors.New("Please configure the [ServerGoogleQuicListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerGoogleQuicListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingGoogleQuic &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerGoogleQuicListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerGoogleQuicListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerGoogleQuicListenPort1
+	if common.FlagInfos.UsingIEEEQuic {
+		if 0 == len(common.JsonConfigs.ServerIeeeQuicListenPorts) {
+			return errors.New("Please configure the [ServerIeeeQuicListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerIeeeQuicListenPorts[0]
 		return nil
 	}
 
-	if common.FlagInfos.UsingIEEEQuic &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerIeeeQuicListenPort1 &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerIeeeQuicListenPort2 {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerIeeeQuicListenPort1
+	if common.FlagInfos.UsingDns {
+		if 0 == len(common.JsonConfigs.ServerDnsListenPorts) {
+			return errors.New("Please configure the [ServerDnsListenPorts] in the config.json file")
+		}
+
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerDnsListenPorts[0]
 		return nil
 	}
-
-	if common.FlagInfos.UsingDns &&
-		common.FlagInfos.SentToServerPort != common.JsonConfigs.ServerDnsListenPort {
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerDnsListenPort
-		return nil
-	}
-
-	// default
-	common.FlagInfos.UsingHttp = true
-	common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpListenPort1
 
 	return nil
 }

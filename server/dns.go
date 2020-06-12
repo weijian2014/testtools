@@ -3,30 +3,28 @@ package server
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/url"
 	"regexp"
 	"strings"
 	"testtools/common"
+
+	"golang.org/x/net/dns/dnsmessage"
 )
 
-func startDnsServer(serverName string) {
-	saveDnsEntrys()
-
-	serverAddress := fmt.Sprintf("%v:%v", common.JsonConfigs.ServerListenHost, common.JsonConfigs.ServerDnsListenPort)
-	udp, err := net.ResolveUDPAddr("udp", serverAddress)
+func startDnsServer(serverName string, listenAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
 	if err != nil {
 		panic(err)
 	}
 
-	conn, err := net.ListenUDP("udp", udp)
+	conn, err := net.ListenUDP("udp", lAddr)
 	defer conn.Close()
 	if err != nil {
 		panic(err)
 	}
 
-	common.Error("%v server startup, listen on %v\n", serverName, serverAddress)
+	common.System("%v server startup, listen on %v\n", serverName, lAddr.String())
 
 	for {
 		// receive
@@ -121,19 +119,19 @@ func startDnsServer(serverName string) {
 
 func printDnsServerEntrys() {
 	if 0 != len(dnsAEntrys) {
-		common.Error("Dns server a record:\n")
+		common.System("Dns server a record:\n")
 	}
 	for k, v := range dnsAEntrys {
-		common.Error("\t%v ---- %v\n", k, v)
+		common.System("\t%v ---- %v\n", k, v)
 	}
 
 	if 0 != len(dns4AEntrys) {
-		common.Error("Dns server aaaa record:\n")
+		common.System("Dns server aaaa record:\n")
 	}
 	for k, v := range dns4AEntrys {
-		common.Error("\t%v ---- %v\n", k, v)
+		common.System("\t%v ---- %v\n", k, v)
 	}
-	common.Error("\n")
+	common.System("\n")
 }
 
 func checkDomainName(domainName string) error {

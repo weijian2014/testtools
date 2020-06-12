@@ -11,20 +11,16 @@ import (
 	"time"
 )
 
-func sendByHttp(localIp string) {
-	localAddr, err := net.ResolveIPAddr("ip", localIp)
-	if err != nil {
+func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveIPAddr("ip", localAddr.Ip)
+	if nil != err {
 		panic(err)
-	}
-
-	localTCPAddr := net.TCPAddr{
-		IP: localAddr.IP,
 	}
 
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			LocalAddr: &localTCPAddr,
+			LocalAddr: lAddr,
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
@@ -36,12 +32,12 @@ func sendByHttp(localIp string) {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("http://%s:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
+		reqeustUrl = fmt.Sprintf("http://%v", remoteAddr.String())
 	} else {
-		reqeustUrl = fmt.Sprintf("http://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
+		reqeustUrl = fmt.Sprintf("https://%v", remoteAddr.String())
 	}
 
-	common.Info("Http client bind on %v, will reqeust to %v\n", localIp, reqeustUrl)
+	common.Info("Http client bind on %v, will reqeust to %v\n", localAddr.String(), reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -67,18 +63,14 @@ func sendByHttp(localIp string) {
 			continue
 		}
 
-		common.Info("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }
 
-func sendByHttps(localIp string) {
-	localAddr, err := net.ResolveIPAddr("ip", localIp)
-	if err != nil {
+func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveIPAddr("ip", localAddr.Ip)
+	if nil != err {
 		panic(err)
-	}
-
-	localTCPAddr := net.TCPAddr{
-		IP: localAddr.IP,
 	}
 
 	tr := &http.Transport{
@@ -87,7 +79,7 @@ func sendByHttps(localIp string) {
 		},
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			LocalAddr: &localTCPAddr,
+			LocalAddr: lAddr,
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
@@ -99,12 +91,12 @@ func sendByHttps(localIp string) {
 
 	var reqeustUrl string
 	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("https://%s:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
+		reqeustUrl = fmt.Sprintf("http://%v", remoteAddr.String())
 	} else {
-		reqeustUrl = fmt.Sprintf("https://[%s]:%d", sendToServerIpAddress, common.FlagInfos.SentToServerPort)
+		reqeustUrl = fmt.Sprintf("https://%v", remoteAddr.String())
 	}
 
-	common.Info("Https client bind on %v, will reqeust to %v\n", localIp, reqeustUrl)
+	common.Info("Https client bind on %v, will reqeust to %v\n", localAddr.String(), reqeustUrl)
 
 	var i uint64
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
@@ -130,6 +122,6 @@ func sendByHttps(localIp string) {
 			continue
 		}
 
-		common.Info("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localTCPAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
 	}
 }

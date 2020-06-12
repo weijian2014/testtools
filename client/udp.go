@@ -7,16 +7,24 @@ import (
 	"time"
 )
 
-func sendByUdp(localIp string) {
-	localAddr := &net.UDPAddr{IP: net.ParseIP(localIp)}
-	remoteAddr := &net.UDPAddr{IP: net.ParseIP(sendToServerIpAddress), Port: int(common.FlagInfos.SentToServerPort)}
-	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
-	defer conn.Close()
-	if err != nil {
-		panic(fmt.Sprintf("Udp client dial with %v failed, err : %v\n", remoteAddr, err.Error()))
+func sendByUdp(localAddr, remoteAddr *common.IpAndPort) {
+	lAddr, err := net.ResolveUDPAddr("udp", localAddr.String())
+	if nil != err {
+		panic(err)
 	}
 
-	common.Info("Udp client bind on %v, will sent data to %v\n", localIp, remoteAddr)
+	rAddr, err := net.ResolveUDPAddr("udp", remoteAddr.String())
+	if nil != err {
+		panic(err)
+	}
+
+	conn, err := net.DialUDP("udp", lAddr, rAddr)
+	defer conn.Close()
+	if err != nil {
+		panic(fmt.Sprintf("Udp client dial with %v failed, err : %v\n", remoteAddr.String(), err.Error()))
+	}
+
+	common.Info("Udp client bind on %v, will sent data to %v\n", localAddr.String(), remoteAddr.String())
 
 	if 0 != common.FlagInfos.WaitingSeconds {
 		common.Info("Udp client waiting %v...\n", common.FlagInfos.WaitingSeconds)
