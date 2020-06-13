@@ -7,6 +7,7 @@
     go mod vender: 将依赖复制到 vendor 下
     go mod verify: 校验依赖
     go mod why: 解释为什么需要依赖
+    go list -m -json all: JSON格式显示所有Import库信息
 
 # GoLand配置
     settings---GO---Go Modules(vgo)---勾选 Enable Go Modules(vgo) integration  #开启Go Modules
