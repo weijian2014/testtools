@@ -30,12 +30,7 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	var reqeustUrl string
-	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("http://%v", remoteAddr.String())
-	} else {
-		reqeustUrl = fmt.Sprintf("https://%v", remoteAddr.String())
-	}
+	reqeustUrl := fmt.Sprintf("http://%v", remoteAddr.String())
 
 	common.Info("Http client bind on %v, will reqeust to %v\n", localAddr.String(), reqeustUrl)
 
@@ -68,7 +63,7 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 }
 
 func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
-	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.Ip)
+	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.String())
 	if nil != err {
 		panic(err)
 	}
@@ -89,12 +84,7 @@ func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	var reqeustUrl string
-	if true == strings.Contains(sendToServerIpAddress, ".") {
-		reqeustUrl = fmt.Sprintf("http://%v", remoteAddr.String())
-	} else {
-		reqeustUrl = fmt.Sprintf("https://%v", remoteAddr.String())
-	}
+	reqeustUrl := fmt.Sprintf("https://%v", remoteAddr.String())
 
 	common.Info("Https client bind on %v, will reqeust to %v\n", localAddr.String(), reqeustUrl)
 

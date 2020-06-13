@@ -25,6 +25,9 @@
     go mod tidy
     go build .
 
+# 格式化整个项目
+     gofmt -l -w  
+
 # go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
     require github.com/lucas-clemente/quic-go 0810051
 

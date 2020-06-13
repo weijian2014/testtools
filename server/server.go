@@ -55,7 +55,7 @@ func StartServer() {
 
 	// Start Tcp server
 	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
-		listenAddr.Port = uint16(port)
+		listenAddr.Port = port
 		go startTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
@@ -63,7 +63,7 @@ func StartServer() {
 
 	// Start Udp server
 	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
-		listenAddr.Port = uint16(port)
+		listenAddr.Port = port
 		go startUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
@@ -71,7 +71,7 @@ func StartServer() {
 
 	// Start Http server
 	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
-		listenAddr.Port = uint16(port)
+		listenAddr.Port = port
 		go startHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
@@ -79,15 +79,15 @@ func StartServer() {
 
 	// Start Https server
 	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
-		listenAddr.Port = uint16(port)
-		go startHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+		listenAddr.Port = port
+		go startHttpsServer(fmt.Sprintf("HttpsServer-%v", port), *listenAddr)
+		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 
 	// Start GoogleQuic server
 	for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
-		listenAddr.Port = uint16(port)
+		listenAddr.Port = port
 		go startGQuicServer(fmt.Sprintf("GoogleQuicServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
@@ -106,7 +106,7 @@ func StartServer() {
 		saveDnsEntrys()
 	}
 	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
-		listenAddr.Port = uint16(port)
+		listenAddr.Port = port
 		go startDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}

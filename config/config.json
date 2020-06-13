@@ -6,37 +6,37 @@
   "____ServerConfig__": "____ServerConfig____",
   "ServerListenHost": "0.0.0.0",
   "ServerTcpListenPorts": [
-    881,
-    882,
-    883
+    811,
+    812,
+    813,
+    814
   ],
   "ServerUdpListenPorts": [
-    884,
-    885,
-    886
+    821,
+    822,
+    823
   ],
   "ServerHttpListenPorts": [
-    887,
-    888,
-    889
+    831,
+    832,
+    833,
+    834
   ],
   "ServerHttpsListenPorts": [
-    890,
-    891,
-    892
+    841,
+    842,
+    843,
+    844,
+    845
   ],
   "ServerGoogleQuicListenPorts": [
-    893,
-    894,
-    895
+    951
   ],
   "ServerIeeeQuicListenPorts": [
-    896,
-    897,
-    898
+    861
   ],
   "ServerDnsListenPorts": [
-    153
+    871
   ],
   "ServerDnsAEntrys": {
     "www.google.com": "1.1.1.1",

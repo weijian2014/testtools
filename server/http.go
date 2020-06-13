@@ -33,7 +33,7 @@ func startHttpServer(serverName string, listenAddr *common.IpAndPort) {
 	http.ListenAndServe(listenAddr.String(), nil)
 }
 
-func startHttpsServer(serverName string, listenAddr *common.IpAndPort) {
+func startHttpsServer(serverName string, listenAddr common.IpAndPort) {
 	_, err := os.Stat(certificatePath)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(certificatePath, os.ModePerm)
