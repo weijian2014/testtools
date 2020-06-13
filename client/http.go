@@ -12,7 +12,7 @@ import (
 )
 
 func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
-	lAddr, err := net.ResolveIPAddr("ip", localAddr.Ip)
+	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.String())
 	if nil != err {
 		panic(err)
 	}
@@ -68,7 +68,7 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 }
 
 func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
-	lAddr, err := net.ResolveIPAddr("ip", localAddr.Ip)
+	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.Ip)
 	if nil != err {
 		panic(err)
 	}

@@ -105,7 +105,7 @@ func StartServer() {
 	if 0 != len(common.JsonConfigs.ServerTcpListenPorts) {
 		saveDnsEntrys()
 	}
-	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
+	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
 		listenAddr.Port = uint16(port)
 		go startDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
