@@ -1,36 +1,55 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"testtools/common"
 )
 
 var (
-	isRegistered   = false
-	isGenerateCert = false
+	isHandleRegistered = false
+	isGenerateCert     = false
+	serverMap          map[uint16]*http.Server
+	serverMapGuard     sync.Mutex
 )
+
+func init() {
+	serverMap = make(map[uint16]*http.Server)
+}
 
 func startHttpServer(serverName string, listenAddr *common.IpAndPort) {
 	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
+	mux := http.NewServeMux()
+
 	// 启动静态文件服务, 将下载服务器存放文件的目录
-	if !isRegistered {
-		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
-
-		http.HandleFunc("/", index)
-		http.HandleFunc("/upload", upload)
-		http.HandleFunc("/list", list)
-
-		isRegistered = true
+	if !isHandleRegistered {
+		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+		isHandleRegistered = true
 	}
 
-	http.ListenAndServe(listenAddr.String(), nil)
+	mux.HandleFunc("/", index)
+	mux.HandleFunc("/upload", upload)
+	mux.HandleFunc("/list", list)
+	mux.HandleFunc("/close", close)
+
+	server := &http.Server{
+		Addr:    listenAddr.String(),
+		Handler: mux,
+	}
+
+	serverMapGuard.Lock()
+	serverMap[listenAddr.Port] = server
+	serverMapGuard.Unlock()
+	server.ListenAndServe()
 }
 
 func startHttpsServer(serverName string, listenAddr common.IpAndPort) {
@@ -71,17 +90,27 @@ func startHttpsServer(serverName string, listenAddr common.IpAndPort) {
 
 	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
-	if !isRegistered {
-		http.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+	mux := http.NewServeMux()
 
-		http.HandleFunc("/", index)
-		http.HandleFunc("/upload", upload)
-		http.HandleFunc("/list", list)
-
-		isRegistered = true
+	if !isHandleRegistered {
+		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+		isHandleRegistered = true
 	}
 
-	http.ListenAndServeTLS(listenAddr.String(), crtFullPath, keyFullPath, nil)
+	mux.HandleFunc("/", index)
+	mux.HandleFunc("/upload", upload)
+	mux.HandleFunc("/list", list)
+	mux.HandleFunc("/close", close)
+
+	server := &http.Server{
+		Addr:    listenAddr.String(),
+		Handler: mux,
+	}
+
+	serverMapGuard.Lock()
+	serverMap[listenAddr.Port] = server
+	serverMapGuard.Unlock()
+	server.ListenAndServeTLS(crtFullPath, keyFullPath)
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -180,6 +209,28 @@ func listDir(dirPth string, suffix string) (files []string, err error) {
 	return files, nil
 }
 
+func close(w http.ResponseWriter, r *http.Request) {
+	var prefix string
+	if nil == r.TLS {
+		prefix = "Http"
+	} else {
+		prefix = "Https"
+	}
+
+	// send
+	w.Header().Set("Connection", "close")
+	w.Write([]byte("Shutdown the server"))
+	w.Write([]byte("\n"))
+	w.(http.Flusher).Flush()
+	conn, _, _ := w.(http.Hijacker).Hijack()
+	defer conn.Close()
+
+	serverPort, _ := strconv.ParseUint((strings.Split(r.Host, ":"))[1], 10, 16)
+	serverName := fmt.Sprintf("%vServer-%v", prefix, serverPort)
+	common.Info("%v server[%v]----%v client[%v]:\n\tShutdown the [%v] server\n", prefix, r.Host, prefix, r.RemoteAddr, serverName)
+	serverMap[uint16(serverPort)].Shutdown(context.Background())
+}
+
 func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 	cmd := fmt.Sprintf("openssl genrsa -out %v 2048 > /dev/null", keyFullPath)
 	_, err := common.Command("/bin/sh", "-c", cmd)
@@ -210,6 +261,7 @@ func HttpServerGuide(listenPort uint16) {
 	common.System("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
 	common.System("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
 	common.System("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.System("\tUse 'curl http://%v:%v/close' shutdown the http server\n", ip, listenPort)
 	common.System("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
@@ -220,5 +272,6 @@ func HttpsServerGuide(listenPort uint16) {
 	common.System("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
 	common.System("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
 	common.System("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
+	common.System("\tUse 'curl -k https://%v:%v/close' shutdown the https server\n", ip, listenPort)
 	common.System("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
 }
