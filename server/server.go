@@ -77,18 +77,24 @@ func StartServer() {
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
 	// Start Https server
-	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
+	for i, port := range common.JsonConfigs.ServerHttpsListenPorts {
 		listenAddr.Port = port
 		go startHttpsServer(fmt.Sprintf("HttpsServer-%v", port), *listenAddr)
-		time.Sleep(time.Duration(10) * time.Millisecond)
+		if 0 == i {
+			time.Sleep(time.Duration(500) * time.Millisecond)
+		}
+		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 
 	// Start Quic server
-	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
+	for i, port := range common.JsonConfigs.ServerQuicListenPorts {
 		listenAddr.Port = uint16(port)
 		go startQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(10) * time.Millisecond)
+		if 0 == i {
+			time.Sleep(time.Duration(500) * time.Millisecond)
+		}
+		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 

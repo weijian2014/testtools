@@ -31,10 +31,10 @@ func startHttpServer(serverName string, listenAddr *common.IpAndPort) {
 	mux := http.NewServeMux()
 
 	// 启动静态文件服务, 将下载服务器存放文件的目录
-	if !isHandleRegistered {
+	// if !isHandleRegistered {
 		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
-		isHandleRegistered = true
-	}
+	// 	isHandleRegistered = true
+	// }
 
 	mux.HandleFunc("/", index)
 	mux.HandleFunc("/upload", upload)
@@ -92,10 +92,10 @@ func startHttpsServer(serverName string, listenAddr common.IpAndPort) {
 
 	mux := http.NewServeMux()
 
-	if !isHandleRegistered {
+	// if !isHandleRegistered {
 		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
-		isHandleRegistered = true
-	}
+	// 	isHandleRegistered = true
+	// }
 
 	mux.HandleFunc("/", index)
 	mux.HandleFunc("/upload", upload)
