@@ -17,8 +17,7 @@ var (
 	serverUdpCount   uint64 = 0
 	serverHttpCount  uint64 = 0
 	serverHttpsCount uint64 = 0
-	serverGQuicCount uint64 = 0
-	serverIQuicCount uint64 = 0
+	serverQuicCount  uint64 = 0
 	serverDnsCount   uint64 = 0
 )
 
@@ -85,21 +84,13 @@ func StartServer() {
 	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	// Start GoogleQuic server
-	for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
-		listenAddr.Port = port
-		go startGQuicServer(fmt.Sprintf("GoogleQuicServer-%v", port), listenAddr)
+	// Start Quic server
+	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
+		listenAddr.Port = uint16(port)
+		go startQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
 	time.Sleep(time.Duration(400) * time.Millisecond)
-
-	// Start IeeeQuic server
-	// for port range common.JsonConfigs.ServerIeeeQuicListenPorts {
-	//  listenAddr.Port = uint16(port)
-	// 	go startGQuicServer(fmt.Sprintf("IeeeQuicServer-%v", port), listenAddr)
-	// 	time.Sleep(time.Duration(10) * time.Millisecond)
-	// }
-	// time.Sleep(time.Duration(400) * time.Millisecond)
 
 	// Start Dns server
 	if 0 != len(common.JsonConfigs.ServerTcpListenPorts) {
@@ -130,8 +121,8 @@ func StartServer() {
 	var sleepInterval uint64 = 60 * 60
 	for {
 		time.Sleep(time.Duration(sleepInterval) * time.Second)
-		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tGQUIC: %v\n\tIQUIC: %v\n\tDNS: %v",
-			sleepInterval, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverGQuicCount, serverIQuicCount, serverDnsCount)
+		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
+			sleepInterval, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
 	}
 }
 
@@ -164,15 +155,8 @@ func checkJsonConfig() error {
 		}
 	}
 
-	// Google Quic
-	for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
-		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
-		}
-	}
-
-	// Ieee Quic
-	for _, port := range common.JsonConfigs.ServerIeeeQuicListenPorts {
+	// Quic
+	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
 		if 0 > port || 65535 < port {
 			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
 		}

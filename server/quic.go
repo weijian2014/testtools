@@ -1,25 +1,20 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"github.com/lucas-clemente/quic-go"
 	"math/big"
 	"strings"
 	"testtools/common"
-
-	"github.com/lucas-clemente/quic-go"
 )
 
-func startGQuicServer(serverName string, listenAddr *common.IpAndPort) {
-	listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), &quic.Config{
-		Versions: []quic.VersionNumber{
-			quic.VersionGQUIC39,
-			quic.VersionGQUIC43,
-		},
-	})
+func startQuicServer(serverName string, listenAddr *common.IpAndPort) {
+	listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +22,7 @@ func startGQuicServer(serverName string, listenAddr *common.IpAndPort) {
 	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 
 	for {
-		session, err := listener.Accept()
+		session, err := listener.Accept(context.Background())
 		if err != nil {
 			common.Warn("%v server accept fail, err: %v\n", serverName, err)
 			continue
@@ -38,7 +33,7 @@ func startGQuicServer(serverName string, listenAddr *common.IpAndPort) {
 }
 
 func newQuicSessionHandler(sess quic.Session, serverName string) {
-	stream, err := sess.AcceptStream()
+	stream, err := sess.AcceptStream(context.Background())
 	defer stream.Close()
 	if err != nil {
 		common.Warn("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
@@ -72,11 +67,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
-	if strings.Contains(serverName, "gQuic") {
-		serverGQuicCount++
-	} else {
-		serverIQuicCount++
-	}
+	serverQuicCount++
 
 	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
 }
@@ -87,11 +78,13 @@ func generateQuicTLSConfig() *tls.Config {
 	if err != nil {
 		panic(err)
 	}
+
 	template := x509.Certificate{SerialNumber: big.NewInt(1)}
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 	if err != nil {
 		panic(err)
 	}
+
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
@@ -99,5 +92,9 @@ func generateQuicTLSConfig() *tls.Config {
 	if err != nil {
 		panic(err)
 	}
-	return &tls.Config{Certificates: []tls.Certificate{tlsCert}}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"quic-echo-example"},
+	}
 }

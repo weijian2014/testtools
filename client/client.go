@@ -56,15 +56,9 @@ func StartClient() {
 		return
 	}
 
-	// GoogleQuic
-	if common.FlagInfos.UsingGoogleQuic {
-		sendByGQuic("gQuic", localAddr, remoteAddr)
-		return
-	}
-
-	// IEEEQuic
-	if common.FlagInfos.UsingIEEEQuic {
-		sendByGQuic("iQuic", localAddr, remoteAddr)
+	// Quic
+	if common.FlagInfos.UsingQuic {
+		sendByQuic(localAddr, remoteAddr)
 		return
 	}
 
@@ -124,12 +118,11 @@ func parsePort() error {
 		!common.FlagInfos.UsingUdp &&
 		!common.FlagInfos.UsingHttp &&
 		!common.FlagInfos.UsingHttps &&
-		!common.FlagInfos.UsingGoogleQuic &&
-		!common.FlagInfos.UsingIEEEQuic &&
+		!common.FlagInfos.UsingQuic &&
 		!common.FlagInfos.UsingDns &&
 		0 == common.FlagInfos.SentToServerPort {
 		common.FlagInfos.UsingHttp = true
-		common.Warn("Please use one of options: -tcp, -udp, -http, -https, -gquic, -iquic, -dns, -dport, default using Http protocol.")
+		common.Warn("Please use one of options: -tcp, -udp, -http, -https, -quic, -dns, -dport, default using Http protocol.")
 	}
 
 	if 0 != common.FlagInfos.SentToServerPort {
@@ -161,16 +154,9 @@ func parsePort() error {
 			}
 		}
 
-		for _, port := range common.JsonConfigs.ServerGoogleQuicListenPorts {
+		for _, port := range common.JsonConfigs.ServerQuicListenPorts {
 			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingGoogleQuic = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerIeeeQuicListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingIEEEQuic = true
+				common.FlagInfos.UsingQuic = true
 				return nil
 			}
 		}
@@ -221,21 +207,12 @@ func parsePort() error {
 		return nil
 	}
 
-	if common.FlagInfos.UsingGoogleQuic {
-		if 0 == len(common.JsonConfigs.ServerGoogleQuicListenPorts) {
-			return errors.New("Please configure the [ServerGoogleQuicListenPorts] in the config.json file")
+	if common.FlagInfos.UsingQuic {
+		if 0 == len(common.JsonConfigs.ServerQuicListenPorts) {
+			return errors.New("Please configure the [ServerQuicListenPorts] in the config.json file")
 		}
 
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerGoogleQuicListenPorts[0]
-		return nil
-	}
-
-	if common.FlagInfos.UsingIEEEQuic {
-		if 0 == len(common.JsonConfigs.ServerIeeeQuicListenPorts) {
-			return errors.New("Please configure the [ServerIeeeQuicListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerIeeeQuicListenPorts[0]
+		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerQuicListenPorts[0]
 		return nil
 	}
 

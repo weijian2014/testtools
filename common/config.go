@@ -36,14 +36,13 @@ type JsonConfigStruct struct {
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
 
 	// Server Config
-	ServerListenHost            string   `json:"ServerListenHost"`
-	ServerTcpListenPorts        []uint16 `json:"ServerTcpListenPorts"`
-	ServerUdpListenPorts        []uint16 `json:"ServerUdpListenPorts"`
-	ServerHttpListenPorts       []uint16 `json:"ServerHttpListenPorts"`
-	ServerHttpsListenPorts      []uint16 `json:"ServerHttpsListenPorts"`
-	ServerGoogleQuicListenPorts []uint16 `json:"ServerGoogleQuicListenPorts"`
-	ServerIeeeQuicListenPorts   []uint16 `json:"ServerIeeeQuicListenPorts"`
-	ServerDnsListenPorts        []uint16 `json:"ServerDnsListenPorts"`
+	ServerListenHost       string   `json:"ServerListenHost"`
+	ServerTcpListenPorts   []uint16 `json:"ServerTcpListenPorts"`
+	ServerUdpListenPorts   []uint16 `json:"ServerUdpListenPorts"`
+	ServerHttpListenPorts  []uint16 `json:"ServerHttpListenPorts"`
+	ServerHttpsListenPorts []uint16 `json:"ServerHttpsListenPorts"`
+	ServerQuicListenPorts  []uint16 `json:"ServerQuicListenPorts"`
+	ServerDnsListenPorts   []uint16 `json:"ServerDnsListenPorts"`
 	// map[string]interface{}
 	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`
@@ -66,8 +65,7 @@ type FlagInfoStruct struct {
 	UsingUdp            bool
 	UsingHttp           bool
 	UsingHttps          bool
-	UsingGoogleQuic     bool
-	UsingIEEEQuic       bool
+	UsingQuic           bool
 	UsingDns            bool
 	ClientBindIpAddress string
 	SentToServerPort    uint16
