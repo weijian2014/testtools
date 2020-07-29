@@ -11,7 +11,7 @@ var (
 )
 
 const (
-	DebugLevel int = iota
+	DebugLevel int = iota // DebugLevel=0
 	InfoLevel
 	SystemLevel
 	WarnLevel
@@ -58,7 +58,7 @@ func Info(fmt string, args ...interface{}) {
 }
 
 func System(fmt string, args ...interface{}) {
-	log.SetPrefix("system ")
+	log.SetPrefix("sys   ")
 	log.Printf(fmt, args...)
 }
 

@@ -48,7 +48,8 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 			if "NO_ERROR" == err.Error() ||
 				"EOF" == err.Error() ||
 				strings.Contains(err.Error(), "PeerGoingAway") ||
-				strings.Contains(err.Error(), "NetworkIdleTimeout") {
+				strings.Contains(err.Error(), "NetworkIdleTimeout") ||
+				strings.Contains(err.Error(), "No recent network activity") {
 				break
 			}
 
