@@ -8,8 +8,8 @@
   "ServerListenHost": "0.0.0.0",
   "ServerTcpListenPorts": [
     1001,
-    1003,
-    1004
+    1002,
+    1003
   ],
   "ServerUdpListenPorts": [
     2001,
@@ -32,7 +32,9 @@
     3003
   ],
   "ServerDnsListenPorts": [
-    4001
+    5301,
+    5302,
+    5303
   ],
   "ServerDnsAEntrys": {
     "www.google.com": "1.1.1.1",

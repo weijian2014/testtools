@@ -19,7 +19,7 @@ var (
 
 func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 	// control coroutine
-	go func(serverName string, listenAddr common.IpAndPort) {
+	go func() {
 		common.Debug("%v server control coroutine running...\n", serverName)
 		mux := http.NewServeMux()
 		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
@@ -46,7 +46,6 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 				common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 				go server.ListenAndServe()
 				isExit = false
-				break
 			case common.StopServerControlOption:
 				common.System("%v server stop\n", serverName)
 				server.SetKeepAlivesEnabled(false)
@@ -56,10 +55,8 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 					common.Error("Delete control channel fial, erro: %v", err)
 				}
 				isExit = true
-				break
 			default:
 				isExit = false
-				continue
 			}
 
 			if isExit {
@@ -68,7 +65,7 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		runtime.Goexit()
-	}(serverName, listenAddr)
+	}()
 }
 
 func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
@@ -103,7 +100,6 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 					crtFullPath := certificatePath + "server.crt"
 					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
 					isExit = false
-					continue
 				}
 			case common.StopServerControlOption:
 				{
@@ -115,12 +111,10 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}
 					isExit = true
-					break
 				}
 			default:
 				{
 					isExit = false
-					continue
 				}
 			}
 

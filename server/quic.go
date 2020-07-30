@@ -17,7 +17,7 @@ import (
 
 func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 	// control coroutine
-	go func(serverName string, listenAddr common.IpAndPort) {
+	go func() {
 		common.Debug("%v server control coroutine running...\n", serverName)
 		listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), nil)
 		if err != nil {
@@ -39,7 +39,6 @@ func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 					go quicServerLoop(serverName, listener)
 					isExit = false
-					continue
 				}
 			case common.StopServerControlOption:
 				{
@@ -50,12 +49,10 @@ func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}
 					isExit = true
-					break
 				}
 			default:
 				{
 					isExit = false
-					continue
 				}
 
 			}
@@ -66,15 +63,19 @@ func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		runtime.Goexit()
-	}(serverName, listenAddr)
+	}()
 }
 
 func quicServerLoop(serverName string, listener quic.Listener) {
 	for {
 		session, err := listener.Accept(context.Background())
 		if err != nil {
-			common.Warn("%v server accept fail, err: %v\n", serverName, err)
-			continue
+			if strings.Contains(err.Error(), "server closed") {
+				runtime.Goexit()
+			} else {
+				common.Warn("%v server accept fail, err: %v\n", serverName, err)
+				continue
+			}
 		}
 
 		go newQuicSessionHandler(session, serverName)

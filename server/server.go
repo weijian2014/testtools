@@ -90,7 +90,7 @@ func StartServer() {
 	}
 
 	// Init Dns server
-	if 0 != len(common.JsonConfigs.ServerTcpListenPorts) {
+	if 0 != len(common.JsonConfigs.ServerDnsListenPorts) {
 		saveDnsEntrys()
 	}
 	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
@@ -124,7 +124,7 @@ func StartServer() {
 	common.System("\nJson config: %+v\n\n", common.JsonConfigs)
 	common.System("All Server start ok\n================================================================================\n")
 
-	go common.StartConfigFileWatcher()
+	go startConfigFileWatcher()
 
 	for {
 		time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)

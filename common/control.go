@@ -94,6 +94,10 @@ func StopServer(port uint16) error {
 	return SendOptionToControlChannel(port, StopServerControlOption)
 }
 
+func StartServer(port uint16) error {
+	return SendOptionToControlChannel(port, StartServerControlOption)
+}
+
 func checkControlOption(option int) error {
 	if StartServerControlOption > option || MaxControlOption <= option {
 		return fmt.Errorf("Invalid option")

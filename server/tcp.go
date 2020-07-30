@@ -3,12 +3,13 @@ package server
 import (
 	"net"
 	"runtime"
+	"strings"
 	"testtools/common"
 )
 
 func initTcpServer(serverName string, listenAddr common.IpAndPort) {
 	// control coroutine
-	f := func(serverName string, listenAddr common.IpAndPort) {
+	go func() {
 		common.Debug("%v server control coroutine running...\n", serverName)
 		listener, err := net.Listen("tcp", listenAddr.String())
 		if err != nil {
@@ -30,7 +31,6 @@ func initTcpServer(serverName string, listenAddr common.IpAndPort) {
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 					go tcpServerLoop(serverName, listener)
 					isExit = false
-					continue
 				}
 			case common.StopServerControlOption:
 				{
@@ -41,12 +41,10 @@ func initTcpServer(serverName string, listenAddr common.IpAndPort) {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}
 					isExit = true
-					break
 				}
 			default:
 				{
 					isExit = false
-					continue
 				}
 			}
 
@@ -56,17 +54,19 @@ func initTcpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		runtime.Goexit()
-	}
-
-	go f(serverName, listenAddr)
+	}()
 }
 
 func tcpServerLoop(serverName string, listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			common.Warn("%v server accept failed, err: %v\n", serverName, err)
-			continue
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				runtime.Goexit()
+			} else {
+				common.Warn("%v server accept failed, err: %v\n", serverName, err)
+				continue
+			}
 		}
 
 		go newTcpConnectionHandler(conn, serverName)
