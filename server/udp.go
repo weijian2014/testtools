@@ -2,23 +2,70 @@ package server
 
 import (
 	"net"
+	"runtime"
 	"testtools/common"
 )
 
-func startUdpServer(serverName string, listenAddr *common.IpAndPort) {
-	lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
-	if err != nil {
-		panic(err)
-	}
+func initUdpServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
+		if err != nil {
+			panic(err)
+		}
 
-	conn, err := net.ListenUDP("udp", lAddr)
-	defer conn.Close()
-	if err != nil {
-		panic(err)
-	}
+		conn, err := net.ListenUDP("udp", lAddr)
+		defer conn.Close()
+		if err != nil {
+			panic(err)
+		}
 
-	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+		c := make(chan int)
+		err = common.InsertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
 
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					go udpServerLoop(serverName, conn)
+					isExit = false
+					continue
+				}
+			case common.StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					conn.Close()
+					err = common.DeleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+					break
+				}
+			default:
+				{
+					isExit = false
+					continue
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}(serverName, listenAddr)
+}
+
+func udpServerLoop(serverName string, conn *net.UDPConn) {
 	for {
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
@@ -35,8 +82,7 @@ func startUdpServer(serverName string, listenAddr *common.IpAndPort) {
 			continue
 		}
 
+		serverUdpCount++
 		common.Info("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
-
-	serverUdpCount++
 }

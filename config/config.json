@@ -4,11 +4,12 @@
   "CommonLogRoll": 50000,
   "CommonRecvBufferSizeBytes": 512,
   "____ServerConfig__": "____ServerConfig____",
+  "ServerCounterOutputIntervalSeconds": 3600,
   "ServerListenHost": "0.0.0.0",
   "ServerTcpListenPorts": [
     1001,
-    1002,
-    1003
+    1003,
+    1004
   ],
   "ServerUdpListenPorts": [
     2001,
@@ -18,13 +19,12 @@
   "ServerHttpListenPorts": [
     8001,
     8002,
-    8003,
-    8004
+    8003
   ],
   "ServerHttpsListenPorts": [
-    8441,
-    8442,
-    8443
+    4431,
+    4432,
+    4433
   ],
   "ServerQuicListenPorts": [
     3001,

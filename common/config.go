@@ -36,13 +36,14 @@ type JsonConfigStruct struct {
 	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
 
 	// Server Config
-	ServerListenHost       string   `json:"ServerListenHost"`
-	ServerTcpListenPorts   []uint16 `json:"ServerTcpListenPorts"`
-	ServerUdpListenPorts   []uint16 `json:"ServerUdpListenPorts"`
-	ServerHttpListenPorts  []uint16 `json:"ServerHttpListenPorts"`
-	ServerHttpsListenPorts []uint16 `json:"ServerHttpsListenPorts"`
-	ServerQuicListenPorts  []uint16 `json:"ServerQuicListenPorts"`
-	ServerDnsListenPorts   []uint16 `json:"ServerDnsListenPorts"`
+	ServerCounterOutputIntervalSeconds uint64   `json:ServerCounterOutputIntervalSeconds`
+	ServerListenHost                   string   `json:"ServerListenHost"`
+	ServerTcpListenPorts               []uint16 `json:"ServerTcpListenPorts"`
+	ServerUdpListenPorts               []uint16 `json:"ServerUdpListenPorts"`
+	ServerHttpListenPorts              []uint16 `json:"ServerHttpListenPorts"`
+	ServerHttpsListenPorts             []uint16 `json:"ServerHttpsListenPorts"`
+	ServerQuicListenPorts              []uint16 `json:"ServerQuicListenPorts"`
+	ServerDnsListenPorts               []uint16 `json:"ServerDnsListenPorts"`
 	// map[string]interface{}
 	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`

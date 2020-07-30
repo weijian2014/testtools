@@ -1,7 +1,6 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -74,20 +73,20 @@ func checkJsonConfig() error {
 		nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress).To16() {
 		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
 			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
-			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress))
+			return fmt.Errorf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress)
 		}
 	}
 
 	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address).To4() {
 		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
 			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
-			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address))
+			return fmt.Errorf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address)
 		}
 	}
 
 	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv6Address).To16() {
 		if "::1" != common.JsonConfigs.ClientBindIpAddress {
-			return errors.New(fmt.Sprintf("common.JsonConfigs.ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.JsonConfigs.ClientSendToIpv6Address))
+			return fmt.Errorf("common.JsonConfigs.ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.JsonConfigs.ClientSendToIpv6Address)
 		}
 	}
 
@@ -97,7 +96,7 @@ func checkJsonConfig() error {
 func checkFlags() error {
 	if 0 != len(common.FlagInfos.ClientBindIpAddress) &&
 		nil == net.ParseIP(common.FlagInfos.ClientBindIpAddress) {
-		return errors.New(fmt.Sprintf("common.FlagInfos.ClientBindIpAddress[%v] is invalid address, please check -b option", common.FlagInfos.ClientBindIpAddress))
+		return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] is invalid address, please check -b option", common.FlagInfos.ClientBindIpAddress)
 	}
 
 	if 0 == len(common.FlagInfos.ClientBindIpAddress) {
@@ -168,12 +167,12 @@ func parsePort() error {
 			}
 		}
 
-		return errors.New("Please specify a correct destination port using -dport")
+		return fmt.Errorf("Please specify a correct destination port using -dport")
 	}
 
 	if common.FlagInfos.UsingTcp {
 		if 0 == len(common.JsonConfigs.ServerTcpListenPorts) {
-			return errors.New("Please configure the [ServerTcpListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerTcpListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerTcpListenPorts[0]
@@ -182,7 +181,7 @@ func parsePort() error {
 
 	if common.FlagInfos.UsingUdp {
 		if 0 == len(common.JsonConfigs.ServerUdpListenPorts) {
-			return errors.New("Please configure the [ServerUdpListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerUdpListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerUdpListenPorts[0]
@@ -191,7 +190,7 @@ func parsePort() error {
 
 	if common.FlagInfos.UsingHttp {
 		if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
-			return errors.New("Please configure the [ServerHttpListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerHttpListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpListenPorts[0]
@@ -200,7 +199,7 @@ func parsePort() error {
 
 	if common.FlagInfos.UsingHttps {
 		if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
-			return errors.New("Please configure the [ServerHttpsListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerHttpsListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpsListenPorts[0]
@@ -209,7 +208,7 @@ func parsePort() error {
 
 	if common.FlagInfos.UsingQuic {
 		if 0 == len(common.JsonConfigs.ServerQuicListenPorts) {
-			return errors.New("Please configure the [ServerQuicListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerQuicListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerQuicListenPorts[0]
@@ -218,7 +217,7 @@ func parsePort() error {
 
 	if common.FlagInfos.UsingDns {
 		if 0 == len(common.JsonConfigs.ServerDnsListenPorts) {
-			return errors.New("Please configure the [ServerDnsListenPorts] in the config.json file")
+			return fmt.Errorf("Please configure the [ServerDnsListenPorts] in the config.json file")
 		}
 
 		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerDnsListenPorts[0]

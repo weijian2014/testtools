@@ -8,126 +8,146 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
+	"runtime"
 	"strings"
-	"sync"
 	"testtools/common"
 )
 
 var (
-	isHandleRegistered = false
-	isGenerateCert     = false
-	serverMap          map[uint16]*http.Server
-	serverMapGuard     sync.Mutex
+	isGenerateCert = false
 )
 
-func init() {
-	serverMap = make(map[uint16]*http.Server)
-}
-
-func startHttpServer(serverName string, listenAddr *common.IpAndPort) {
-	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
-
-	mux := http.NewServeMux()
-
-	// 启动静态文件服务, 将下载服务器存放文件的目录
-	// if !isHandleRegistered {
+func initHttpServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		mux := http.NewServeMux()
 		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
-	// 	isHandleRegistered = true
-	// }
+		mux.HandleFunc("/", index)
+		mux.HandleFunc("/upload", upload)
+		mux.HandleFunc("/list", list)
 
-	mux.HandleFunc("/", index)
-	mux.HandleFunc("/upload", upload)
-	mux.HandleFunc("/list", list)
-	mux.HandleFunc("/close", close)
-
-	server := &http.Server{
-		Addr:    listenAddr.String(),
-		Handler: mux,
-	}
-
-	serverMapGuard.Lock()
-	serverMap[listenAddr.Port] = server
-	serverMapGuard.Unlock()
-	server.ListenAndServe()
-}
-
-func startHttpsServer(serverName string, listenAddr common.IpAndPort) {
-	_, err := os.Stat(certificatePath)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(certificatePath, os.ModePerm)
-		if nil != err {
-			panic(err)
-		}
-	}
-
-	keyFullPath := certificatePath + "server.key"
-	crtFullPath := certificatePath + "server.crt"
-
-	if !isGenerateCert {
-		_, err = os.Stat(keyFullPath)
-		if os.IsExist(err) {
-			err = os.Remove(keyFullPath)
-			if nil != err {
-				panic(err)
-			}
+		server := &http.Server{
+			Addr:    listenAddr.String(),
+			Handler: mux,
 		}
 
-		_, err = os.Stat(crtFullPath)
-		if os.IsExist(err) {
-			err = os.Remove(crtFullPath)
-			if nil != err {
-				panic(err)
-			}
-		}
-		err = generateHttpsCertificate(keyFullPath, crtFullPath)
+		c := make(chan int)
+		err := common.InsertControlChannel(listenAddr.Port, c)
 		if nil != err {
 			panic(err)
 		}
 
-		isGenerateCert = true
-	}
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+				go server.ListenAndServe()
+				isExit = false
+				break
+			case common.StopServerControlOption:
+				common.System("%v server stop\n", serverName)
+				server.SetKeepAlivesEnabled(false)
+				server.Shutdown(context.Background())
+				err = common.DeleteControlChannel(listenAddr.Port)
+				if nil != err {
+					common.Error("Delete control channel fial, erro: %v", err)
+				}
+				isExit = true
+				break
+			default:
+				isExit = false
+				continue
+			}
 
-	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+			if isExit {
+				break
+			}
+		}
 
-	mux := http.NewServeMux()
+		runtime.Goexit()
+	}(serverName, listenAddr)
+}
 
-	// if !isHandleRegistered {
+func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		mux := http.NewServeMux()
 		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
-	// 	isHandleRegistered = true
-	// }
+		mux.HandleFunc("/", index)
+		mux.HandleFunc("/upload", upload)
+		mux.HandleFunc("/list", list)
 
-	mux.HandleFunc("/", index)
-	mux.HandleFunc("/upload", upload)
-	mux.HandleFunc("/list", list)
-	mux.HandleFunc("/close", close)
+		server := &http.Server{
+			Addr:    listenAddr.String(),
+			Handler: mux,
+		}
 
-	server := &http.Server{
-		Addr:    listenAddr.String(),
-		Handler: mux,
-	}
+		c := make(chan int)
+		err := common.InsertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
 
-	serverMapGuard.Lock()
-	serverMap[listenAddr.Port] = server
-	serverMapGuard.Unlock()
-	server.ListenAndServeTLS(crtFullPath, keyFullPath)
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					keyFullPath := certificatePath + "server.key"
+					crtFullPath := certificatePath + "server.crt"
+					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
+					isExit = false
+					continue
+				}
+			case common.StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					server.SetKeepAlivesEnabled(false)
+					server.Shutdown(context.Background())
+					err = common.DeleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+					break
+				}
+			default:
+				{
+					isExit = false
+					continue
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}(serverName, listenAddr)
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
 	// receive
 	recvBuffer := r.Header.Get("ClientSendData")
 	remoteAddr := r.RemoteAddr
+
+	// send
+	w.Write([]byte(common.JsonConfigs.ServerSendData))
+	w.Write([]byte("\n"))
+
 	var prefix string
 	if nil == r.TLS {
 		prefix = "Http"
 	} else {
 		prefix = "Https"
 	}
-
-	// send
-	w.Write([]byte(common.JsonConfigs.ServerSendData))
-	w.Write([]byte("\n"))
-
 	if "Http" == prefix {
 		serverHttpCount++
 	} else {
@@ -209,28 +229,6 @@ func listDir(dirPth string, suffix string) (files []string, err error) {
 	return files, nil
 }
 
-func close(w http.ResponseWriter, r *http.Request) {
-	var prefix string
-	if nil == r.TLS {
-		prefix = "Http"
-	} else {
-		prefix = "Https"
-	}
-
-	// send
-	w.Header().Set("Connection", "close")
-	w.Write([]byte("Shutdown the server"))
-	w.Write([]byte("\n"))
-	w.(http.Flusher).Flush()
-	conn, _, _ := w.(http.Hijacker).Hijack()
-	defer conn.Close()
-
-	serverPort, _ := strconv.ParseUint((strings.Split(r.Host, ":"))[1], 10, 16)
-	serverName := fmt.Sprintf("%vServer-%v", prefix, serverPort)
-	common.Info("%v server[%v]----%v client[%v]:\n\tShutdown the [%v] server\n", prefix, r.Host, prefix, r.RemoteAddr, serverName)
-	serverMap[uint16(serverPort)].Shutdown(context.Background())
-}
-
 func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 	cmd := fmt.Sprintf("openssl genrsa -out %v 2048 > /dev/null", keyFullPath)
 	_, err := common.Command("/bin/sh", "-c", cmd)
@@ -261,7 +259,6 @@ func HttpServerGuide(listenPort uint16) {
 	common.System("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
 	common.System("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
 	common.System("\tUse 'curl http://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	common.System("\tUse 'curl http://%v:%v/close' shutdown the http server\n", ip, listenPort)
 	common.System("\tUse 'wget http://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
@@ -272,6 +269,42 @@ func HttpsServerGuide(listenPort uint16) {
 	common.System("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)
 	common.System("\tUse 'curl -k -F \"uploadfile=@/filepath/filename\" https://%v:%v/upload' upload file to web server\n", ip, listenPort)
 	common.System("\tUse 'curl -k https://%v:%v/list' list downloadable file names\n", ip, listenPort)
-	common.System("\tUse 'curl -k https://%v:%v/close' shutdown the https server\n", ip, listenPort)
 	common.System("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
+}
+
+func prepareCert() {
+	if !isGenerateCert {
+		_, err := os.Stat(certificatePath)
+		if os.IsNotExist(err) {
+			err = os.Mkdir(certificatePath, os.ModePerm)
+			if nil != err {
+				panic(err)
+			}
+		}
+
+		keyFullPath := certificatePath + "server.key"
+		crtFullPath := certificatePath + "server.crt"
+
+		_, err = os.Stat(keyFullPath)
+		if os.IsExist(err) {
+			err = os.Remove(keyFullPath)
+			if nil != err {
+				panic(err)
+			}
+		}
+
+		_, err = os.Stat(crtFullPath)
+		if os.IsExist(err) {
+			err = os.Remove(crtFullPath)
+			if nil != err {
+				panic(err)
+			}
+		}
+		err = generateHttpsCertificate(keyFullPath, crtFullPath)
+		if nil != err {
+			panic(err)
+		}
+
+		isGenerateCert = true
+	}
 }

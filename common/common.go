@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -74,7 +74,7 @@ func Command(name string, arg ...string) ([]byte, error) {
 		noEnterErrStr := strings.TrimRight(string(errBytes), "\n")
 		cancel()
 		cmd.Wait()
-		return []byte(""), errors.New(noEnterErrStr)
+		return []byte(""), fmt.Errorf(noEnterErrStr)
 	}
 
 	opBytes, err := ioutil.ReadAll(stdout)

@@ -2,17 +2,66 @@ package server
 
 import (
 	"net"
+	"runtime"
 	"testtools/common"
 )
 
-func startTcpServer(serverName string, listenAddr *common.IpAndPort) {
-	listener, err := net.Listen("tcp", listenAddr.String())
-	if err != nil {
-		panic(err)
+func initTcpServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	f := func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		listener, err := net.Listen("tcp", listenAddr.String())
+		if err != nil {
+			panic(err)
+		}
+
+		c := make(chan int)
+		err = common.InsertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
+
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					go tcpServerLoop(serverName, listener)
+					isExit = false
+					continue
+				}
+			case common.StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					listener.Close()
+					err = common.DeleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+					break
+				}
+			default:
+				{
+					isExit = false
+					continue
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
 	}
 
-	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+	go f(serverName, listenAddr)
+}
 
+func tcpServerLoop(serverName string, listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

@@ -1,31 +1,77 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
 	"regexp"
+	"runtime"
 	"strings"
 	"testtools/common"
 
 	"golang.org/x/net/dns/dnsmessage"
 )
 
-func startDnsServer(serverName string, listenAddr *common.IpAndPort) {
-	lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
-	if err != nil {
-		panic(err)
-	}
+func initDnsServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		lAddr, err := net.ResolveUDPAddr("udp", listenAddr.String())
+		if err != nil {
+			panic(err)
+		}
 
-	conn, err := net.ListenUDP("udp", lAddr)
-	defer conn.Close()
-	if err != nil {
-		panic(err)
-	}
+		conn, err := net.ListenUDP("udp", lAddr)
+		defer conn.Close()
+		if err != nil {
+			panic(err)
+		}
 
-	common.System("%v server startup, listen on %v\n", serverName, lAddr.String())
+		c := make(chan int)
+		err = common.InsertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
 
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					go dnsServerLoop(serverName, conn)
+					isExit = false
+					continue
+				}
+			case common.StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					conn.Close()
+					err = common.DeleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+					break
+				}
+			default:
+				{
+					isExit = false
+					continue
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}(serverName, listenAddr)
+}
+
+func dnsServerLoop(serverName string, conn *net.UDPConn) {
 	for {
 		// receive
 		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
@@ -136,15 +182,15 @@ func printDnsServerEntrys() {
 
 func checkDomainName(domainName string) error {
 	if strings.Contains(domainName, " ") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid", domainName))
+		return fmt.Errorf("The domain name %v invalid", domainName)
 	}
 
 	if strings.HasPrefix(domainName, "http") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'http'", domainName))
+		return fmt.Errorf("The domain name %v invalid, the prefix has 'http'", domainName)
 	}
 
 	if strings.HasPrefix(domainName, "https") {
-		return errors.New(fmt.Sprintf("The domain name %v invalid, the prefix has 'https", domainName))
+		return fmt.Errorf("The domain name %v invalid, the prefix has 'https", domainName)
 	}
 
 	//支持以http://或者https://开头并且域名中间有/的情况

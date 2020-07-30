@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testtools/common"
@@ -50,64 +49,64 @@ func StartServer() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
-	listenAddr := &common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
+	listenAddr := common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
 
-	// Start Tcp server
+	// Init Tcp server
 	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
 		listenAddr.Port = port
-		go startTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
+		initTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	// Start Udp server
+	// Init Udp server
 	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
 		listenAddr.Port = port
-		go startUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
+		initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	// Start Http server
+	// Init Http server
 	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
 		listenAddr.Port = port
-		go startHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
+		initHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(50) * time.Millisecond)
 
-	// Start Https server
-	for i, port := range common.JsonConfigs.ServerHttpsListenPorts {
+	// Init Https server
+	if 0 != len(common.JsonConfigs.ServerHttpsListenPorts) {
+		prepareCert()
+	}
+	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
 		listenAddr.Port = port
-		go startHttpsServer(fmt.Sprintf("HttpsServer-%v", port), *listenAddr)
-		if 0 == i {
-			time.Sleep(time.Duration(500) * time.Millisecond)
-		}
-		time.Sleep(time.Duration(50) * time.Millisecond)
+		initHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	// Start Quic server
-	for i, port := range common.JsonConfigs.ServerQuicListenPorts {
+	// Init Quic server
+	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
 		listenAddr.Port = uint16(port)
-		go startQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
-		if 0 == i {
-			time.Sleep(time.Duration(500) * time.Millisecond)
-		}
-		time.Sleep(time.Duration(50) * time.Millisecond)
+		initQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
-	time.Sleep(time.Duration(400) * time.Millisecond)
 
-	// Start Dns server
+	// Init Dns server
 	if 0 != len(common.JsonConfigs.ServerTcpListenPorts) {
 		saveDnsEntrys()
 	}
 	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
 		listenAddr.Port = port
-		go startDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+		initDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
 	}
+
 	time.Sleep(time.Duration(50) * time.Millisecond)
+
+	/// Start all server
+	err = common.StartAllServers()
+	if nil != err {
+		panic(err)
+	}
+
+	time.Sleep(time.Duration(1000) * time.Millisecond)
 
 	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
 		HttpServerGuide(80)
@@ -123,12 +122,14 @@ func StartServer() {
 
 	printDnsServerEntrys()
 	common.System("\nJson config: %+v\n\n", common.JsonConfigs)
+	common.System("All Server start ok\n================================================================================\n")
 
-	var sleepInterval uint64 = 60 * 60
+	go common.StartConfigFileWatcher()
+
 	for {
-		time.Sleep(time.Duration(sleepInterval) * time.Second)
+		time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
 		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
-			sleepInterval, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
+			common.JsonConfigs.ServerCounterOutputIntervalSeconds, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
 	}
 }
 
@@ -136,42 +137,42 @@ func checkJsonConfig() error {
 	// Tcp
 	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 
 	// Udp
 	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 
 	// Http
 	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 
 	// Https
 	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 
 	// Quic
 	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 
 	// Dns
 	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
 		if 0 > port || 65535 < port {
-			return errors.New(fmt.Sprintf("Listen port[%v] invalid of config.json file", port))
+			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
 		}
 	}
 

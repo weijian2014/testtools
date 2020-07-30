@@ -7,20 +7,69 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/lucas-clemente/quic-go"
 	"math/big"
+	"runtime"
 	"strings"
 	"testtools/common"
+
+	"github.com/lucas-clemente/quic-go"
 )
 
-func startQuicServer(serverName string, listenAddr *common.IpAndPort) {
-	listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), nil)
-	if err != nil {
-		panic(err)
-	}
+func initQuicServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		listener, err := quic.ListenAddr(listenAddr.String(), generateQuicTLSConfig(), nil)
+		if err != nil {
+			panic(err)
+		}
 
-	common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+		c := make(chan int)
+		err = common.InsertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
 
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case common.StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					go quicServerLoop(serverName, listener)
+					isExit = false
+					continue
+				}
+			case common.StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					listener.Close()
+					err = common.DeleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+					break
+				}
+			default:
+				{
+					isExit = false
+					continue
+				}
+
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}(serverName, listenAddr)
+}
+
+func quicServerLoop(serverName string, listener quic.Listener) {
 	for {
 		session, err := listener.Accept(context.Background())
 		if err != nil {
