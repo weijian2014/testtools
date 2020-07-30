@@ -178,7 +178,6 @@ func printDnsServerEntrys() {
 	for k, v := range dns4AEntrys {
 		common.System("\t%v ---- %v\n", k, v)
 	}
-	common.System("\n")
 }
 
 func checkDomainName(domainName string) error {

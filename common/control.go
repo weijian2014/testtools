@@ -90,12 +90,25 @@ func StartAllServers() error {
 	return nil
 }
 
-func StopServer(port uint16) error {
-	return SendOptionToControlChannel(port, StopServerControlOption)
+func StopAllServers() error {
+	for port, _ := range controlChannelsMap {
+		err := SendOptionToControlChannel(port, StopServerControlOption)
+		if nil != err {
+			return err
+		}
+
+		time.Sleep(time.Duration(10) * time.Millisecond)
+	}
+
+	return nil
 }
 
 func StartServer(port uint16) error {
 	return SendOptionToControlChannel(port, StartServerControlOption)
+}
+
+func StopServer(port uint16) error {
+	return SendOptionToControlChannel(port, StopServerControlOption)
 }
 
 func checkControlOption(option int) error {

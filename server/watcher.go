@@ -65,14 +65,34 @@ func reflushServers() error {
 	common.JsonConfigs.CommonLogRoll = newConfig.CommonLogRoll
 	common.JsonConfigs.CommonRecvBufferSizeBytes = newConfig.CommonRecvBufferSizeBytes
 	common.JsonConfigs.ServerCounterOutputIntervalSeconds = newConfig.ServerCounterOutputIntervalSeconds
-	common.JsonConfigs.ServerListenHost = newConfig.ServerListenHost
-	common.JsonConfigs.ServerDnsAEntrys = newConfig.ServerDnsAEntrys
-	common.JsonConfigs.ServerDns4AEntrys = newConfig.ServerDns4AEntrys
+
 	common.JsonConfigs.ServerSendData = newConfig.ServerSendData
 	common.JsonConfigs.ClientBindIpAddress = newConfig.ClientBindIpAddress
 	common.JsonConfigs.ClientSendToIpv4Address = newConfig.ClientSendToIpv4Address
 	common.JsonConfigs.ClientSendToIpv6Address = newConfig.ClientSendToIpv6Address
 	common.JsonConfigs.ClientSendData = newConfig.ClientSendData
+
+	// server listen host
+	if common.JsonConfigs.ServerListenHost != newConfig.ServerListenHost {
+		common.System("Server listen host has changed, old=%v, new=%v\n", common.JsonConfigs.ServerListenHost, newConfig.ServerListenHost)
+		err = common.StopAllServers()
+		if nil != err {
+			common.System("The %v file watcher stop all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+			return err
+		}
+
+		time.Sleep(time.Duration(500) * time.Millisecond)
+		common.JsonConfigs.ServerListenHost = newConfig.ServerListenHost
+		initAllServer()
+		time.Sleep(time.Duration(500) * time.Millisecond)
+		err = common.StartAllServers()
+		if nil != err {
+			common.System("The %v file watcher start all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+			return err
+		}
+
+		return nil
+	}
 
 	listenAddr := common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
 
@@ -90,6 +110,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -100,6 +121,7 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
@@ -119,6 +141,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -129,6 +152,7 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
@@ -148,6 +172,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -158,6 +183,7 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
@@ -177,6 +203,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -188,6 +215,7 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
@@ -206,6 +234,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -216,6 +245,7 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
@@ -234,6 +264,7 @@ func reflushServers() error {
 				err = common.StopServer(port)
 				if nil != err {
 					common.System("The %v file watcher stop [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 
@@ -247,9 +278,21 @@ func reflushServers() error {
 				err = common.StartServer(port)
 				if nil != err {
 					common.System("The %v file watcher start [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					return err
 				}
 			}
 		}
+	}
+
+	if !reflect.DeepEqual(newConfig.ServerDnsAEntrys, common.JsonConfigs.ServerDnsAEntrys) ||
+		!reflect.DeepEqual(newConfig.ServerDns4AEntrys, common.JsonConfigs.ServerDns4AEntrys) {
+		common.System("Dns server entrys has changed, oldA=%v, old4A=%v, newA=%v, new4A=%v\n",
+			common.JsonConfigs.ServerDnsAEntrys, common.JsonConfigs.ServerDns4AEntrys, newConfig.ServerDnsAEntrys, newConfig.ServerDns4AEntrys)
+		common.JsonConfigs.ServerDnsAEntrys = newConfig.ServerDnsAEntrys
+		common.JsonConfigs.ServerDns4AEntrys = newConfig.ServerDns4AEntrys
+		saveDnsEntrys()
+		printDnsServerEntrys()
+		common.System("\n")
 	}
 
 	common.JsonConfigs = newConfig

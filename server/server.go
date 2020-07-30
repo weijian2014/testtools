@@ -49,6 +49,44 @@ func StartServer() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
+	initAllServer()
+	time.Sleep(time.Duration(50) * time.Millisecond)
+
+	/// Start all server
+	err = common.StartAllServers()
+	if nil != err {
+		panic(err)
+	}
+
+	time.Sleep(time.Duration(200) * time.Millisecond)
+
+	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
+		HttpServerGuide(80)
+	} else {
+		HttpServerGuide(common.JsonConfigs.ServerHttpListenPorts[0])
+	}
+
+	if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
+		HttpsServerGuide(443)
+	} else {
+		HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPorts[0])
+	}
+
+	printDnsServerEntrys()
+	common.System("\nJson config:%+v\n\n", common.JsonConfigs)
+	go startConfigFileWatcher()
+	time.Sleep(time.Duration(200) * time.Millisecond)
+	common.System("All server start ok\n")
+	common.System("================================================================================\n")
+
+	for {
+		time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
+		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
+			common.JsonConfigs.ServerCounterOutputIntervalSeconds, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
+	}
+}
+
+func initAllServer() {
 	listenAddr := common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
 
 	// Init Tcp server
@@ -96,40 +134,6 @@ func StartServer() {
 	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
 		listenAddr.Port = port
 		initDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
-	}
-
-	time.Sleep(time.Duration(50) * time.Millisecond)
-
-	/// Start all server
-	err = common.StartAllServers()
-	if nil != err {
-		panic(err)
-	}
-
-	time.Sleep(time.Duration(1000) * time.Millisecond)
-
-	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
-		HttpServerGuide(80)
-	} else {
-		HttpServerGuide(common.JsonConfigs.ServerHttpListenPorts[0])
-	}
-
-	if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
-		HttpsServerGuide(443)
-	} else {
-		HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPorts[0])
-	}
-
-	printDnsServerEntrys()
-	common.System("\nJson config: %+v\n\n", common.JsonConfigs)
-	common.System("All Server start ok\n================================================================================\n")
-
-	go startConfigFileWatcher()
-
-	for {
-		time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
-		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
-			common.JsonConfigs.ServerCounterOutputIntervalSeconds, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
 	}
 }
 
