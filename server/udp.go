@@ -23,7 +23,7 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err = common.InsertControlChannel(listenAddr.Port, c)
+		err = insertControlChannel(listenAddr.Port, c)
 		if nil != err {
 			panic(err)
 		}
@@ -32,17 +32,17 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 		for {
 			option := <-c
 			switch option {
-			case common.StartServerControlOption:
+			case StartServerControlOption:
 				{
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 					go udpServerLoop(serverName, conn)
 					isExit = false
 				}
-			case common.StopServerControlOption:
+			case StopServerControlOption:
 				{
 					common.System("%v server stop\n", serverName)
 					conn.Close()
-					err = common.DeleteControlChannel(listenAddr.Port)
+					err = deleteControlChannel(listenAddr.Port)
 					if nil != err {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}

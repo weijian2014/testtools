@@ -53,7 +53,7 @@ func StartServer() {
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
 	/// Start all server
-	err = common.StartAllServers()
+	err = startAllServers()
 	if nil != err {
 		panic(err)
 	}
@@ -80,9 +80,14 @@ func StartServer() {
 	common.System("================================================================================\n")
 
 	for {
-		time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
-		common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
-			common.JsonConfigs.ServerCounterOutputIntervalSeconds, serverTcpCount, serverUdpCount, serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
+		if 0 == common.JsonConfigs.ServerCounterOutputIntervalSeconds {
+			time.Sleep(time.Duration(5) * time.Second)
+		} else {
+			time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
+			common.System("Service Statistics(interval %v second):\n\tTCP: %v\n\tUDP: %v\n\tHTTP: %v\n\tHTTPS: %v\n\tQUIC: %v\n\tDNS: %v",
+				common.JsonConfigs.ServerCounterOutputIntervalSeconds, serverTcpCount, serverUdpCount,
+				serverHttpCount, serverHttpsCount, serverQuicCount, serverDnsCount)
+		}
 	}
 }
 

@@ -5,7 +5,7 @@
   "CommonRecvBufferSizeBytes": 512,
   "____ServerConfig__": "____ServerConfig____",
   "ServerCounterOutputIntervalSeconds": 3600,
-  "ServerListenHost": "127.0.0.1",
+  "ServerListenHost": "0.0.0.0",
   "ServerTcpListenPorts": [
     1001,
     1002,

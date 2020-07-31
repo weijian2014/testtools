@@ -33,7 +33,7 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err := common.InsertControlChannel(listenAddr.Port, c)
+		err := insertControlChannel(listenAddr.Port, c)
 		if nil != err {
 			panic(err)
 		}
@@ -42,15 +42,15 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 		for {
 			option := <-c
 			switch option {
-			case common.StartServerControlOption:
+			case StartServerControlOption:
 				common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 				go server.ListenAndServe()
 				isExit = false
-			case common.StopServerControlOption:
+			case StopServerControlOption:
 				common.System("%v server stop\n", serverName)
 				server.SetKeepAlivesEnabled(false)
 				server.Shutdown(context.Background())
-				err = common.DeleteControlChannel(listenAddr.Port)
+				err = deleteControlChannel(listenAddr.Port)
 				if nil != err {
 					common.Error("Delete control channel fial, erro: %v", err)
 				}
@@ -84,7 +84,7 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err := common.InsertControlChannel(listenAddr.Port, c)
+		err := insertControlChannel(listenAddr.Port, c)
 		if nil != err {
 			panic(err)
 		}
@@ -93,7 +93,7 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 		for {
 			option := <-c
 			switch option {
-			case common.StartServerControlOption:
+			case StartServerControlOption:
 				{
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
 					keyFullPath := certificatePath + "server.key"
@@ -101,12 +101,12 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
 					isExit = false
 				}
-			case common.StopServerControlOption:
+			case StopServerControlOption:
 				{
 					common.System("%v server stop\n", serverName)
 					server.SetKeepAlivesEnabled(false)
 					server.Shutdown(context.Background())
-					err = common.DeleteControlChannel(listenAddr.Port)
+					err = deleteControlChannel(listenAddr.Port)
 					if nil != err {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}
