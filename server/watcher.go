@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"testtools/common"
@@ -37,25 +38,34 @@ func startConfigFileWatcher() {
 		for {
 			select {
 			case event, ok := <-watcher.Events:
-				if !ok {
-					common.System("The %v file no ok in evnet!", common.FlagInfos.ConfigFileFullPath)
-					return
-				}
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					err := reflushServers()
-					if nil != err {
-						common.System("The %v file watcher reflush servers fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+				{
+					if !ok {
+						common.System("The %v file no ok in evnet!", common.FlagInfos.ConfigFileFullPath)
+						return
+					}
+
+					if event.Name != common.FlagInfos.ConfigFileFullPath {
+						break
+					}
+
+					if event.Op&fsnotify.Write == fsnotify.Write {
+						err := reflushServers()
+						if nil != err {
+							common.System("The %v file watcher reflush servers fail for write, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+						}
 					}
 				}
 			case err, ok := <-watcher.Errors:
-				if !ok {
-					common.System("The %v file no ok in error!", common.FlagInfos.ConfigFileFullPath)
-					return
-				}
+				{
+					if !ok {
+						common.System("The %v file no ok in error!", common.FlagInfos.ConfigFileFullPath)
+						return
+					}
 
-				if nil != err {
-					common.System("The %v file watcher get error, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
-					return
+					if nil != err {
+						common.System("The %v file watcher get error, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+						return
+					}
 				}
 			}
 		}
@@ -63,7 +73,8 @@ func startConfigFileWatcher() {
 
 	common.System("The %v file watcher start ok", common.FlagInfos.ConfigFileFullPath)
 
-	err = watcher.Add(common.FlagInfos.ConfigFileFullPath)
+	// watch the directory of file, but not a file
+	err = watcher.Add(filepath.Dir(common.FlagInfos.ConfigFileFullPath))
 	if err != nil {
 		panic(err)
 	}
@@ -75,6 +86,10 @@ func reflushServers() error {
 	newConfig, err := common.LoadConfigFile(common.FlagInfos.ConfigFileFullPath)
 	if nil != err {
 		return err
+	}
+
+	if reflect.DeepEqual(newConfig, common.FlagInfos) {
+		return nil
 	}
 
 	common.JsonConfigs.CommonLogLevel = newConfig.CommonLogLevel
@@ -115,10 +130,10 @@ func reflushServers() error {
 	// reflush tcp server
 	if !reflect.DeepEqual(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts) {
 		r := intersection(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts)
-		add := subtraction(newConfig.ServerTcpListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerTcpListenPorts, r)
+		add := subtraction(newConfig.ServerTcpListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Tcp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerTcpListenPorts, newConfig.ServerTcpListenPorts, del, add)
 			common.JsonConfigs.ServerTcpListenPorts = newConfig.ServerTcpListenPorts
 
@@ -149,7 +164,7 @@ func reflushServers() error {
 		add := subtraction(newConfig.ServerUdpListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerUdpListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenPorts, newConfig.ServerUdpListenPorts, del, add)
 			common.JsonConfigs.ServerUdpListenPorts = newConfig.ServerUdpListenPorts
 
@@ -180,7 +195,7 @@ func reflushServers() error {
 		add := subtraction(newConfig.ServerHttpListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerHttpListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Http server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpListenPorts, newConfig.ServerHttpListenPorts, del, add)
 			common.JsonConfigs.ServerHttpListenPorts = newConfig.ServerHttpListenPorts
 
@@ -211,7 +226,7 @@ func reflushServers() error {
 		add := subtraction(newConfig.ServerHttpsListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerHttpsListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Https server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpsListenPorts, newConfig.ServerHttpsListenPorts, del, add)
 			common.JsonConfigs.ServerHttpsListenPorts = newConfig.ServerHttpsListenPorts
 
@@ -243,7 +258,7 @@ func reflushServers() error {
 		add := subtraction(newConfig.ServerQuicListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerQuicListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Quic server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerQuicListenPorts, newConfig.ServerQuicListenPorts, del, add)
 			common.JsonConfigs.ServerQuicListenPorts = newConfig.ServerQuicListenPorts
 			for _, port := range del {
@@ -273,7 +288,7 @@ func reflushServers() error {
 		add := subtraction(newConfig.ServerDnsListenPorts, r)
 		del := subtraction(common.JsonConfigs.ServerDnsListenPorts, r)
 
-		if 0 != len(add) && 0 != len(add) {
+		if 0 != len(del) || 0 != len(add) {
 			common.System("Dns server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerDnsListenPorts, newConfig.ServerDnsListenPorts, del, add)
 			common.JsonConfigs.ServerDnsListenPorts = newConfig.ServerDnsListenPorts
 			for _, port := range del {
