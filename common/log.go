@@ -19,6 +19,43 @@ const (
 	FatalLevel
 )
 
+func LogLevelToString(level int) string {
+	switch level {
+	case DebugLevel:
+		{
+			return "Debug"
+		}
+	case InfoLevel:
+		{
+			return "Info"
+		}
+	case SystemLevel:
+		{
+			return "System"
+		}
+	case WarnLevel:
+		{
+			return "Warn"
+		}
+	case ErrorLevel:
+		{
+			return "Error"
+		}
+	case FatalLevel:
+		{
+			return "Fatal"
+		}
+	default:
+		{
+			return "Unknow"
+		}
+	}
+}
+
+func GetLogLevel() string {
+	return "0-Debug, 1-Info, 2-System, 3-Warn, 4-Error, 5-Fatal"
+}
+
 type Logger struct {
 	level         int
 	rollBackLines int

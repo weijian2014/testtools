@@ -92,16 +92,33 @@ func reflushServers() error {
 		return nil
 	}
 
-	common.JsonConfigs.CommonLogLevel = newConfig.CommonLogLevel
-	common.JsonConfigs.CommonLogRoll = newConfig.CommonLogRoll
-	common.JsonConfigs.CommonRecvBufferSizeBytes = newConfig.CommonRecvBufferSizeBytes
-	common.JsonConfigs.ServerCounterOutputIntervalSeconds = newConfig.ServerCounterOutputIntervalSeconds
+	if common.JsonConfigs.CommonLogLevel != newConfig.CommonLogLevel {
+		common.System("Server log level(%v) has changed, old=[%v-%v], new=[%v-%v]\n",
+			common.GetLogLevel(),
+			common.JsonConfigs.CommonLogLevel, common.LogLevelToString(common.JsonConfigs.CommonLogLevel),
+			newConfig.CommonLogLevel, common.LogLevelToString(newConfig.CommonLogLevel))
+		common.JsonConfigs.CommonLogLevel = newConfig.CommonLogLevel
+	}
 
-	common.JsonConfigs.ServerSendData = newConfig.ServerSendData
-	common.JsonConfigs.ClientBindIpAddress = newConfig.ClientBindIpAddress
-	common.JsonConfigs.ClientSendToIpv4Address = newConfig.ClientSendToIpv4Address
-	common.JsonConfigs.ClientSendToIpv6Address = newConfig.ClientSendToIpv6Address
-	common.JsonConfigs.ClientSendData = newConfig.ClientSendData
+	if common.JsonConfigs.CommonLogRoll != newConfig.CommonLogRoll {
+		common.System("Server log roll(line) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.CommonLogRoll, newConfig.CommonLogRoll)
+		common.JsonConfigs.CommonLogRoll = newConfig.CommonLogRoll
+	}
+
+	if common.JsonConfigs.CommonRecvBufferSizeBytes != newConfig.CommonRecvBufferSizeBytes {
+		common.System("Server recvice buffer size(byte) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.CommonRecvBufferSizeBytes, newConfig.CommonRecvBufferSizeBytes)
+		common.JsonConfigs.CommonRecvBufferSizeBytes = newConfig.CommonRecvBufferSizeBytes
+	}
+
+	if common.JsonConfigs.ServerCounterOutputIntervalSeconds != newConfig.ServerCounterOutputIntervalSeconds {
+		common.System("Server counter output interval(second) seconds has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerCounterOutputIntervalSeconds, newConfig.ServerCounterOutputIntervalSeconds)
+		common.JsonConfigs.ServerCounterOutputIntervalSeconds = newConfig.ServerCounterOutputIntervalSeconds
+	}
+
+	if common.JsonConfigs.ServerSendData != newConfig.ServerSendData {
+		common.System("Server send data has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerSendData, newConfig.ServerSendData)
+		common.JsonConfigs.ServerSendData = newConfig.ServerSendData
+	}
 
 	// server listen host
 	if common.JsonConfigs.ServerListenHost != newConfig.ServerListenHost {
