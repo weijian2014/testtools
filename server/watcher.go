@@ -40,7 +40,7 @@ func startConfigFileWatcher() {
 			case event, ok := <-watcher.Events:
 				{
 					if !ok {
-						common.System("The %v file no ok in evnet!", common.FlagInfos.ConfigFileFullPath)
+						common.Error("The %v file no ok in evnet!", common.FlagInfos.ConfigFileFullPath)
 						return
 					}
 
@@ -51,19 +51,19 @@ func startConfigFileWatcher() {
 					if event.Op&fsnotify.Write == fsnotify.Write {
 						err := reflushServers()
 						if nil != err {
-							common.System("The %v file watcher reflush servers fail for write, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+							common.Warn("The %v file watcher reflush servers fail for write, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
 						}
 					}
 				}
 			case err, ok := <-watcher.Errors:
 				{
 					if !ok {
-						common.System("The %v file no ok in error!", common.FlagInfos.ConfigFileFullPath)
+						common.Error("The %v file no ok in error!", common.FlagInfos.ConfigFileFullPath)
 						return
 					}
 
 					if nil != err {
-						common.System("The %v file watcher get error, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+						common.Error("The %v file watcher get error, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
 						return
 					}
 				}
@@ -125,7 +125,7 @@ func reflushServers() error {
 		common.System("Server listen host has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerListenHost, newConfig.ServerListenHost)
 		err = stopAllServers()
 		if nil != err {
-			common.System("The %v file watcher stop all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+			common.Error("The %v file watcher stop all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
 			return err
 		}
 
@@ -135,7 +135,7 @@ func reflushServers() error {
 		time.Sleep(time.Duration(500) * time.Millisecond)
 		err = startAllServers()
 		if nil != err {
-			common.System("The %v file watcher start all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
+			common.Error("The %v file watcher start all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
 			return err
 		}
 
@@ -157,7 +157,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -168,7 +168,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(200) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -188,7 +188,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -199,7 +199,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(100) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -219,7 +219,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -230,7 +230,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(100) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -250,7 +250,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -262,7 +262,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(300) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -281,7 +281,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -292,7 +292,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(300) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -311,7 +311,7 @@ func reflushServers() error {
 			for _, port := range del {
 				err = stopServer(port)
 				if nil != err {
-					common.System("The %v file watcher stop [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher stop [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
@@ -325,7 +325,7 @@ func reflushServers() error {
 				time.Sleep(time.Duration(50) * time.Millisecond)
 				err = startServer(port)
 				if nil != err {
-					common.System("The %v file watcher start [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+					common.Error("The %v file watcher start [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
 					return err
 				}
 			}
