@@ -31,6 +31,8 @@ func StartServer() {
 		panic(err)
 	}
 
+	common.Debug("Check the %v file done!\n", common.FlagInfos.ConfigFileFullPath)
+
 	// 创建./files/目录
 	_, err = os.Stat(uploadPath)
 	if os.IsNotExist(err) {
@@ -40,8 +42,11 @@ func StartServer() {
 		}
 	}
 
+	common.Debug("Create the %v directory done!\n", uploadPath)
+
 	// 在./files/目录下创建一个test.txt文件， 并写入ServerSendData数据
-	testFile, err := os.Create(uploadPath + "test.txt")
+	testFileFullPath := uploadPath + "test.txt"
+	testFile, err := os.Create(testFileFullPath)
 	if nil != err {
 		panic(err)
 	}
@@ -49,7 +54,10 @@ func StartServer() {
 	testFile.Write([]byte("\n"))
 	testFile.Close()
 
+	common.Debug("Create the %v file done!\n", testFileFullPath)
+
 	initAllServer()
+	common.Debug("Initialize all servers done!\n")
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
 	/// Start all server
@@ -58,6 +66,7 @@ func StartServer() {
 		panic(err)
 	}
 
+	common.Debug("Start all servers done!\n")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
 	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
@@ -65,16 +74,19 @@ func StartServer() {
 	} else {
 		HttpServerGuide(common.JsonConfigs.ServerHttpListenPorts[0])
 	}
+	common.Debug("Show the http server guide done!\n")
 
 	if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
 		HttpsServerGuide(443)
 	} else {
 		HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPorts[0])
 	}
+	common.Debug("Show the https server guide done!\n")
 
 	printDnsServerEntrys()
 	common.System("\nJson config:%+v\n\n", common.JsonConfigs)
 	go startConfigFileWatcher()
+	common.Debug("Start the config file watcher donw!\n")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	common.System("All server start ok\n")
 	common.System("================================================================================\n")

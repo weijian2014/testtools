@@ -45,6 +45,7 @@ func startConfigFileWatcher() {
 					}
 
 					if event.Name != common.FlagInfos.ConfigFileFullPath {
+						common.Debug("The %v file has changed!\n", event.Name)
 						break
 					}
 

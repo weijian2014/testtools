@@ -114,11 +114,10 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 			return
 		}
 
+		serverQuicCount++
 		common.Info("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
 			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
-
-	serverQuicCount++
 
 	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
 }
