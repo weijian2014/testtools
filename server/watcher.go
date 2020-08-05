@@ -411,7 +411,7 @@ func startAllServers() error {
 			return err
 		}
 
-		time.Sleep(time.Duration(10) * time.Millisecond)
+		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 
 	return nil

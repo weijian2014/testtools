@@ -110,7 +110,7 @@ func initAllServer() {
 	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
 		listenAddr.Port = port
 		initTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
 
 	// Init Udp server
@@ -134,14 +134,14 @@ func initAllServer() {
 	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
 		listenAddr.Port = port
 		initHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
 	// Init Quic server
 	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
 		listenAddr.Port = uint16(port)
 		initQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
 	// Init Dns server
