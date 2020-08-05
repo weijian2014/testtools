@@ -94,19 +94,36 @@ func checkJsonConfig() error {
 }
 
 func checkFlags() error {
+	// -s check
 	if 0 != len(common.FlagInfos.ClientBindIpAddress) &&
 		nil == net.ParseIP(common.FlagInfos.ClientBindIpAddress) {
-		return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] is invalid address, please check -b option", common.FlagInfos.ClientBindIpAddress)
+		return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] is invalid address, please check -s option", common.FlagInfos.ClientBindIpAddress)
 	}
-
 	if 0 == len(common.FlagInfos.ClientBindIpAddress) {
 		common.FlagInfos.ClientBindIpAddress = common.JsonConfigs.ClientBindIpAddress
 	}
 
-	if false == strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") {
-		sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv4Address
+	// -d check
+	if 0 != len(common.FlagInfos.ClientSendToIpAddress) &&
+		nil == net.ParseIP(common.FlagInfos.ClientSendToIpAddress) {
+		return fmt.Errorf("common.FlagInfos.ClientSendToIpAddress[%v] is invalid address, please check -d option", common.FlagInfos.ClientSendToIpAddress)
+	}
+	if 0 == len(common.FlagInfos.ClientSendToIpAddress) {
+		if false == strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") {
+			sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv4Address
+		} else {
+			sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv6Address
+		}
 	} else {
-		sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv6Address
+		if strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") && !strings.Contains(common.FlagInfos.ClientSendToIpAddress, ":") {
+			return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] and common.FlagInfos.ClientSendToIpAddress[%v] are invalid address, please check -d option",
+				common.FlagInfos.ClientBindIpAddress, common.FlagInfos.ClientSendToIpAddress)
+		} else if strings.Contains(common.FlagInfos.ClientBindIpAddress, ".") && !strings.Contains(common.FlagInfos.ClientSendToIpAddress, ".") {
+			return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] and common.FlagInfos.ClientSendToIpAddress[%v] are invalid address, please check -d option",
+				common.FlagInfos.ClientBindIpAddress, common.FlagInfos.ClientSendToIpAddress)
+		} else {
+			sendToServerIpAddress = common.FlagInfos.ClientSendToIpAddress
+		}
 	}
 
 	return nil

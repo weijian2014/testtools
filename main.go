@@ -18,18 +18,22 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.IsServer, "server", false, "As server running, default as client")
 
 	// client option
-	flag.StringVar(&common.FlagInfos.ClientBindIpAddress, "b", "", "The ip address of client bind\n"+
+	flag.StringVar(&common.FlagInfos.ClientBindIpAddress, "s", "", "The source IP address of client\n"+
 		"This parameter takes precedence over clientBindIpAddress in the config.json file\n"+
 		"If the parameter is an IPv6 address, the client will send data to the ClientSendToIpv6Address of config.json file")
+
+	flag.StringVar(&common.FlagInfos.ClientSendToIpAddress, "d", "", "The destination IP address of client\n"+
+		"This parameter takes precedence over ClientSendToIpv4Address or ClientSendToIpv6Address in the config.json file\n")
+
 	flag.BoolVar(&common.FlagInfos.UsingTcp, "tcp", false, "Using TCP protocol")
 	flag.BoolVar(&common.FlagInfos.UsingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&common.FlagInfos.UsingHttp, "http", false, "Using HTTP protocol")
 	flag.BoolVar(&common.FlagInfos.UsingHttps, "https", false, "Using HTTPS protocol")
 	flag.BoolVar(&common.FlagInfos.UsingQuic, "quic", false, "Using QUIC protocol")
 	flag.BoolVar(&common.FlagInfos.UsingDns, "dns", false, "Using DNS protocol")
-	flag.UintVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, gQuic and iQuic protocols")
-	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, gQuic and DNS protocol")
-	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, gQuic and iQuic protocols")
+	flag.UintVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, QUIC protocols")
+	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")
+	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, QUIC protocols")
 	flag.Parse()
 
 	common.FlagInfos.SentToServerPort = uint16(tmpSentToServerPort)

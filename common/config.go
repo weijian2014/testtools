@@ -62,16 +62,17 @@ type FlagInfoStruct struct {
 	IsServer           bool
 	ConfigFileFullPath string
 	// client option
-	UsingTcp            bool
-	UsingUdp            bool
-	UsingHttp           bool
-	UsingHttps          bool
-	UsingQuic           bool
-	UsingDns            bool
-	ClientBindIpAddress string
-	SentToServerPort    uint16
-	WaitingSeconds      uint64
-	ClientSendNumbers   uint64
+	UsingTcp              bool
+	UsingUdp              bool
+	UsingHttp             bool
+	UsingHttps            bool
+	UsingQuic             bool
+	UsingDns              bool
+	ClientBindIpAddress   string
+	ClientSendToIpAddress string
+	SentToServerPort      uint16
+	WaitingSeconds        uint64
+	ClientSendNumbers     uint64
 }
 
 type IpAndPort struct {
