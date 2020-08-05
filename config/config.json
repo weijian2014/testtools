@@ -48,8 +48,8 @@
   },
   "ServerSendData": "Hello Client",
   "____ClientConfig____": "____ClientConfig____",
-  "ClientBindIpAddress": "127.0.0.1",
-  "ClientSendToIpv4Address": "127.0.0.1",
+  "ClientBindIpAddress": "0.0.0.0",
+  "ClientSendToIpv4Address": "0.0.0.0",
   "ClientSendToIpv6Address": "::1",
   "ClientSendData": "Hello Server"
 }
