@@ -9,8 +9,11 @@ import (
 	"testtools/server"
 )
 
+var (
+	tmpSentToServerPort uint = 0
+)
+
 func init() {
-	var tmpSentToServerPort uint
 
 	// common option
 	flag.BoolVar(&common.FlagInfos.IsHelp, "h", false, "Show help")
@@ -35,6 +38,19 @@ func init() {
 	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, QUIC protocols")
 	flag.Parse()
+}
+
+func main() {
+	var logLevel int = common.JsonConfigs.CommonLogLevel
+	common.LoggerInit(logLevel, common.JsonConfigs.CommonLogRoll, "")
+
+	if common.FlagInfos.IsHelp {
+		flag.Usage()
+		server.HttpServerGuide(80)
+		server.HttpsServerGuide(443)
+		common.System("\nJson config: %+v\n\n", common.JsonConfigs)
+		return
+	}
 
 	common.FlagInfos.SentToServerPort = uint16(tmpSentToServerPort)
 	_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
@@ -54,19 +70,6 @@ func init() {
 	common.JsonConfigs, err = common.LoadConfigFile(common.FlagInfos.ConfigFileFullPath)
 	if nil != err {
 		panic(err)
-	}
-}
-
-func main() {
-	var logLevel int = common.JsonConfigs.CommonLogLevel
-	common.LoggerInit(logLevel, common.JsonConfigs.CommonLogRoll, "")
-
-	if common.FlagInfos.IsHelp {
-		flag.Usage()
-		server.HttpServerGuide(80)
-		server.HttpsServerGuide(443)
-		common.System("\nJson config: %+v\n\n", common.JsonConfigs)
-		return
 	}
 
 	if common.FlagInfos.IsServer {
