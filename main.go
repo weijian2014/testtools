@@ -9,11 +9,8 @@ import (
 	"testtools/server"
 )
 
-var (
-	tmpSentToServerPort uint = 0
-)
-
 func init() {
+	var tmpSentToServerPort uint
 
 	// common option
 	flag.BoolVar(&common.FlagInfos.IsHelp, "h", false, "Show help")
@@ -38,38 +35,48 @@ func init() {
 	flag.Uint64Var(&common.FlagInfos.WaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, QUIC protocols")
 	flag.Parse()
+
+	common.FlagInfos.SentToServerPort = uint16(tmpSentToServerPort)
+
+	if !common.FlagInfos.IsHelp {
+		_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
+		if os.IsNotExist(err) {
+			common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/config/config.json"
+			_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
+			if os.IsNotExist(err) {
+				common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/../config/config.json"
+			}
+
+			_, err = os.Stat(common.FlagInfos.ConfigFileFullPath)
+			if os.IsNotExist(err) {
+				panic(fmt.Sprintf("Please using -f option specifying a configuration file"))
+			}
+		}
+
+		common.JsonConfigs, err = common.LoadConfigFile(common.FlagInfos.ConfigFileFullPath)
+		if nil != err {
+			panic(err)
+		}
+	}
 }
 
 func main() {
-	var logLevel int = common.JsonConfigs.CommonLogLevel
-	common.LoggerInit(logLevel, common.JsonConfigs.CommonLogRoll, "")
+	var logLevel int = 0
+	var logRoll int = 50000
+	if !common.FlagInfos.IsHelp {
+		logLevel = common.JsonConfigs.CommonLogLevel
+		logRoll = common.JsonConfigs.CommonLogRoll
+	}
+
+	// The third parameter "" mean the log output to stdout
+	common.LoggerInit(logLevel, logRoll, "")
 
 	if common.FlagInfos.IsHelp {
 		flag.Usage()
-		server.HttpServerGuide(80)
-		server.HttpsServerGuide(443)
-		common.System("\nJson config: %+v\n\n", common.JsonConfigs)
+		// server.HttpServerGuide(80)
+		// server.HttpsServerGuide(443)
+		// common.System("\nJson config: %+v\n\n", common.JsonConfigs)
 		return
-	}
-
-	common.FlagInfos.SentToServerPort = uint16(tmpSentToServerPort)
-	_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
-	if os.IsNotExist(err) {
-		common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/config/config.json"
-		_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
-		if os.IsNotExist(err) {
-			common.FlagInfos.ConfigFileFullPath = common.CurrDir + "/../config/config.json"
-		}
-
-		_, err = os.Stat(common.FlagInfos.ConfigFileFullPath)
-		if os.IsNotExist(err) {
-			panic(fmt.Sprintf("Please using -f option specifying a configuration file"))
-		}
-	}
-
-	common.JsonConfigs, err = common.LoadConfigFile(common.FlagInfos.ConfigFileFullPath)
-	if nil != err {
-		panic(err)
 	}
 
 	if common.FlagInfos.IsServer {
