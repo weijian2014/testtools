@@ -124,13 +124,14 @@ func initAllServer() {
 
 	// Init Special Udp server
 	for _, host := range common.JsonConfigs.ServerUdpListenHosts {
-		ipAndPort := strings.Split(host, ":")
-		p, err := strconv.ParseUint(ipAndPort[1], 10, 16)
+		index := strings.LastIndex(host, ":")
+		ip := host[0:index]
+		p, err := strconv.ParseUint(host[index+1:], 10, 16)
 		if nil != err {
 			panic(err)
 		}
 		port := uint16(p)
-		la := common.IpAndPort{Ip: ipAndPort[0], Port: port}
+		la := common.IpAndPort{Ip: ip, Port: port}
 		initSpecialUdpServer(fmt.Sprintf("SpecialUdpServer-%v", port), la)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}

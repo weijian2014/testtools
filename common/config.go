@@ -82,11 +82,14 @@ type IpAndPort struct {
 }
 
 func (addr *IpAndPort) String() string {
-	if false == strings.Contains(FlagInfos.ClientBindIpAddress, ":") {
-		return fmt.Sprintf("%v:%v", addr.Ip, addr.Port)
+	str := ""
+	if false == strings.Contains(addr.Ip, ":") {
+		str = fmt.Sprintf("%v:%v", addr.Ip, addr.Port)
 	} else {
-		return fmt.Sprintf("[%v]:%v", addr.Ip, addr.Port)
+		str = fmt.Sprintf("[%v]:%v", addr.Ip, addr.Port)
 	}
+
+	return str
 }
 
 // 读取json配置文件

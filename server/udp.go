@@ -69,7 +69,7 @@ func initSpecialUdpServer(serverName string, listenAddr common.IpAndPort) {
 		common.Debug("%v server control coroutine running...\n", serverName)
 
 		network := "udp"
-		if strings.Contains(common.FlagInfos.ClientSendToIpAddress, ":") {
+		if strings.Contains(listenAddr.Ip, ":") {
 			network = "udp6"
 		} else {
 			network = "udp4"

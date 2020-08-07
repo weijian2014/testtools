@@ -7,7 +7,8 @@
   "ServerCounterOutputIntervalSeconds": 3600,
   "ServerListenHost": "0.0.0.0",
   "ServerUdpListenHosts": [
-    "0.0.0.0:3004"
+    "0.0.0.0:3004",
+    ":::3005"
   ],
   "ServerTcpListenPorts": [
     1001,
