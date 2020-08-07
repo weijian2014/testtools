@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"testtools/common"
 )
@@ -156,7 +157,13 @@ func parsePort() error {
 			}
 		}
 
-		for _, port := range common.JsonConfigs.ServerUdpListenHosts {
+		for _, host := range common.JsonConfigs.ServerUdpListenHosts {
+			index := strings.LastIndex(host, ":")
+			p, err := strconv.ParseUint(host[index+1:], 10, 16)
+			if nil != err {
+				panic(err)
+			}
+			port := uint16(p)
 			if port == common.FlagInfos.SentToServerPort {
 				common.FlagInfos.UsingUdp = true
 				return nil
