@@ -156,6 +156,13 @@ func parsePort() error {
 			}
 		}
 
+		for _, port := range common.JsonConfigs.ServerUdpListenHosts {
+			if port == common.FlagInfos.SentToServerPort {
+				common.FlagInfos.UsingUdp = true
+				return nil
+			}
+		}
+
 		for _, port := range common.JsonConfigs.ServerHttpListenPorts {
 			if port == common.FlagInfos.SentToServerPort {
 				common.FlagInfos.UsingHttp = true
