@@ -63,6 +63,70 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 	}()
 }
 
+func initSpecialUdpServer(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func() {
+		common.Debug("%v server control coroutine running...\n", serverName)
+
+		network := "udp"
+		if strings.Contains(common.FlagInfos.ClientSendToIpAddress, ":") {
+			network = "udp6"
+		} else {
+			network = "udp4"
+		}
+
+		lAddr, err := net.ResolveUDPAddr(network, listenAddr.String())
+		if err != nil {
+			panic(err)
+		}
+
+		conn, err := net.ListenUDP(network, lAddr)
+		defer conn.Close()
+		if err != nil {
+			panic(err)
+		}
+
+		c := make(chan int)
+		err = insertControlChannel(listenAddr.Port, c)
+		if nil != err {
+			panic(err)
+		}
+
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					go udpServerLoop(serverName, conn)
+					isExit = false
+				}
+			case StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					conn.Close()
+					err = deleteControlChannel(listenAddr.Port)
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+				}
+			default:
+				{
+					isExit = false
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}()
+}
+
 func udpServerLoop(serverName string, conn *net.UDPConn) {
 	for {
 		// receive
@@ -77,14 +141,17 @@ func udpServerLoop(serverName string, conn *net.UDPConn) {
 			}
 		}
 
-		// send
-		n, err := conn.WriteToUDP([]byte(common.JsonConfigs.ServerSendData), remoteAddress)
-		if err != nil {
-			common.Warn("%v server[%v]----Udp client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
-			continue
-		}
+		go func() {
+			// send
+			n, err := conn.WriteToUDP([]byte(common.JsonConfigs.ServerSendData), remoteAddress)
+			if err != nil {
+				common.Warn("%v server[%v]----Udp client[%v] send failed, err : %v\n", serverName, conn.LocalAddr(), remoteAddress, err)
+				runtime.Goexit()
+			}
 
-		serverUdpCount++
-		common.Info("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
+			serverUdpCount++
+			common.Info("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
+			runtime.Goexit()
+		}()
 	}
 }

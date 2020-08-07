@@ -207,6 +207,37 @@ func reflushServers() error {
 		}
 	}
 
+	// // reflush special udp server
+	// if !reflect.DeepEqual(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts) {
+	// 	r := intersection(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts)
+	// 	add := subtraction(newConfig.ServerUdpListenHosts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerUdpListenHosts, r)
+
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenHosts, newConfig.ServerUdpListenHosts, del, add)
+	// 		common.JsonConfigs.ServerUdpListenHosts = newConfig.ServerUdpListenHosts
+
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(100) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	// reflush http server
 	if !reflect.DeepEqual(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts) {
 		r := intersection(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts)

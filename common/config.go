@@ -38,6 +38,7 @@ type JsonConfigStruct struct {
 	// Server Config
 	ServerCounterOutputIntervalSeconds uint64   `json:ServerCounterOutputIntervalSeconds`
 	ServerListenHost                   string   `json:"ServerListenHost"`
+	ServerUdpListenHosts               []string `json:"ServerUdpListenHosts"`
 	ServerTcpListenPorts               []uint16 `json:"ServerTcpListenPorts"`
 	ServerUdpListenPorts               []uint16 `json:"ServerUdpListenPorts"`
 	ServerHttpListenPorts              []uint16 `json:"ServerHttpListenPorts"`

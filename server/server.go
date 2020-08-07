@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"testtools/common"
 	"time"
 )
@@ -117,6 +119,19 @@ func initAllServer() {
 	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
 		listenAddr.Port = port
 		initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
+		time.Sleep(time.Duration(5) * time.Millisecond)
+	}
+
+	// Init Special Udp server
+	for _, host := range common.JsonConfigs.ServerUdpListenHosts {
+		ipAndPort := strings.Split(host, ":")
+		p, err := strconv.ParseUint(ipAndPort[1], 10, 16)
+		if nil != err {
+			panic(err)
+		}
+		port := uint16(p)
+		la := common.IpAndPort{Ip: ipAndPort[0], Port: port}
+		initSpecialUdpServer(fmt.Sprintf("SpecialUdpServer-%v", port), la)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
 
