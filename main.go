@@ -50,9 +50,6 @@ func main() {
 	var logLevel int = 0
 	var logRoll int = 50000
 
-	// The third parameter "" mean the log output to stdout
-	common.LoggerInit(logLevel, logRoll, "")
-
 	if common.FlagInfos.IsServer {
 		// server
 		_, err := os.Stat(common.FlagInfos.ConfigFileFullPath)
@@ -74,10 +71,6 @@ func main() {
 			panic(err)
 		}
 
-		server.HttpServerGuide(80)
-		server.HttpsServerGuide(443)
-		common.System("\nJson config: %+v\n\n", common.JsonConfigs)
-
 		logLevel = common.JsonConfigs.ServerLogLevel
 		logRoll = common.JsonConfigs.ServerLogRoll
 	} else {
@@ -87,8 +80,8 @@ func main() {
 		common.FlagInfos.ClientRecvBufferSizeBytes = 512
 	}
 
-	common.SetLogLevel(logLevel)
-	common.SetLogRoll(logRoll)
+	// The third parameter "" mean the log output to stdout
+	common.LoggerInit(logLevel, logRoll, "")
 
 	if common.FlagInfos.IsServer {
 		server.StartServer()

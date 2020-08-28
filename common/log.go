@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	logger *Logger = nil
+	logger Logger
 )
 
 const (
@@ -65,7 +65,7 @@ type Logger struct {
 }
 
 func LoggerInit(lev int, roll int, fullPath string) {
-	logger = &Logger{level: lev, rollBackLines: roll, lines: 0, filePath: fullPath, file: nil}
+	logger = Logger{level: lev, rollBackLines: roll, lines: 0, filePath: fullPath, file: nil}
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
 
 	var w io.Writer
@@ -74,7 +74,7 @@ func LoggerInit(lev int, roll int, fullPath string) {
 	} else {
 		createLogFile()
 		// Logger实现了Write方法,可以做为io.Writer接口使用
-		w = logger
+		w = &logger
 	}
 
 	log.SetOutput(w)

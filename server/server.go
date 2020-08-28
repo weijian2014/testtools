@@ -95,7 +95,7 @@ func StartServer() {
 	printDnsServerEntrys()
 	common.System("\nJson config:%+v\n\n", common.JsonConfigs)
 	go startConfigFileWatcher()
-	common.Debug("Start the config file watcher donw!\n")
+	common.Debug("Start the config file watcher done!\n")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	common.System("All server start ok\n")
 	common.System("================================================================================\n")
