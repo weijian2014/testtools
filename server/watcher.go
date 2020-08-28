@@ -93,129 +93,83 @@ func reflushServers() error {
 		return nil
 	}
 
-	if common.JsonConfigs.CommonLogLevel != newConfig.CommonLogLevel {
+	// ServerLogLevel
+	if common.JsonConfigs.ServerLogLevel != newConfig.ServerLogLevel {
 		common.System("Server log level(%v) has changed, old=[%v-%v], new=[%v-%v]\n",
 			common.GetLogLevel(),
-			common.JsonConfigs.CommonLogLevel, common.LogLevelToString(common.JsonConfigs.CommonLogLevel),
-			newConfig.CommonLogLevel, common.LogLevelToString(newConfig.CommonLogLevel))
-		common.JsonConfigs.CommonLogLevel = newConfig.CommonLogLevel
+			common.JsonConfigs.ServerLogLevel, common.LogLevelToString(common.JsonConfigs.ServerLogLevel),
+			newConfig.ServerLogLevel, common.LogLevelToString(newConfig.ServerLogLevel))
+		common.JsonConfigs.ServerLogLevel = newConfig.ServerLogLevel
+		common.SetLogLevel(common.JsonConfigs.ServerLogLevel)
 	}
 
-	if common.JsonConfigs.CommonLogRoll != newConfig.CommonLogRoll {
-		common.System("Server log roll(line) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.CommonLogRoll, newConfig.CommonLogRoll)
-		common.JsonConfigs.CommonLogRoll = newConfig.CommonLogRoll
+	// ServerLogRoll
+	if common.JsonConfigs.ServerLogRoll != newConfig.ServerLogRoll {
+		common.System("Server log roll(line) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerLogRoll, newConfig.ServerLogRoll)
+		common.JsonConfigs.ServerLogRoll = newConfig.ServerLogRoll
+		common.SetLogRoll(common.JsonConfigs.ServerLogRoll)
 	}
 
-	if common.JsonConfigs.CommonRecvBufferSizeBytes != newConfig.CommonRecvBufferSizeBytes {
-		common.System("Server recvice buffer size(byte) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.CommonRecvBufferSizeBytes, newConfig.CommonRecvBufferSizeBytes)
-		common.JsonConfigs.CommonRecvBufferSizeBytes = newConfig.CommonRecvBufferSizeBytes
+	// ServerRecvBufferSizeBytes
+	if common.JsonConfigs.ServerRecvBufferSizeBytes != newConfig.ServerRecvBufferSizeBytes {
+		common.System("Server recvice buffer size(byte) has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerRecvBufferSizeBytes, newConfig.ServerRecvBufferSizeBytes)
+		common.JsonConfigs.ServerRecvBufferSizeBytes = newConfig.ServerRecvBufferSizeBytes
 	}
 
+	// ServerCounterOutputIntervalSeconds
 	if common.JsonConfigs.ServerCounterOutputIntervalSeconds != newConfig.ServerCounterOutputIntervalSeconds {
 		common.System("Server counter output interval(second) seconds has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerCounterOutputIntervalSeconds, newConfig.ServerCounterOutputIntervalSeconds)
 		common.JsonConfigs.ServerCounterOutputIntervalSeconds = newConfig.ServerCounterOutputIntervalSeconds
 	}
 
+	// ServerSendData
 	if common.JsonConfigs.ServerSendData != newConfig.ServerSendData {
 		common.System("Server send data has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerSendData, newConfig.ServerSendData)
 		common.JsonConfigs.ServerSendData = newConfig.ServerSendData
 	}
 
-	// server listen host
-	if common.JsonConfigs.ServerListenHost != newConfig.ServerListenHost {
-		common.System("Server listen host has changed, old=[%v], new=[%v]\n", common.JsonConfigs.ServerListenHost, newConfig.ServerListenHost)
-		err = stopAllServers()
-		if nil != err {
-			common.Error("The %v file watcher stop all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
-			return err
-		}
+	// listenAddr := common.IpAndPort{Ip: "0.0.0.0", Port: 0}
 
-		time.Sleep(time.Duration(500) * time.Millisecond)
-		common.JsonConfigs.ServerListenHost = newConfig.ServerListenHost
-		initAllServer()
-		time.Sleep(time.Duration(500) * time.Millisecond)
-		err = startAllServers()
-		if nil != err {
-			common.Error("The %v file watcher start all server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, err)
-			return err
-		}
-
-		return nil
-	}
-
-	listenAddr := common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
-
-	// reflush tcp server
-	if !reflect.DeepEqual(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts) {
-		r := intersection(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts)
-		del := subtraction(common.JsonConfigs.ServerTcpListenPorts, r)
-		add := subtraction(newConfig.ServerTcpListenPorts, r)
-
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Tcp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerTcpListenPorts, newConfig.ServerTcpListenPorts, del, add)
-			common.JsonConfigs.ServerTcpListenPorts = newConfig.ServerTcpListenPorts
-
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-
-			for _, port := range add {
-				listenAddr.Port = port
-				initTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(200) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
-
-	// reflush udp server
-	if !reflect.DeepEqual(newConfig.ServerUdpListenPorts, common.JsonConfigs.ServerUdpListenPorts) {
-		r := intersection(newConfig.ServerUdpListenPorts, common.JsonConfigs.ServerUdpListenPorts)
-		add := subtraction(newConfig.ServerUdpListenPorts, r)
-		del := subtraction(common.JsonConfigs.ServerUdpListenPorts, r)
-
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenPorts, newConfig.ServerUdpListenPorts, del, add)
-			common.JsonConfigs.ServerUdpListenPorts = newConfig.ServerUdpListenPorts
-
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-
-			for _, port := range add {
-				listenAddr.Port = port
-				initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(100) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
-
-	// // reflush special udp server
-	// if !reflect.DeepEqual(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts) {
-	// 	r := intersection(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts)
-	// 	add := subtraction(newConfig.ServerUdpListenHosts, r)
-	// 	del := subtraction(common.JsonConfigs.ServerUdpListenHosts, r)
+	// // reflush tcp server
+	// if !reflect.DeepEqual(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts) {
+	// 	r := intersection(newConfig.ServerTcpListenPorts, common.JsonConfigs.ServerTcpListenPorts)
+	// 	del := subtraction(common.JsonConfigs.ServerTcpListenPorts, r)
+	// 	add := subtraction(newConfig.ServerTcpListenPorts, r)
 
 	// 	if 0 != len(del) || 0 != len(add) {
-	// 		common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenHosts, newConfig.ServerUdpListenHosts, del, add)
-	// 		common.JsonConfigs.ServerUdpListenHosts = newConfig.ServerUdpListenHosts
+	// 		common.System("Tcp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerTcpListenPorts, newConfig.ServerTcpListenPorts, del, add)
+	// 		common.JsonConfigs.ServerTcpListenPorts = newConfig.ServerTcpListenPorts
+
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			initTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(200) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [TcpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// // reflush udp server
+	// if !reflect.DeepEqual(newConfig.ServerUdpListenPorts, common.JsonConfigs.ServerUdpListenPorts) {
+	// 	r := intersection(newConfig.ServerUdpListenPorts, common.JsonConfigs.ServerUdpListenPorts)
+	// 	add := subtraction(newConfig.ServerUdpListenPorts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerUdpListenPorts, r)
+
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenPorts, newConfig.ServerUdpListenPorts, del, add)
+	// 		common.JsonConfigs.ServerUdpListenPorts = newConfig.ServerUdpListenPorts
 
 	// 		for _, port := range del {
 	// 			err = stopServer(port)
@@ -238,142 +192,173 @@ func reflushServers() error {
 	// 	}
 	// }
 
-	// reflush http server
-	if !reflect.DeepEqual(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts) {
-		r := intersection(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts)
-		add := subtraction(newConfig.ServerHttpListenPorts, r)
-		del := subtraction(common.JsonConfigs.ServerHttpListenPorts, r)
+	// // // reflush special udp server
+	// // if !reflect.DeepEqual(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts) {
+	// // 	r := intersection(newConfig.ServerUdpListenHosts, common.JsonConfigs.ServerUdpListenHosts)
+	// // 	add := subtraction(newConfig.ServerUdpListenHosts, r)
+	// // 	del := subtraction(common.JsonConfigs.ServerUdpListenHosts, r)
 
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Http server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpListenPorts, newConfig.ServerHttpListenPorts, del, add)
-			common.JsonConfigs.ServerHttpListenPorts = newConfig.ServerHttpListenPorts
+	// // 	if 0 != len(del) || 0 != len(add) {
+	// // 		common.System("Udp server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerUdpListenHosts, newConfig.ServerUdpListenHosts, del, add)
+	// // 		common.JsonConfigs.ServerUdpListenHosts = newConfig.ServerUdpListenHosts
 
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
+	// // 		for _, port := range del {
+	// // 			err = stopServer(port)
+	// // 			if nil != err {
+	// // 				common.Error("The %v file watcher stop [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// // 				return err
+	// // 			}
+	// // 		}
 
-			for _, port := range add {
-				listenAddr.Port = port
-				initHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(100) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
+	// // 		for _, port := range add {
+	// // 			listenAddr.Port = port
+	// // 			initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
+	// // 			time.Sleep(time.Duration(100) * time.Millisecond)
+	// // 			err = startServer(port)
+	// // 			if nil != err {
+	// // 				common.Error("The %v file watcher start [UdpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// // 				return err
+	// // 			}
+	// // 		}
+	// // 	}
+	// // }
 
-	// reflush https server
-	if !reflect.DeepEqual(newConfig.ServerHttpsListenPorts, common.JsonConfigs.ServerHttpsListenPorts) {
-		r := intersection(newConfig.ServerHttpsListenPorts, common.JsonConfigs.ServerHttpsListenPorts)
-		add := subtraction(newConfig.ServerHttpsListenPorts, r)
-		del := subtraction(common.JsonConfigs.ServerHttpsListenPorts, r)
+	// // reflush http server
+	// if !reflect.DeepEqual(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts) {
+	// 	r := intersection(newConfig.ServerHttpListenPorts, common.JsonConfigs.ServerHttpListenPorts)
+	// 	add := subtraction(newConfig.ServerHttpListenPorts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerHttpListenPorts, r)
 
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Https server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpsListenPorts, newConfig.ServerHttpsListenPorts, del, add)
-			common.JsonConfigs.ServerHttpsListenPorts = newConfig.ServerHttpsListenPorts
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Http server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpListenPorts, newConfig.ServerHttpListenPorts, del, add)
+	// 		common.JsonConfigs.ServerHttpListenPorts = newConfig.ServerHttpListenPorts
 
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
 
-			for _, port := range add {
-				listenAddr.Port = port
-				prepareCert()
-				initHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(300) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			initHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(100) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [HttpServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	// reflush quic server
-	if !reflect.DeepEqual(newConfig.ServerQuicListenPorts, common.JsonConfigs.ServerQuicListenPorts) {
-		r := intersection(newConfig.ServerQuicListenPorts, common.JsonConfigs.ServerQuicListenPorts)
-		add := subtraction(newConfig.ServerQuicListenPorts, r)
-		del := subtraction(common.JsonConfigs.ServerQuicListenPorts, r)
+	// // reflush https server
+	// if !reflect.DeepEqual(newConfig.ServerHttpsListenPorts, common.JsonConfigs.ServerHttpsListenPorts) {
+	// 	r := intersection(newConfig.ServerHttpsListenPorts, common.JsonConfigs.ServerHttpsListenPorts)
+	// 	add := subtraction(newConfig.ServerHttpsListenPorts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerHttpsListenPorts, r)
 
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Quic server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerQuicListenPorts, newConfig.ServerQuicListenPorts, del, add)
-			common.JsonConfigs.ServerQuicListenPorts = newConfig.ServerQuicListenPorts
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Https server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerHttpsListenPorts, newConfig.ServerHttpsListenPorts, del, add)
+	// 		common.JsonConfigs.ServerHttpsListenPorts = newConfig.ServerHttpsListenPorts
 
-			for _, port := range add {
-				listenAddr.Port = port
-				initQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(300) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
 
-	// reflush dns server
-	if !reflect.DeepEqual(newConfig.ServerDnsListenPorts, common.JsonConfigs.ServerDnsListenPorts) {
-		r := intersection(newConfig.ServerDnsListenPorts, common.JsonConfigs.ServerDnsListenPorts)
-		add := subtraction(newConfig.ServerDnsListenPorts, r)
-		del := subtraction(common.JsonConfigs.ServerDnsListenPorts, r)
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			prepareCert()
+	// 			initHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(300) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [HttpsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-		if 0 != len(del) || 0 != len(add) {
-			common.System("Dns server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerDnsListenPorts, newConfig.ServerDnsListenPorts, del, add)
-			common.JsonConfigs.ServerDnsListenPorts = newConfig.ServerDnsListenPorts
-			for _, port := range del {
-				err = stopServer(port)
-				if nil != err {
-					common.Error("The %v file watcher stop [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
+	// // reflush quic server
+	// if !reflect.DeepEqual(newConfig.ServerQuicListenPorts, common.JsonConfigs.ServerQuicListenPorts) {
+	// 	r := intersection(newConfig.ServerQuicListenPorts, common.JsonConfigs.ServerQuicListenPorts)
+	// 	add := subtraction(newConfig.ServerQuicListenPorts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerQuicListenPorts, r)
 
-			for _, port := range add {
-				listenAddr.Port = port
-				if 0 != len(common.JsonConfigs.ServerDnsListenPorts) {
-					saveDnsEntrys()
-				}
-				initDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
-				time.Sleep(time.Duration(50) * time.Millisecond)
-				err = startServer(port)
-				if nil != err {
-					common.Error("The %v file watcher start [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
-					return err
-				}
-			}
-		}
-	}
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Quic server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerQuicListenPorts, newConfig.ServerQuicListenPorts, del, add)
+	// 		common.JsonConfigs.ServerQuicListenPorts = newConfig.ServerQuicListenPorts
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
 
-	if !reflect.DeepEqual(newConfig.ServerDnsAEntrys, common.JsonConfigs.ServerDnsAEntrys) ||
-		!reflect.DeepEqual(newConfig.ServerDns4AEntrys, common.JsonConfigs.ServerDns4AEntrys) {
-		common.System("Dns server entrys has changed, oldA=%v, old4A=%v, newA=%v, new4A=%v\n",
-			common.JsonConfigs.ServerDnsAEntrys, common.JsonConfigs.ServerDns4AEntrys, newConfig.ServerDnsAEntrys, newConfig.ServerDns4AEntrys)
-		common.JsonConfigs.ServerDnsAEntrys = newConfig.ServerDnsAEntrys
-		common.JsonConfigs.ServerDns4AEntrys = newConfig.ServerDns4AEntrys
-		saveDnsEntrys()
-		printDnsServerEntrys()
-		common.System("\n")
-	}
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			initQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(300) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [QuicServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// // reflush dns server
+	// if !reflect.DeepEqual(newConfig.ServerDnsListenPorts, common.JsonConfigs.ServerDnsListenPorts) {
+	// 	r := intersection(newConfig.ServerDnsListenPorts, common.JsonConfigs.ServerDnsListenPorts)
+	// 	add := subtraction(newConfig.ServerDnsListenPorts, r)
+	// 	del := subtraction(common.JsonConfigs.ServerDnsListenPorts, r)
+
+	// 	if 0 != len(del) || 0 != len(add) {
+	// 		common.System("Dns server port has changed, old=%v, new=%v, del=%v, add=%v\n", common.JsonConfigs.ServerDnsListenPorts, newConfig.ServerDnsListenPorts, del, add)
+	// 		common.JsonConfigs.ServerDnsListenPorts = newConfig.ServerDnsListenPorts
+	// 		for _, port := range del {
+	// 			err = stopServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher stop [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+
+	// 		for _, port := range add {
+	// 			listenAddr.Port = port
+	// 			if 0 != len(common.JsonConfigs.ServerDnsListenPorts) {
+	// 				saveDnsEntrys()
+	// 			}
+	// 			initDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
+	// 			time.Sleep(time.Duration(50) * time.Millisecond)
+	// 			err = startServer(port)
+	// 			if nil != err {
+	// 				common.Error("The %v file watcher start [DnsServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, port, err)
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// if !reflect.DeepEqual(newConfig.ServerDnsAEntrys, common.JsonConfigs.ServerDnsAEntrys) ||
+	// 	!reflect.DeepEqual(newConfig.ServerDns4AEntrys, common.JsonConfigs.ServerDns4AEntrys) {
+	// 	common.System("Dns server entrys has changed, oldA=%v, old4A=%v, newA=%v, new4A=%v\n",
+	// 		common.JsonConfigs.ServerDnsAEntrys, common.JsonConfigs.ServerDns4AEntrys, newConfig.ServerDnsAEntrys, newConfig.ServerDns4AEntrys)
+	// 	common.JsonConfigs.ServerDnsAEntrys = newConfig.ServerDnsAEntrys
+	// 	common.JsonConfigs.ServerDns4AEntrys = newConfig.ServerDns4AEntrys
+	// 	saveDnsEntrys()
+	// 	printDnsServerEntrys()
+	// 	common.System("\n")
+	// }
 
 	common.JsonConfigs = newConfig
 	return nil

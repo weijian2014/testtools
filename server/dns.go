@@ -71,7 +71,7 @@ func initDnsServer(serverName string, listenAddr common.IpAndPort) {
 func dnsServerLoop(serverName string, conn *net.UDPConn) {
 	for {
 		// receive
-		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.ServerRecvBufferSizeBytes)
 		_, remoteAddress, err := conn.ReadFromUDP(recvBuffer)
 		if err != nil {
 			if strings.Contains(err.Error(), "use of closed network connection") {

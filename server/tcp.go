@@ -77,7 +77,7 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 	defer conn.Close()
 	for {
 		// receive
-		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.ServerRecvBufferSizeBytes)
 		n, err := conn.Read(recvBuffer)
 		if err != nil {
 			if "NO_ERROR" == err.Error() {

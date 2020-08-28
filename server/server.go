@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"testtools/common"
 	"time"
@@ -72,7 +73,7 @@ func StartServer() {
 	if 0 == len(common.JsonConfigs.ServerHttpListenHosts) {
 		HttpServerGuide(80)
 	} else {
-		ip, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpListenHosts[0])
+		_, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpListenHosts[0])
 		if nil != err {
 			panic(err)
 		}
@@ -83,7 +84,7 @@ func StartServer() {
 	if 0 == len(common.JsonConfigs.ServerHttpsListenHosts) {
 		HttpsServerGuide(443)
 	} else {
-		ip, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpsListenHosts[0])
+		_, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpsListenHosts[0])
 		if nil != err {
 			panic(err)
 		}
@@ -112,110 +113,132 @@ func StartServer() {
 }
 
 func initAllServer() {
-	listenAddr := common.IpAndPort{Ip: common.JsonConfigs.ServerListenHost, Port: 0}
+	listenAddr := common.IpAndPort{Ip: "0.0.0.0", Port: 0}
 
 	// Init Tcp server
-	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
-		listenAddr.Port = port
-		initTcpServer(fmt.Sprintf("TcpServer-%v", port), listenAddr)
+	for _, host := range common.JsonConfigs.ServerTcpListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initTcpServer(fmt.Sprintf("TcpServer-%v", listenAddr.Port), listenAddr)
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
 
 	// Init Udp server
-	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
-		listenAddr.Port = port
-		initUdpServer(fmt.Sprintf("UdpServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(5) * time.Millisecond)
+	for _, host := range common.JsonConfigs.ServerUdpListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initUdpServer(fmt.Sprintf("UdpServer-%v", listenAddr.Port), listenAddr)
+		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
 
-	// // Init Special Udp server
-	// for _, host := range common.JsonConfigs.ServerUdpListenHosts {
-	// 	index := strings.LastIndex(host, ":")
-	// 	ip := host[0:index]
-	// 	p, err := strconv.ParseUint(host[index+1:], 10, 16)
-	// 	if nil != err {
-	// 		panic(err)
-	// 	}
-	// 	port := uint16(p)
-	// 	la := common.IpAndPort{Ip: ip, Port: port}
-	// 	initSpecialUdpServer(fmt.Sprintf("SpecialUdpServer-%v", port), la)
-	// 	time.Sleep(time.Duration(5) * time.Millisecond)
-	// }
+	// Init Quic server
+	for _, host := range common.JsonConfigs.ServerQuicListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initQuicServer(fmt.Sprintf("QuicServer-%v", listenAddr.Port), listenAddr)
+		time.Sleep(time.Duration(150) * time.Millisecond)
+	}
 
 	// Init Http server
-	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
-		listenAddr.Port = port
-		initHttpServer(fmt.Sprintf("HttpServer-%v", port), listenAddr)
+	for _, host := range common.JsonConfigs.ServerHttpListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initHttpServer(fmt.Sprintf("HttpServer-%v", listenAddr.Port), listenAddr)
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
 
 	// Init Https server
-	if 0 != len(common.JsonConfigs.ServerHttpsListenPorts) {
+	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) {
 		prepareCert()
 	}
-	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
-		listenAddr.Port = port
-		initHttpsServer(fmt.Sprintf("HttpsServer-%v", port), listenAddr)
-		time.Sleep(time.Duration(150) * time.Millisecond)
-	}
-
-	// Init Quic server
-	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
-		listenAddr.Port = uint16(port)
-		initQuicServer(fmt.Sprintf("QuicServer-%v", port), listenAddr)
+	for _, host := range common.JsonConfigs.ServerHttpsListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initHttpsServer(fmt.Sprintf("HttpsServer-%v", listenAddr.Port), listenAddr)
 		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
 	// Init Dns server
-	if 0 != len(common.JsonConfigs.ServerDnsListenPorts) {
+	if 0 != len(common.JsonConfigs.ServerDnsListenHosts) {
 		saveDnsEntrys()
 	}
-	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
-		listenAddr.Port = port
-		initDnsServer(fmt.Sprintf("DnsServer-%v", port), listenAddr)
+	for _, host := range common.JsonConfigs.ServerDnsListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initDnsServer(fmt.Sprintf("DnsServer-%v", listenAddr.Port), listenAddr)
 	}
 }
 
 func checkJsonConfig() error {
 	// Tcp
-	for _, port := range common.JsonConfigs.ServerTcpListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
+	for _, host := range common.JsonConfigs.ServerTcpListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
+		}
+
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for tcp server", host)
 		}
 	}
 
 	// Udp
-	for _, port := range common.JsonConfigs.ServerUdpListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
+	for _, host := range common.JsonConfigs.ServerUdpListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
 		}
-	}
 
-	// Http
-	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
-		}
-	}
-
-	// Https
-	for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for udp server", host)
 		}
 	}
 
 	// Quic
-	for _, port := range common.JsonConfigs.ServerQuicListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
+	for _, host := range common.JsonConfigs.ServerQuicListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
+		}
+
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for quic server", host)
+		}
+	}
+
+	// Http
+	for _, host := range common.JsonConfigs.ServerHttpListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
+		}
+
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for http server", host)
+		}
+	}
+
+	// Https
+	for _, host := range common.JsonConfigs.ServerHttpsListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
+		}
+
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for https server", host)
 		}
 	}
 
 	// Dns
-	for _, port := range common.JsonConfigs.ServerDnsListenPorts {
-		if 0 > port || 65535 < port {
-			return fmt.Errorf("Listen port[%v] invalid of config.json file", port)
+	for _, host := range common.JsonConfigs.ServerDnsListenHosts {
+		ip, _, err := common.GetIpAndPort(host)
+		if nil != err {
+			return err
+		}
+
+		if nil == net.ParseIP(ip).To4() &&
+			nil == net.ParseIP(ip).To16() {
+			return fmt.Errorf("Listen host[%v] invalid of config.json file for dns server", host)
 		}
 	}
 

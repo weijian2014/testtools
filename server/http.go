@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"runtime"
@@ -248,7 +247,7 @@ func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
 }
 
 func HttpServerGuide(listenPort uint16) {
-	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
+	ip := "127.0.0.1"
 	common.System("Http server use guide:\n")
 	common.System("\tUse 'curl http://%v:%v' get index page\n", ip, listenPort)
 	common.System("\tUse 'curl -F \"uploadfile=@/filepath/filename\" http://%v:%v/upload' upload file to web server\n", ip, listenPort)
@@ -257,7 +256,7 @@ func HttpServerGuide(listenPort uint16) {
 }
 
 func HttpsServerGuide(listenPort uint16) {
-	ip := net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address)
+	ip := "127.0.0.1"
 	common.System("Https server certificate has been generated in the %v directory\n", certificatePath)
 	common.System("Https server use guide:\n")
 	common.System("\tUse 'curl -k https://%v:%v' get index page\n", ip, listenPort)

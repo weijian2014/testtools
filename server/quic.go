@@ -92,7 +92,7 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 
 	for {
 		// receive
-		recvBuffer := make([]byte, common.JsonConfigs.CommonRecvBufferSizeBytes)
+		recvBuffer := make([]byte, common.JsonConfigs.ServerRecvBufferSizeBytes)
 		_, err = stream.Read(recvBuffer)
 		if err != nil {
 			if "NO_ERROR" == err.Error() ||

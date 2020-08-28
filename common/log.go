@@ -80,6 +80,14 @@ func LoggerInit(lev int, roll int, fullPath string) {
 	log.SetOutput(w)
 }
 
+func SetLogLevel(lev int) {
+	logger.level = lev
+}
+
+func SetLogRoll(roll int) {
+	logger.rollBackLines = roll
+}
+
 func Debug(fmt string, args ...interface{}) {
 	if logger.level <= DebugLevel {
 		log.SetPrefix("debug ")

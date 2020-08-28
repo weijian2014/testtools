@@ -38,12 +38,12 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
 		client := &http.Client{Transport: tr}
-		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
+		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.FlagInfos.ClientSendData))
 		if err != nil {
 			common.Warn("Http client new request failed, times[%d], err : %v\n", i, err.Error())
 			continue
 		}
-		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
+		req.Header.Add("ClientSendData", common.FlagInfos.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -58,7 +58,7 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 			continue
 		}
 
-		common.Info("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Http client[%v]----Http server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.FlagInfos.ClientSendData, body)
 	}
 }
 
@@ -92,12 +92,12 @@ func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
 		client := &http.Client{Transport: tr}
-		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.JsonConfigs.ClientSendData))
+		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.FlagInfos.ClientSendData))
 		if err != nil {
 			common.Warn("Https client new request failed, times[%d], err : %v\n", i, err.Error())
 			continue
 		}
-		req.Header.Add("ClientSendData", common.JsonConfigs.ClientSendData)
+		req.Header.Add("ClientSendData", common.FlagInfos.ClientSendData)
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -112,6 +112,6 @@ func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
 			continue
 		}
 
-		common.Info("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.JsonConfigs.ClientSendData, body)
+		common.Info("Https client[%v]----Https server[%v], times[%d]:\n\tsend: %s\n\trecv: %s", localAddr.String(), req.Host, i, common.FlagInfos.ClientSendData, body)
 	}
 }

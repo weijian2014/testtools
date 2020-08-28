@@ -1,9 +1,7 @@
 {
-  "____CommonConfig____": "____CommonConfig____",
-  "CommonLogLevel": 1,
-  "CommonLogRoll": 50000,
-  "CommonRecvBufferSizeBytes": 512,
-  "____ServerConfig__": "____ServerConfig____",
+  "ServernLogLevel": 1,
+  "ServerLogRoll": 50000,
+  "ServerRecvBufferSizeBytes": 512,
   "ServerCounterOutputIntervalSeconds": 3600,
   "ServerTcpListenHosts": [
     "0.0.0.0:1001",
@@ -45,10 +43,5 @@
     "www.qq.com": "2222::2222:2222:2222:2222",
     "www.cnblogs.com": "3333::3333:3333:3333:3333"
   },
-  "ServerSendData": "Hello Client",
-  "____ClientConfig____": "____ClientConfig____",
-  "ClientBindIpAddress": "0.0.0.0",
-  "ClientSendToIpv4Address": "0.0.0.0",
-  "ClientSendToIpv6Address": "::1",
-  "ClientSendData": "Hello Server"
+  "ServerSendData": "Hello Client"
 }

@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"testtools/common"
 )
@@ -15,244 +14,95 @@ var (
 )
 
 func StartClient() {
-	err := checkJsonConfig()
+	err := checkFlags()
 	if nil != err {
 		panic(err)
 	}
 
-	err = checkFlags()
-	if nil != err {
-		panic(err)
-	}
-
-	err = parsePort()
-	if nil != err {
-		panic(err)
-	}
-
-	localAddr := &common.IpAndPort{Ip: common.FlagInfos.ClientBindIpAddress, Port: 0}
-	remoteAddr := &common.IpAndPort{Ip: sendToServerIpAddress, Port: common.FlagInfos.SentToServerPort}
+	localAddr := &common.IpAndPort{Ip: common.FlagInfos.ClientScrIp, Port: 0}
+	remoteAddr := &common.IpAndPort{Ip: common.FlagInfos.ClientDestIp, Port: common.FlagInfos.ClientDestPort}
 	// Tcp
-	if common.FlagInfos.UsingTcp {
+	if common.FlagInfos.ClientUsingTcp {
 		sendByTcp(localAddr, remoteAddr)
 		return
 	}
 
 	// Udp
-	if common.FlagInfos.UsingUdp {
+	if common.FlagInfos.ClientUsingUdp {
 		sendByUdp(localAddr, remoteAddr)
 		return
 	}
 
 	// Http
-	if common.FlagInfos.UsingHttp {
+	if common.FlagInfos.ClientUsingHttp {
 		sendByHttp(localAddr, remoteAddr)
 		return
 	}
 
 	// Https
-	if common.FlagInfos.UsingHttps {
+	if common.FlagInfos.ClientUsingHttps {
 		sendByHttps(localAddr, remoteAddr)
 		return
 	}
 
 	// Quic
-	if common.FlagInfos.UsingQuic {
+	if common.FlagInfos.ClientUsingQuic {
 		sendByQuic(localAddr, remoteAddr)
 		return
 	}
 
 	// Dns
-	if common.FlagInfos.UsingDns {
+	if common.FlagInfos.ClientUsingDns {
 		sendByDns(localAddr, remoteAddr)
 		return
 	}
 }
 
-func checkJsonConfig() error {
-	if nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress).To4() &&
-		nil == net.ParseIP(common.JsonConfigs.ClientBindIpAddress).To16() {
-		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
-			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
-			return fmt.Errorf("common.JsonConfigs.ClientBindIpAddress[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientBindIpAddress)
-		}
-	}
-
-	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv4Address).To4() {
-		if "127.0.0.1" != common.JsonConfigs.ClientBindIpAddress &&
-			"0.0.0.0" != common.JsonConfigs.ClientBindIpAddress {
-			return fmt.Errorf("common.JsonConfigs.ClientSendToIpv4Address[%v] is invalid ipv4 address in the config.json file", common.JsonConfigs.ClientSendToIpv4Address)
-		}
-	}
-
-	if nil == net.ParseIP(common.JsonConfigs.ClientSendToIpv6Address).To16() {
-		if "::1" != common.JsonConfigs.ClientBindIpAddress {
-			return fmt.Errorf("common.JsonConfigs.ClientSendToIpv6Address[%v] is invalid ipv6 address in the config.json file", common.JsonConfigs.ClientSendToIpv6Address)
-		}
-	}
-
-	return nil
-}
-
 func checkFlags() error {
-	// -s check
-	if 0 != len(common.FlagInfos.ClientBindIpAddress) &&
-		nil == net.ParseIP(common.FlagInfos.ClientBindIpAddress) {
-		return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] is invalid address, please check -s option", common.FlagInfos.ClientBindIpAddress)
+	// -s src IP check
+	if 0 == len(common.FlagInfos.ClientScrIp) {
+		return fmt.Errorf("ClientScrIp is invalid address, please specify a correct source ip using -s", common.FlagInfos.ClientScrIp)
 	}
-	if 0 == len(common.FlagInfos.ClientBindIpAddress) {
-		common.FlagInfos.ClientBindIpAddress = common.JsonConfigs.ClientBindIpAddress
-	}
-
-	// -d check
-	if 0 != len(common.FlagInfos.ClientSendToIpAddress) &&
-		nil == net.ParseIP(common.FlagInfos.ClientSendToIpAddress) {
-		return fmt.Errorf("common.FlagInfos.ClientSendToIpAddress[%v] is invalid address, please check -d option", common.FlagInfos.ClientSendToIpAddress)
-	}
-	if 0 == len(common.FlagInfos.ClientSendToIpAddress) {
-		if false == strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") {
-			sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv4Address
-		} else {
-			sendToServerIpAddress = common.JsonConfigs.ClientSendToIpv6Address
-		}
-	} else {
-		if strings.Contains(common.FlagInfos.ClientBindIpAddress, ":") && !strings.Contains(common.FlagInfos.ClientSendToIpAddress, ":") {
-			return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] and common.FlagInfos.ClientSendToIpAddress[%v] are invalid address, please check -d option",
-				common.FlagInfos.ClientBindIpAddress, common.FlagInfos.ClientSendToIpAddress)
-		} else if strings.Contains(common.FlagInfos.ClientBindIpAddress, ".") && !strings.Contains(common.FlagInfos.ClientSendToIpAddress, ".") {
-			return fmt.Errorf("common.FlagInfos.ClientBindIpAddress[%v] and common.FlagInfos.ClientSendToIpAddress[%v] are invalid address, please check -d option",
-				common.FlagInfos.ClientBindIpAddress, common.FlagInfos.ClientSendToIpAddress)
-		} else {
-			sendToServerIpAddress = common.FlagInfos.ClientSendToIpAddress
-		}
+	if nil == net.ParseIP(common.FlagInfos.ClientScrIp).To4() &&
+		nil == net.ParseIP(common.FlagInfos.ClientScrIp).To16() {
+		return fmt.Errorf("ClientScrIp[%v] is invalid address, please check -s option", common.FlagInfos.ClientScrIp)
 	}
 
-	return nil
-}
-
-func parsePort() error {
-	if !common.FlagInfos.UsingTcp &&
-		!common.FlagInfos.UsingUdp &&
-		!common.FlagInfos.UsingHttp &&
-		!common.FlagInfos.UsingHttps &&
-		!common.FlagInfos.UsingQuic &&
-		!common.FlagInfos.UsingDns &&
-		0 == common.FlagInfos.SentToServerPort {
-		common.FlagInfos.UsingHttp = true
-		common.Warn("Please use one of options: -tcp, -udp, -http, -https, -quic, -dns, -dport, default using Http protocol.")
+	// -d dest IP check
+	if 0 == len(common.FlagInfos.ClientDestIp) {
+		return fmt.Errorf("ClientDestIp is invalid address, please specify a correct destination ip using -d", common.FlagInfos.ClientDestIp)
+	}
+	if nil == net.ParseIP(common.FlagInfos.ClientDestIp).To4() &&
+		nil == net.ParseIP(common.FlagInfos.ClientDestIp).To16() {
+		return fmt.Errorf("ClientDestIp[%v] is invalid address, please check -d option", common.FlagInfos.ClientDestIp)
 	}
 
-	if 0 != common.FlagInfos.SentToServerPort {
-		for _, port := range common.JsonConfigs.ServerTcpListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingTcp = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerUdpListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingUdp = true
-				return nil
-			}
-		}
-
-		for _, host := range common.JsonConfigs.ServerUdpListenHosts {
-			index := strings.LastIndex(host, ":")
-			p, err := strconv.ParseUint(host[index+1:], 10, 16)
-			if nil != err {
-				panic(err)
-			}
-			port := uint16(p)
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingUdp = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerHttpListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingHttp = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerHttpsListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingHttps = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerQuicListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingQuic = true
-				return nil
-			}
-		}
-
-		for _, port := range common.JsonConfigs.ServerDnsListenPorts {
-			if port == common.FlagInfos.SentToServerPort {
-				common.FlagInfos.UsingDns = true
-				return nil
-			}
-		}
-
-		return fmt.Errorf("Please specify a correct destination port using -dport")
+	if strings.Contains(common.FlagInfos.ClientScrIp, ":") && !strings.Contains(common.FlagInfos.ClientDestIp, ":") {
+		return fmt.Errorf("ClientScrIp[%v] and common.FlagInfos.ClientDestIp[%v] are invalid address, please check -s or -d",
+			common.FlagInfos.ClientScrIp, common.FlagInfos.ClientDestIp)
+	} else if strings.Contains(common.FlagInfos.ClientScrIp, ".") && !strings.Contains(common.FlagInfos.ClientDestIp, ".") {
+		return fmt.Errorf("common.FlagInfos.ClientScrIp[%v] and common.FlagInfos.ClientDestIp[%v] are invalid address, please check -s or -d",
+			common.FlagInfos.ClientScrIp, common.FlagInfos.ClientDestIp)
 	}
 
-	if common.FlagInfos.UsingTcp {
-		if 0 == len(common.JsonConfigs.ServerTcpListenPorts) {
-			return fmt.Errorf("Please configure the [ServerTcpListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerTcpListenPorts[0]
-		return nil
+	// -dport
+	if 0 > common.FlagInfos.ClientDestPort || 65535 < common.FlagInfos.ClientDestPort {
+		return fmt.Errorf("ClientDestPort[%v] is invalid, please specify a correct destination port using -dport", common.FlagInfos.ClientDestPort)
 	}
 
-	if common.FlagInfos.UsingUdp {
-		if 0 == len(common.JsonConfigs.ServerUdpListenPorts) {
-			return fmt.Errorf("Please configure the [ServerUdpListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerUdpListenPorts[0]
-		return nil
+	// -debug
+	if 0 > common.FlagInfos.ClientLogLevel || 5 < common.FlagInfos.ClientLogLevel {
+		return fmt.Errorf("ClientLogLevel[%v] is invalid, please check -debug", common.FlagInfos.ClientDestPort)
 	}
 
-	if common.FlagInfos.UsingHttp {
-		if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
-			return fmt.Errorf("Please configure the [ServerHttpListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpListenPorts[0]
-		return nil
-	}
-
-	if common.FlagInfos.UsingHttps {
-		if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
-			return fmt.Errorf("Please configure the [ServerHttpsListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerHttpsListenPorts[0]
-		return nil
-	}
-
-	if common.FlagInfos.UsingQuic {
-		if 0 == len(common.JsonConfigs.ServerQuicListenPorts) {
-			return fmt.Errorf("Please configure the [ServerQuicListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerQuicListenPorts[0]
-		return nil
-	}
-
-	if common.FlagInfos.UsingDns {
-		if 0 == len(common.JsonConfigs.ServerDnsListenPorts) {
-			return fmt.Errorf("Please configure the [ServerDnsListenPorts] in the config.json file")
-		}
-
-		common.FlagInfos.SentToServerPort = common.JsonConfigs.ServerDnsListenPorts[0]
-		return nil
+	if !common.FlagInfos.ClientUsingTcp &&
+		!common.FlagInfos.ClientUsingUdp &&
+		!common.FlagInfos.ClientUsingHttp &&
+		!common.FlagInfos.ClientUsingHttps &&
+		!common.FlagInfos.ClientUsingQuic &&
+		!common.FlagInfos.ClientUsingDns {
+		common.System("the client protocol NO specified, please use one of options: -tcp, -udp, -http, -https, -quic, -dns, -dport, default using http protocol")
+		common.FlagInfos.ClientUsingHttp = true
 	}
 
 	return nil

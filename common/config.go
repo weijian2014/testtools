@@ -30,48 +30,40 @@ func init() {
 }
 
 type JsonConfigStruct struct {
-	// Common Config
-	CommonLogLevel            int    `json:"CommonLogLevel"`
-	CommonLogRoll             int    `json:"CommonLogRoll"`
-	CommonRecvBufferSizeBytes uint64 `json:"CommonRecvBufferSizeBytes"`
-
-	// Server Config
-	ServerCounterOutputIntervalSeconds uint64   `json:ServerCounterOutputIntervalSeconds`
-	ServerTcpListenHosts               []string `json:"ServerTcpListenHosts"`
-	ServerUdpListenHosts               []string `json:"ServerUdpListenHosts"`
-	ServerQuicListenHosts              []string `json:"ServerQuicListenHosts"`
-	ServerHttpListenHosts              []string `json:"ServerHttpListenHosts"`
-	ServerHttpsListenHosts             []string `json:"ServerHttpsListenHosts"`
-	ServerDnsListenHosts               []string `json:"ServerDnsListenHosts"`
-	// map[string]interface{}
-	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
-	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`
-	ServerSendData    string      `json:"ServerSendData"`
-
-	// Client Config
-	ClientBindIpAddress     string `json:"ClientBindIpAddress"`
-	ClientSendToIpv4Address string `json:"ClientSendToIpv4Address"`
-	ClientSendToIpv6Address string `json:"ClientSendToIpv6Address"`
-	ClientSendData          string `json:"ClientSendData"`
+	ServerLogLevel                     int         `json:"ServerLogLevel"`
+	ServerLogRoll                      int         `json:"ServerLogRoll"`
+	ServerRecvBufferSizeBytes          uint64      `json:"ServerRecvBufferSizeBytes"`
+	ServerCounterOutputIntervalSeconds uint64      `json:ServerCounterOutputIntervalSeconds`
+	ServerTcpListenHosts               []string    `json:"ServerTcpListenHosts"`
+	ServerUdpListenHosts               []string    `json:"ServerUdpListenHosts"`
+	ServerQuicListenHosts              []string    `json:"ServerQuicListenHosts"`
+	ServerHttpListenHosts              []string    `json:"ServerHttpListenHosts"`
+	ServerHttpsListenHosts             []string    `json:"ServerHttpsListenHosts"`
+	ServerDnsListenHosts               []string    `json:"ServerDnsListenHosts"`
+	ServerDnsAEntrys                   interface{} `json:"ServerDnsAEntrys"`  // map[string]interface{}
+	ServerDns4AEntrys                  interface{} `json:"ServerDns4AEntrys"` // map[string]interface{}
+	ServerSendData                     string      `json:"ServerSendData"`
 }
 
 type FlagInfoStruct struct {
-	// common option
 	IsHelp             bool
 	IsServer           bool
 	ConfigFileFullPath string
 	// client option
-	UsingTcp              bool
-	UsingUdp              bool
-	UsingHttp             bool
-	UsingHttps            bool
-	UsingQuic             bool
-	UsingDns              bool
-	ClientBindIpAddress   string
-	ClientSendToIpAddress string
-	SentToServerPort      uint16
-	WaitingSeconds        uint64
-	ClientSendNumbers     uint64
+	ClientUsingTcp            bool
+	ClientUsingUdp            bool
+	ClientUsingHttp           bool
+	ClientUsingHttps          bool
+	ClientUsingQuic           bool
+	ClientUsingDns            bool
+	ClientScrIp               string
+	ClientDestIp              string
+	ClientDestPort            uint16
+	ClientWaitingSeconds      uint64
+	ClientSendNumbers         uint64
+	ClientLogLevel            int
+	ClientSendData            string
+	ClientRecvBufferSizeBytes uint64
 }
 
 type IpAndPort struct {
