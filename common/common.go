@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -144,4 +145,25 @@ func GenerateX509Certificate(keyFullPath string, crtFullPath string) error {
 	keyOut.Close()
 
 	return nil
+}
+
+func GetIpAndPort(host string) (string, uint16, error) {
+	if !strings.Contains(host, ":") {
+		return "", 0, fmt.Errorf("host[%v] error", host)
+	}
+
+	index := strings.LastIndex(host, ":")
+	ip := host[0:index]
+
+	p, err := strconv.ParseUint(host[index+1:], 10, 16)
+	if nil != err {
+		return "", 0, fmt.Errorf("host[%v] parse fail, err: %v", host, err)
+	}
+
+	port := uint16(p)
+	if 0 > port || 65535 < port {
+		return "", 0, fmt.Errorf("port of host[%v] invalid", host)
+	}
+
+	return ip, port, nil
 }

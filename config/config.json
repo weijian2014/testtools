@@ -5,40 +5,35 @@
   "CommonRecvBufferSizeBytes": 512,
   "____ServerConfig__": "____ServerConfig____",
   "ServerCounterOutputIntervalSeconds": 3600,
-  "ServerListenHost": "0.0.0.0",
+  "ServerTcpListenHosts": [
+    "0.0.0.0:1001",
+    "0.0.0.0:1002",
+    "0.0.0.0:1003"
+  ],
   "ServerUdpListenHosts": [
-    "0.0.0.0:3004",
-    ":::3005"
+    "0.0.0.0:2001",
+    "0.0.0.0:2002",
+    "0.0.0.0:2003"
   ],
-  "ServerTcpListenPorts": [
-    1001,
-    1002,
-    1003
+  "ServerQuicListenHosts": [
+    "0.0.0.0:3001",
+    "0.0.0.0:3002",
+    "0.0.0.0:3003"
   ],
-  "ServerUdpListenPorts": [
-    2001,
-    2002,
-    2003
+  "ServerHttpListenHosts": [
+    "0.0.0.0:8001",
+    "0.0.0.0:8002",
+    "0.0.0.0:8003"
   ],
-  "ServerHttpListenPorts": [
-    8001,
-    8002,
-    8003
+  "ServerHttpsListenHosts": [
+    "0.0.0.0:4431",
+    "0.0.0.0:4432",
+    "0.0.0.0:4433"
   ],
-  "ServerHttpsListenPorts": [
-    4431,
-    4432,
-    4433
-  ],
-  "ServerQuicListenPorts": [
-    3001,
-    3002,
-    3003
-  ],
-  "ServerDnsListenPorts": [
-    5301,
-    5302,
-    5303
+  "ServerDnsListenHosts": [
+    "0.0.0.0:5301",
+    "0.0.0.0:5302",
+    "0.0.0.0:5303"
   ],
   "ServerDnsAEntrys": {
     "www.google.com": "1.1.1.1",

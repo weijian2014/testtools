@@ -37,14 +37,12 @@ type JsonConfigStruct struct {
 
 	// Server Config
 	ServerCounterOutputIntervalSeconds uint64   `json:ServerCounterOutputIntervalSeconds`
-	ServerListenHost                   string   `json:"ServerListenHost"`
+	ServerTcpListenHosts               []string `json:"ServerTcpListenHosts"`
 	ServerUdpListenHosts               []string `json:"ServerUdpListenHosts"`
-	ServerTcpListenPorts               []uint16 `json:"ServerTcpListenPorts"`
-	ServerUdpListenPorts               []uint16 `json:"ServerUdpListenPorts"`
-	ServerHttpListenPorts              []uint16 `json:"ServerHttpListenPorts"`
-	ServerHttpsListenPorts             []uint16 `json:"ServerHttpsListenPorts"`
-	ServerQuicListenPorts              []uint16 `json:"ServerQuicListenPorts"`
-	ServerDnsListenPorts               []uint16 `json:"ServerDnsListenPorts"`
+	ServerQuicListenHosts              []string `json:"ServerQuicListenHosts"`
+	ServerHttpListenHosts              []string `json:"ServerHttpListenHosts"`
+	ServerHttpsListenHosts             []string `json:"ServerHttpsListenHosts"`
+	ServerDnsListenHosts               []string `json:"ServerDnsListenHosts"`
 	// map[string]interface{}
 	ServerDnsAEntrys  interface{} `json:"ServerDnsAEntrys"`
 	ServerDns4AEntrys interface{} `json:"ServerDns4AEntrys"`

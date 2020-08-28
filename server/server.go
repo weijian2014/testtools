@@ -3,8 +3,6 @@ package server
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"testtools/common"
 	"time"
 )
@@ -71,17 +69,25 @@ func StartServer() {
 	common.Debug("Start all servers done!\n")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
-	if 0 == len(common.JsonConfigs.ServerHttpListenPorts) {
+	if 0 == len(common.JsonConfigs.ServerHttpListenHosts) {
 		HttpServerGuide(80)
 	} else {
-		HttpServerGuide(common.JsonConfigs.ServerHttpListenPorts[0])
+		ip, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpListenHosts[0])
+		if nil != err {
+			panic(err)
+		}
+		HttpServerGuide(port)
 	}
 	common.Debug("Show the http server guide done!\n")
 
-	if 0 == len(common.JsonConfigs.ServerHttpsListenPorts) {
+	if 0 == len(common.JsonConfigs.ServerHttpsListenHosts) {
 		HttpsServerGuide(443)
 	} else {
-		HttpsServerGuide(common.JsonConfigs.ServerHttpsListenPorts[0])
+		ip, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpsListenHosts[0])
+		if nil != err {
+			panic(err)
+		}
+		HttpsServerGuide(port)
 	}
 	common.Debug("Show the https server guide done!\n")
 
@@ -122,19 +128,19 @@ func initAllServer() {
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
 
-	// Init Special Udp server
-	for _, host := range common.JsonConfigs.ServerUdpListenHosts {
-		index := strings.LastIndex(host, ":")
-		ip := host[0:index]
-		p, err := strconv.ParseUint(host[index+1:], 10, 16)
-		if nil != err {
-			panic(err)
-		}
-		port := uint16(p)
-		la := common.IpAndPort{Ip: ip, Port: port}
-		initSpecialUdpServer(fmt.Sprintf("SpecialUdpServer-%v", port), la)
-		time.Sleep(time.Duration(5) * time.Millisecond)
-	}
+	// // Init Special Udp server
+	// for _, host := range common.JsonConfigs.ServerUdpListenHosts {
+	// 	index := strings.LastIndex(host, ":")
+	// 	ip := host[0:index]
+	// 	p, err := strconv.ParseUint(host[index+1:], 10, 16)
+	// 	if nil != err {
+	// 		panic(err)
+	// 	}
+	// 	port := uint16(p)
+	// 	la := common.IpAndPort{Ip: ip, Port: port}
+	// 	initSpecialUdpServer(fmt.Sprintf("SpecialUdpServer-%v", port), la)
+	// 	time.Sleep(time.Duration(5) * time.Millisecond)
+	// }
 
 	// Init Http server
 	for _, port := range common.JsonConfigs.ServerHttpListenPorts {
