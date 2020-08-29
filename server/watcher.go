@@ -18,12 +18,12 @@ const (
 )
 
 var (
-	controlChannelsMap      map[uint16]chan int
+	controlChannelsMap      map[string]chan int
 	controlChannelsMapGuard sync.Mutex
 )
 
 func init() {
-	controlChannelsMap = make(map[uint16]chan int)
+	controlChannelsMap = make(map[string]chan int)
 }
 
 func startConfigFileWatcher() {
@@ -167,12 +167,29 @@ func reflushServers() error {
 		common.JsonConfigs.ServerHttpsListenHosts = newConfig.ServerHttpsListenHosts
 	}
 
-	// reflush dns entry
-	if !reflect.DeepEqual(newConfig.ServerDnsAEntrys, common.JsonConfigs.ServerDnsAEntrys) ||
-		!reflect.DeepEqual(newConfig.ServerDns4AEntrys, common.JsonConfigs.ServerDns4AEntrys) {
-		common.System("Dns server entrys has changed, oldA=%v, old4A=%v, newA=%v, new4A=%v\n",
-			common.JsonConfigs.ServerDnsAEntrys, common.JsonConfigs.ServerDns4AEntrys, newConfig.ServerDnsAEntrys, newConfig.ServerDns4AEntrys)
+	// reflush dns server
+	err = reflushServer(common.JsonConfigs.ServerDnsListenHosts, newConfig.ServerDnsListenHosts, "Dns")
+	if nil != err {
+		return err
+	} else {
+		common.JsonConfigs.ServerDnsListenHosts = newConfig.ServerDnsListenHosts
+	}
+
+	// reflush dns A entry
+	if !reflect.DeepEqual(newConfig.ServerDnsAEntrys, common.JsonConfigs.ServerDnsAEntrys) {
+		common.System("Dns server A entrys has changed, oldA=%v, newA=%v\n",
+			common.JsonConfigs.ServerDnsAEntrys, newConfig.ServerDnsAEntrys)
 		common.JsonConfigs.ServerDnsAEntrys = newConfig.ServerDnsAEntrys
+
+		saveDnsEntrys()
+		printDnsServerEntrys()
+		common.System("\n")
+	}
+
+	// reflush dns AAAA entry
+	if !reflect.DeepEqual(newConfig.ServerDns4AEntrys, common.JsonConfigs.ServerDns4AEntrys) {
+		common.System("Dns server AAAA entrys has changed, oldA=%v, newA=%v\n",
+			common.JsonConfigs.ServerDns4AEntrys, newConfig.ServerDns4AEntrys)
 		common.JsonConfigs.ServerDns4AEntrys = newConfig.ServerDns4AEntrys
 		saveDnsEntrys()
 		printDnsServerEntrys()
@@ -183,45 +200,33 @@ func reflushServers() error {
 	return nil
 }
 
-func insertControlChannel(port uint16, ctrlChan chan int) error {
-	if 65535 <= port {
-		return fmt.Errorf("Invalid port")
-	}
-
+func insertControlChannel(host string, ctrlChan chan int) error {
 	controlChannelsMapGuard.Lock()
 	defer controlChannelsMapGuard.Unlock()
 
-	_, ok := controlChannelsMap[port]
+	_, ok := controlChannelsMap[host]
 	if ok {
-		return fmt.Errorf("The control channel already exists")
+		return fmt.Errorf("The control channel[%v] already exists to insert control channel", host)
 	}
 
-	controlChannelsMap[port] = ctrlChan
+	controlChannelsMap[host] = ctrlChan
 	return nil
 }
 
-func deleteControlChannel(port uint16) error {
-	if 65535 <= port {
-		return fmt.Errorf("Invalid port")
-	}
-
+func deleteControlChannel(host string) error {
 	controlChannelsMapGuard.Lock()
 	defer controlChannelsMapGuard.Unlock()
 
-	_, ok := controlChannelsMap[port]
+	_, ok := controlChannelsMap[host]
 	if !ok {
-		return fmt.Errorf("The control channel does not exist")
+		return fmt.Errorf("The control channel[%v] does not exist to delete", host)
 	}
 
-	delete(controlChannelsMap, port)
+	delete(controlChannelsMap, host)
 	return nil
 }
 
-func sendOptionToControlChannel(port uint16, option int) error {
-	if 65535 <= port {
-		return fmt.Errorf("Invalid port")
-	}
-
+func sendOptionToControlChannel(host string, option int) error {
 	err := checkControlOption(option)
 	if nil != err {
 		return err
@@ -230,9 +235,9 @@ func sendOptionToControlChannel(port uint16, option int) error {
 	controlChannelsMapGuard.Lock()
 	defer controlChannelsMapGuard.Unlock()
 
-	ctrlChan, ok := controlChannelsMap[port]
+	ctrlChan, ok := controlChannelsMap[host]
 	if !ok {
-		return fmt.Errorf("The control channel does not exist")
+		return fmt.Errorf("The control channel[%v] does not exist to send option", host)
 	}
 
 	ctrlChan <- option
@@ -240,12 +245,11 @@ func sendOptionToControlChannel(port uint16, option int) error {
 }
 
 func startAllServers() error {
-	for port, _ := range controlChannelsMap {
-		err := sendOptionToControlChannel(port, StartServerControlOption)
-		if nil != err {
-			return err
-		}
+	controlChannelsMapGuard.Lock()
+	defer controlChannelsMapGuard.Unlock()
 
+	for _, ctrlChan := range controlChannelsMap {
+		ctrlChan <- StartServerControlOption
 		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 
@@ -253,24 +257,23 @@ func startAllServers() error {
 }
 
 func stopAllServers() error {
-	for port, _ := range controlChannelsMap {
-		err := sendOptionToControlChannel(port, StopServerControlOption)
-		if nil != err {
-			return err
-		}
+	controlChannelsMapGuard.Lock()
+	defer controlChannelsMapGuard.Unlock()
 
-		time.Sleep(time.Duration(10) * time.Millisecond)
+	for _, ctrlChan := range controlChannelsMap {
+		ctrlChan <- StopServerControlOption
+		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 
 	return nil
 }
 
-func startServer(port uint16) error {
-	return sendOptionToControlChannel(port, StartServerControlOption)
+func startServer(host string) error {
+	return sendOptionToControlChannel(host, StartServerControlOption)
 }
 
-func stopServer(port uint16) error {
-	return sendOptionToControlChannel(port, StopServerControlOption)
+func stopServer(host string) error {
+	return sendOptionToControlChannel(host, StopServerControlOption)
 }
 
 func checkControlOption(option int) error {
@@ -324,20 +327,22 @@ func reflushServer(old, new []string, name string) error {
 		if 0 != len(del) || 0 != len(add) {
 			common.System("%v server listen hosts has changed, old=%v, new=%v, del=%v, add=%v\n", name, old, old, del, add)
 
+			listenAddr := common.IpAndPort{Ip: "0.0.0.0", Port: 0}
 			for _, host := range del {
-				_, port, err := common.GetIpAndPort(host)
+				ip, port, err := common.GetIpAndPort(host)
 				if nil != err {
 					return err
 				}
 
-				err = stopServer(port)
+				listenAddr.Ip = ip
+				listenAddr.Port = port
+				err = stopServer(listenAddr.String())
 				if nil != err {
 					common.Error("The %v file watcher stop [%vServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, name, port, err)
 					return err
 				}
 			}
 
-			listenAddr := common.IpAndPort{Ip: "0.0.0.0", Port: 0}
 			for _, host := range add {
 				ip, port, err := common.GetIpAndPort(host)
 				if nil != err {
@@ -348,7 +353,7 @@ func reflushServer(old, new []string, name string) error {
 				listenAddr.Port = port
 				initTcpServer(fmt.Sprintf("%vServer-%v", name, port), listenAddr)
 				time.Sleep(time.Duration(500) * time.Millisecond)
-				err = startServer(port)
+				err = startServer(listenAddr.String())
 				if nil != err {
 					common.Error("The %v file watcher start [%vServer-%v] server fail, err: %v\n", common.FlagInfos.ConfigFileFullPath, name, port, err)
 					return err

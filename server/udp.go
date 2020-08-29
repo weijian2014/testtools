@@ -23,7 +23,7 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err = insertControlChannel(listenAddr.Port, c)
+		err = insertControlChannel(listenAddr.String(), c)
 		if nil != err {
 			panic(err)
 		}
@@ -42,71 +42,7 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 				{
 					common.System("%v server stop\n", serverName)
 					conn.Close()
-					err = deleteControlChannel(listenAddr.Port)
-					if nil != err {
-						common.Error("Delete control channel fial, erro: %v", err)
-					}
-					isExit = true
-				}
-			default:
-				{
-					isExit = false
-				}
-			}
-
-			if isExit {
-				break
-			}
-		}
-
-		runtime.Goexit()
-	}()
-}
-
-func initSpecialUdpServer(serverName string, listenAddr common.IpAndPort) {
-	// control coroutine
-	go func() {
-		common.Debug("%v server control coroutine running...\n", serverName)
-
-		network := "udp"
-		if strings.Contains(listenAddr.Ip, ":") {
-			network = "udp6"
-		} else {
-			network = "udp4"
-		}
-
-		lAddr, err := net.ResolveUDPAddr(network, listenAddr.String())
-		if err != nil {
-			panic(err)
-		}
-
-		conn, err := net.ListenUDP(network, lAddr)
-		defer conn.Close()
-		if err != nil {
-			panic(err)
-		}
-
-		c := make(chan int)
-		err = insertControlChannel(listenAddr.Port, c)
-		if nil != err {
-			panic(err)
-		}
-
-		isExit := false
-		for {
-			option := <-c
-			switch option {
-			case StartServerControlOption:
-				{
-					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
-					go udpServerLoop(serverName, conn)
-					isExit = false
-				}
-			case StopServerControlOption:
-				{
-					common.System("%v server stop\n", serverName)
-					conn.Close()
-					err = deleteControlChannel(listenAddr.Port)
+					err = deleteControlChannel(listenAddr.String())
 					if nil != err {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}

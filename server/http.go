@@ -32,7 +32,7 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err := insertControlChannel(listenAddr.Port, c)
+		err := insertControlChannel(listenAddr.String(), c)
 		if nil != err {
 			panic(err)
 		}
@@ -49,7 +49,7 @@ func initHttpServer(serverName string, listenAddr common.IpAndPort) {
 				common.System("%v server stop\n", serverName)
 				server.SetKeepAlivesEnabled(false)
 				server.Shutdown(context.Background())
-				err = deleteControlChannel(listenAddr.Port)
+				err = deleteControlChannel(listenAddr.String())
 				if nil != err {
 					common.Error("Delete control channel fial, erro: %v", err)
 				}
@@ -83,7 +83,7 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		c := make(chan int)
-		err := insertControlChannel(listenAddr.Port, c)
+		err := insertControlChannel(listenAddr.String(), c)
 		if nil != err {
 			panic(err)
 		}
@@ -105,7 +105,7 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 					common.System("%v server stop\n", serverName)
 					server.SetKeepAlivesEnabled(false)
 					server.Shutdown(context.Background())
-					err = deleteControlChannel(listenAddr.Port)
+					err = deleteControlChannel(listenAddr.String())
 					if nil != err {
 						common.Error("Delete control channel fial, erro: %v", err)
 					}
