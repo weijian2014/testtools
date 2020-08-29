@@ -161,7 +161,7 @@ func GetIpAndPort(host string) (string, uint16, error) {
 	}
 
 	port := uint16(p)
-	if 0 > port || 65535 < port {
+	if 0 >= port || 65535 < port {
 		return "", 0, fmt.Errorf("port of host[%v] invalid", host)
 	}
 

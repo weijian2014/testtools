@@ -61,7 +61,7 @@ func StartClient() {
 func checkFlags() error {
 	// -s src IP check
 	if 0 == len(common.FlagInfos.ClientScrIp) {
-		return fmt.Errorf("ClientScrIp is invalid address, please specify a correct source ip using -s", common.FlagInfos.ClientScrIp)
+		return fmt.Errorf("ClientScrIp is invalid address, please specify a correct source ip using -s")
 	}
 	if nil == net.ParseIP(common.FlagInfos.ClientScrIp).To4() &&
 		nil == net.ParseIP(common.FlagInfos.ClientScrIp).To16() {
@@ -70,7 +70,7 @@ func checkFlags() error {
 
 	// -d dest IP check
 	if 0 == len(common.FlagInfos.ClientDestIp) {
-		return fmt.Errorf("ClientDestIp is invalid address, please specify a correct destination ip using -d", common.FlagInfos.ClientDestIp)
+		return fmt.Errorf("ClientDestIp is invalid address, please specify a correct destination ip using -d")
 	}
 	if nil == net.ParseIP(common.FlagInfos.ClientDestIp).To4() &&
 		nil == net.ParseIP(common.FlagInfos.ClientDestIp).To16() {
@@ -86,7 +86,7 @@ func checkFlags() error {
 	}
 
 	// -dport
-	if 0 > common.FlagInfos.ClientDestPort || 65535 < common.FlagInfos.ClientDestPort {
+	if 0 >= common.FlagInfos.ClientDestPort || 65535 < common.FlagInfos.ClientDestPort {
 		return fmt.Errorf("ClientDestPort[%v] is invalid, please specify a correct destination port using -dport", common.FlagInfos.ClientDestPort)
 	}
 
