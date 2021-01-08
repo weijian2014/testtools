@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"testtools/common"
+
+	"golang.org/x/net/http2"
 )
 
 var (
@@ -81,6 +83,67 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 			Addr:    listenAddr.String(),
 			Handler: mux,
 		}
+
+		c := make(chan int)
+		err := insertControlChannel(listenAddr.String(), c)
+		if nil != err {
+			panic(err)
+		}
+
+		isExit := false
+		for {
+			option := <-c
+			switch option {
+			case StartServerControlOption:
+				{
+					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
+					keyFullPath := certificatePath + "server.key"
+					crtFullPath := certificatePath + "server.crt"
+					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
+					isExit = false
+				}
+			case StopServerControlOption:
+				{
+					common.System("%v server stop\n", serverName)
+					server.SetKeepAlivesEnabled(false)
+					server.Shutdown(context.Background())
+					err = deleteControlChannel(listenAddr.String())
+					if nil != err {
+						common.Error("Delete control channel fial, erro: %v", err)
+					}
+					isExit = true
+				}
+			default:
+				{
+					isExit = false
+				}
+			}
+
+			if isExit {
+				break
+			}
+		}
+
+		runtime.Goexit()
+	}(serverName, listenAddr)
+}
+
+func initHttp20Server(serverName string, listenAddr common.IpAndPort) {
+	// control coroutine
+	go func(serverName string, listenAddr common.IpAndPort) {
+		common.Debug("%v server control coroutine running...\n", serverName)
+		mux := http.NewServeMux()
+		mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+		mux.HandleFunc("/", index)
+		mux.HandleFunc("/upload", upload)
+		mux.HandleFunc("/list", list)
+
+		server := &http.Server{
+			Addr:    listenAddr.String(),
+			Handler: mux,
+		}
+
+		http2.ConfigureServer(server, &http2.Server{})
 
 		c := make(chan int)
 		err := insertControlChannel(listenAddr.String(), c)

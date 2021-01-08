@@ -31,6 +31,7 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.ClientUsingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttp, "http", false, "Using HTTP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttps, "https", false, "Using HTTPS protocol")
+	flag.BoolVar(&common.FlagInfos.ClientUsingHttp20, "http20", false, "Using HTTP2.0 protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingQuic, "quic", false, "Using QUIC protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingDns, "dns", false, "Using DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientWaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")

@@ -41,7 +41,13 @@ func StartClient() {
 
 	// Https
 	if common.FlagInfos.ClientUsingHttps {
-		sendByHttps(localAddr, remoteAddr)
+		sendByHttps(localAddr, remoteAddr, false)
+		return
+	}
+
+	// Http2.0
+	if common.FlagInfos.ClientUsingHttp20 {
+		sendByHttps(localAddr, remoteAddr, true)
 		return
 	}
 
@@ -99,6 +105,7 @@ func checkFlags() error {
 		!common.FlagInfos.ClientUsingUdp &&
 		!common.FlagInfos.ClientUsingHttp &&
 		!common.FlagInfos.ClientUsingHttps &&
+		!common.FlagInfos.ClientUsingHttp20 &&
 		!common.FlagInfos.ClientUsingQuic &&
 		!common.FlagInfos.ClientUsingDns {
 		common.System("the client protocol NO specified, please use one of options: -tcp, -udp, -http, -https, -quic, -dns, -dport, default using http protocol")

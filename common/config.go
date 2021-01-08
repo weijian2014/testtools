@@ -39,6 +39,7 @@ type JsonConfigStruct struct {
 	ServerQuicListenHosts              []string    `json:"ServerQuicListenHosts"`
 	ServerHttpListenHosts              []string    `json:"ServerHttpListenHosts"`
 	ServerHttpsListenHosts             []string    `json:"ServerHttpsListenHosts"`
+	ServerHttp20ListenHosts            []string    `json:"ServerHttp20ListenHosts"`
 	ServerDnsListenHosts               []string    `json:"ServerDnsListenHosts"`
 	ServerDnsAEntrys                   interface{} `json:"ServerDnsAEntrys"`  // map[string]interface{}
 	ServerDns4AEntrys                  interface{} `json:"ServerDns4AEntrys"` // map[string]interface{}
@@ -54,6 +55,7 @@ type FlagInfoStruct struct {
 	ClientUsingUdp            bool
 	ClientUsingHttp           bool
 	ClientUsingHttps          bool
+	ClientUsingHttp20         bool
 	ClientUsingQuic           bool
 	ClientUsingDns            bool
 	ClientScrIp               string

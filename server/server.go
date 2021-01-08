@@ -153,6 +153,16 @@ func initAllServer() {
 		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
+	// Init Http20 server
+	if 0 != len(common.JsonConfigs.ServerHttp20ListenHosts) {
+		prepareCert()
+	}
+	for _, host := range common.JsonConfigs.ServerHttp20ListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initHttp20Server(fmt.Sprintf("Http20Server-%v", listenAddr.Port), listenAddr)
+		time.Sleep(time.Duration(150) * time.Millisecond)
+	}
+
 	// Init Dns server
 	if 0 != len(common.JsonConfigs.ServerDnsListenHosts) {
 		saveDnsEntrys()

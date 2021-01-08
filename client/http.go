@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testtools/common"
 	"time"
+
+	"golang.org/x/net/http2"
 )
 
 func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
@@ -62,26 +64,10 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 	}
 }
 
-func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
+func sendByHttps(localAddr, remoteAddr *common.IpAndPort, isEnableHttp20 bool) {
 	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.String())
 	if nil != err {
 		panic(err)
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, // 忽略证书
-		},
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			LocalAddr: lAddr,
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
 	}
 
 	reqeustUrl := fmt.Sprintf("https://%v", remoteAddr.String())
@@ -89,9 +75,39 @@ func sendByHttps(localAddr, remoteAddr *common.IpAndPort) {
 	common.Info("Https client bind on %v, will reqeust to %v\n", localAddr.String(), reqeustUrl)
 
 	var i uint64
+	var client *http.Client
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
-		client := &http.Client{Transport: tr}
+		if !isEnableHttp20 {
+			client = &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true, // 忽略证书
+					},
+					Proxy: http.ProxyFromEnvironment,
+					DialContext: (&net.Dialer{
+						LocalAddr: lAddr,
+						Timeout:   30 * time.Second,
+						KeepAlive: 30 * time.Second,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+				},
+			}
+		} else {
+			// 启动HTTP/2协议
+			client = &http.Client{
+				Transport: &http2.Transport{
+					AllowHTTP: true, // Skip TLS dial
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true, // 忽略证书
+					},
+				},
+			}
+		}
+
 		req, err := http.NewRequest("GET", reqeustUrl, strings.NewReader(common.FlagInfos.ClientSendData))
 		if err != nil {
 			common.Warn("Https client new request failed, times[%d], err : %v\n", i, err.Error())
