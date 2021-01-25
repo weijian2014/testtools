@@ -29,6 +29,8 @@ bool IS_RST=true;
 bool IS_FIN=false;
 std::string SERV_IP=("0.0.0.0");
 uint32_t SERV_PORT=8001;
+std::string CLT_IP=("0.0.0.0");
+uint32_t CLT_PORT=8989;
 
 void showUsage() {
     cout << "RstFinTool Usage:" << endl;
@@ -36,13 +38,16 @@ void showUsage() {
     cout << " -s, --server              Run the RstFinTool as tcp server. default run as client." << endl;
     cout << " -r, --rst                 The RstFinTool send a RST packes to the client after 3-handshakes complete, that is select when unspecified." << endl;
     cout << " -f, --fin                 The RstFinTool send a FIN packes to the client after 3-handshakes complete." << endl;
-    cout << " -i, --ip                  String, the server or client IP addrss, must be specified. default as 0.0.0.0." << endl;
-    cout << " -p, --port                Int, the server or client IP addrss, must be specified. default as 8001." << endl;
+    cout << " -i, --ip                  String, the server  IP addrss, must be specified. default as 0.0.0.0." << endl;
+    cout << " -p, --port                Int, the server port, must be specified. default as 8001." << endl;
+    cout << " -c, --sip                 String, the client IP addrss, must be specified. default as 0.0.0.0." << endl;
+    cout << " -d, --sport               Int, the client port, must be specified. default as 8989." << endl;
     cout << "RstFinTool Examples:" << endl;
     cout << " ./RstFinTool -s -r -i 127.0.0.1 -p 6666  # Run RstFinTool as RST server listen on 127.0.0.1:6666" << endl;
     cout << " ./RstFinTool -s -f -i 127.0.0.1 -p 6666  # Run RstFinTool as FIN server listen on 127.0.0.1:6666" << endl;
     cout << " ./RstFinTool -r -i 127.0.0.1 -p 6666     # Send data to RST server, that listen on 127.0.0.1:6666" << endl;
     cout << " ./RstFinTool -f -i 127.0.0.1 -p 6666     # Send data to FIN server, that listen on 127.0.0.1:6666" << endl;
+    cout << " ./RstFinTool -f -c 127.0.0.1 -d 8888 -i 127.0.0.1 -p 6666     # the Client bind on 127.0.0.1:8888 and send data to FIN server, that listen on 127.0.0.1:6666" << endl;
 }
 
 int parseOpt(int argc, char *argv[]) {
@@ -52,13 +57,15 @@ int parseOpt(int argc, char *argv[]) {
       {"rst", no_argument, NULL, 'r'},
       {"fin", no_argument, NULL, 'f'},
       {"ip", required_argument, NULL, 'i'},
-      {"port", required_argument, NULL, 'p'}
+      {"port", required_argument, NULL, 'p'},
+      {"sip", optional_argument, NULL, 'c'},
+      {"sport", optional_argument, NULL, 'd'}
    };
 
    int optIndex = 0;
    for (;;) 
    {
-      optIndex = getopt_long(argc, argv, "hsrf:i:p:", longOpts, NULL);
+      optIndex = getopt_long(argc, argv, "hsrf:i:p:c:d:", longOpts, NULL);
       if (-1 == optIndex)
       {
          break;
@@ -81,6 +88,12 @@ int parseOpt(int argc, char *argv[]) {
                break;
          case 'p':
                SERV_PORT = atoi(optarg);
+               break;
+         case 'c':
+               CLT_IP = std::string(optarg);
+               break;
+         case 'd':
+               CLT_PORT = atoi(optarg);
                break;
          case 'h':
          default:
@@ -162,8 +175,6 @@ int startServer()
 int startClient()
 {
    int send_fd;
-   struct sockaddr_in s_addr;
-   socklen_t len = sizeof(s_addr);
    send_fd = socket(AF_INET, SOCK_STREAM, 0);
    if(send_fd == -1) 
    { 
@@ -171,11 +182,21 @@ int startClient()
       return -1;
    }
 
-   bzero(&s_addr, sizeof(s_addr));
-   s_addr.sin_family = AF_INET;
-   inet_pton(AF_INET, SERV_IP.c_str(), &s_addr.sin_addr);
-   s_addr.sin_port = htons(SERV_PORT);
-   if(connect(send_fd,(struct sockaddr*)&s_addr,len) == -1) 
+   struct sockaddr_in s_addr, d_addr;
+   socklen_t len = sizeof(s_addr);
+   s_addr.sin_addr.s_addr = inet_addr(CLT_IP.c_str());
+   s_addr.sin_port = htons(CLT_PORT);
+   if (bind(send_fd, (struct sockaddr *) &s_addr, sizeof(s_addr)) < 0) 
+   {
+      perror("bind failed");
+      return -1;
+   }
+
+   bzero(&d_addr, sizeof(d_addr));
+   d_addr.sin_family = AF_INET;
+   inet_pton(AF_INET, SERV_IP.c_str(), &d_addr.sin_addr);
+   d_addr.sin_port = htons(SERV_PORT);
+   if(connect(send_fd, (struct sockaddr*)&d_addr, len) == -1) 
    { 
       perror("connect fail");
       return -1;
