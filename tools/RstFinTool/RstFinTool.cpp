@@ -36,18 +36,18 @@ void showUsage() {
     cout << "RstFinTool: simulate the TCP server send a RST/FIN packet to client after 3-handshakes complete." << endl;
     cout << "1) Usage:" << endl;
     cout << " -h, --help                Print this message and exit." << endl;
-    cout << " -s, --server              Run the RstFinTool as tcp server. default run as client." << endl;
-    cout << " -r, --rst                 The RstFinTool send a RST packes to the client after 3-handshakes complete, that is select when unspecified." << endl;
+    cout << " -s, --server              Run the RstFinTool as tcp server, default run as client." << endl;
+    cout << " -r, --rst                 The RstFinTool send a RST packes to the client after 3-handshakes complete which dafault server type" << endl;
     cout << " -f, --fin                 The RstFinTool send a FIN packes to the client after 3-handshakes complete." << endl;
-    cout << " -a, --sip                 String, the source IP addrss, must be specified. default as 0.0.0.0." << endl;
-    cout << " -b, --sport               Int, the source port, must be specified. default as 6666." << endl;
-    cout << " -c, --dip                 String, the destination IP addrss, must be specified. default as 0.0.0.0." << endl;
-    cout << " -d, --dport               Int, the destination port, must be specified. default as 8888." << endl;
+    cout << " -a, --sip                 String, the source IP addrss, must be specified, default as 0.0.0.0." << endl;
+    cout << " -b, --sport               Int, the source port, must be specified, default as 6666." << endl;
+    cout << " -c, --dip                 String, the destination IP addrss, must be specified, default as 0.0.0.0." << endl;
+    cout << " -d, --dport               Int, the destination port, must be specified, default as 8888." << endl;
     cout << "2) Examples:" << endl;
-    cout << " ./RstFinTool --server --rst --sip 127.0.0.1 --sport 8888  # Run RstFinTool as RST server listen on 127.0.0.1:8888" << endl;
-    cout << " ./RstFinTool --server --fin --sip 127.0.0.1 --sport 8888  # Run RstFinTool as FIN server listen on 127.0.0.1:8888" << endl;
-    cout << " ./RstFinTool --fin --sip 127.0.0.1 --sport 6666 --dip 127.0.0.1 --dport 8888" << endl;
-    cout << "\t\t\t\t# The client bind on 127.0.0.1:6666 and send data to FIN server, that listen on 127.0.0.1:8888" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 8888 --rst  # Run RstFinTool as RST server which listen on 127.0.0.1:8888" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 8888 --fin  # Run RstFinTool as FIN server which listen on 127.0.0.1:8888" << endl;
+    cout << " ./RstFinTool --sip 127.0.0.1 --sport 6666 --dip 127.0.0.1 --dport 8888 --fin" << endl;
+    cout << " \t\t\t# The client[127.0.0.1:6666] send data to FIN server[127.0.0.1:8888]" << endl;
 }
 
 int parseOpt(int argc, char *argv[]) {
