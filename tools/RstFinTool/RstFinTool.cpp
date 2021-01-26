@@ -63,6 +63,7 @@ int parseOpt(int argc, char *argv[]) {
    };
 
    int optIndex = 0;
+   bool isSrcPortOption(false);
    for (;;) 
    {
       optIndex = getopt_long(argc, argv, "hsrf:a:b:c:d:", longOpts, NULL);
@@ -87,6 +88,7 @@ int parseOpt(int argc, char *argv[]) {
                SRC_IP = string(optarg);
                break;
          case 'b':
+               isSrcPortOption = true;
                SRC_PORT = atoi(optarg);
                break;
          case 'c':
@@ -102,11 +104,11 @@ int parseOpt(int argc, char *argv[]) {
       }
    }
 
-   if (!IS_SERVER)
+   if (!IS_SERVER && !isSrcPortOption)
    {
       // At this point, you can reach for the port 0 trick: 
       // on both Windows and Linux, if you bind a socket to port 0, the kernel will assign it a free port number somewhere above 1024.
-      SRC_PORT=0;
+      SRC_PORT = 0;
    }
 
    return 0;
@@ -119,7 +121,7 @@ int handleAccept(int fd)
       char pcContent[4096];
       bzero(pcContent, sizeof(pcContent));
       read(fd,pcContent, 4096);
-      printf("send RST packet to client ok\n\n");
+      printf("fd=%d send RST packet to client ok\n\n", fd);
    }
 
    if (IS_FIN)
@@ -127,7 +129,7 @@ int handleAccept(int fd)
       char pcContent[128];
       bzero(pcContent, sizeof(pcContent));
       read(fd,pcContent, 128);
-      printf("send FIN packet to client ok\n\n");
+      printf("fd=%d send FIN packet to client ok\n\n", fd);
    }
   
    close(fd);
@@ -152,7 +154,12 @@ int startServer()
    listen_addr.sin_port = htons(SRC_PORT);
    bind(listen_fd,(struct sockaddr *)&listen_addr, len);
    listen(listen_fd, 9999);
-   printf("tcp server listen on %s:%d, type=%s, fd=%d\n", SRC_IP.c_str(), SRC_PORT, IS_RST ? "RST" : "FIN", listen_fd);
+
+   int sPort = ntohs(listen_addr.sin_port);
+   char sIp[INET_ADDRSTRLEN];
+   bzero(sIp, sizeof(sIp));
+   inet_ntop(AF_INET, &(listen_addr.sin_addr), sIp, sizeof(sIp));
+   printf("tcp server[%s:%d] start ok, type=%s, fd=%d\n", sIp, sPort, IS_RST ? "RST" : "FIN", listen_fd);
 
    while(1)
    {
@@ -164,11 +171,11 @@ int startServer()
       }
       else
       {
-         int port = ntohs(client_addr.sin_port);
-         char ipDotDec[INET_ADDRSTRLEN];
-         bzero(ipDotDec, sizeof(ipDotDec));
-         inet_ntop(AF_INET, &(client_addr.sin_addr), ipDotDec, sizeof(ipDotDec));
-         printf("*********client[%s:%d] connected, fd=%d*********\n", ipDotDec, port, client_fd);
+         int cPort = ntohs(client_addr.sin_port);
+         char cIp[INET_ADDRSTRLEN];
+         bzero(cIp, sizeof(cPort));
+         inet_ntop(AF_INET, &(client_addr.sin_addr), cIp, sizeof(cIp));
+         printf("*********server[%s:%d] <---> client[%s:%d] connected, fd=%d*********\n", sIp, sPort, cIp, cPort, client_fd);
       }
 
       thread t(handleAccept, client_fd);
@@ -189,42 +196,59 @@ int startClient()
    }
 
    struct sockaddr_in s_addr, d_addr;
-   socklen_t len = sizeof(s_addr);
+   socklen_t addrLen = sizeof(s_addr);
+   bzero(&s_addr, addrLen);
    s_addr.sin_family = AF_INET;
    s_addr.sin_addr.s_addr = inet_addr(SRC_IP.c_str());
    s_addr.sin_port = htons(SRC_PORT);
-   if (bind(send_fd, (struct sockaddr *) &s_addr, sizeof(s_addr)) < 0)
+   if (0 != bind(send_fd, (struct sockaddr *) &s_addr, addrLen))
    {
       perror("bind failed");
       return -1;
    }
 
-   bzero(&d_addr, sizeof(d_addr));
+   bzero(&d_addr, addrLen);
    d_addr.sin_family = AF_INET;
    inet_pton(AF_INET, DST_IP.c_str(), &d_addr.sin_addr);
    d_addr.sin_port = htons(DST_PORT);
-   if(connect(send_fd, (struct sockaddr*)&d_addr, len) == -1) 
+   if (0 != connect(send_fd, (struct sockaddr*)&d_addr, addrLen)) 
    {
       perror("connect fail");
       return -1;
    }
 
+   bzero(&s_addr, addrLen);
+   if (0 != getsockname(send_fd, (struct sockaddr*)&s_addr, &addrLen))
+   {
+      perror("getsockname fail");
+      return -1;
+   }
+   int sPort = ntohs(s_addr.sin_port);
+   char sIp[INET_ADDRSTRLEN];
+   bzero(sIp, sizeof(sIp));
+   inet_ntop(AF_INET, &(s_addr.sin_addr), sIp, sizeof(sIp));
+
+   int dPort = ntohs(d_addr.sin_port);
+   char dIp[INET_ADDRSTRLEN];
+   bzero(dIp, sizeof(dIp));
+   inet_ntop(AF_INET, &(d_addr.sin_addr), dIp, sizeof(dIp));
+
    if (IS_RST)
    {
       // IP fragmentation
-      char pcContent[2050]={0};
-      write(send_fd, pcContent, 2050);
-      printf("client[%s:%d] send data to server[%s:%d] for RST\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
+      char pcContent[10248]={0};
+      write(send_fd, pcContent, 10248);
+      printf("client[%s:%d] <---> server[%s:%d] connected for RST\n", sIp, sPort, dIp, dPort);
    }
 
    if (IS_FIN)
    {
       char pcContent[16]={0};
       write(send_fd, pcContent, 16);
-      printf("client[%s:%d] send data to server[%s:%d] for FIN\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
+      printf("client[%s:%d] <---> server[%s:%d] connected for FIN\n", sIp, sPort, dIp, dPort);
    }
 
-   sleep(3);
+   sleep(2);
    close(send_fd);
    return 0;
 }
