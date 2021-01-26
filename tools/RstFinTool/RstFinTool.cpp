@@ -28,9 +28,9 @@ bool IS_SERVER=false;
 bool IS_RST=true;
 bool IS_FIN=false;
 string SRC_IP=("0.0.0.0");
-uint32_t SRC_PORT=8888;
+uint32_t SRC_PORT=6666;
 string DST_IP=("0.0.0.0");
-uint32_t DST_PORT=6666;
+uint32_t DST_PORT=8888;
 
 void showUsage() {
     cout << "RstFinTool: simulate the TCP server send a RST/FIN packet to client after 3-handshakes complete." << endl;
@@ -39,15 +39,15 @@ void showUsage() {
     cout << " -s, --server              Run the RstFinTool as tcp server, default run as client." << endl;
     cout << " -r, --rst                 The RstFinTool send a RST packes to the client after 3-handshakes complete which dafault server type" << endl;
     cout << " -f, --fin                 The RstFinTool send a FIN packes to the client after 3-handshakes complete." << endl;
-    cout << " -a, --sip                 String, the source IP addrss, must be specified, default as 0.0.0.0." << endl;
-    cout << " -b, --sport               Int, the source port, must be specified, default as 6666." << endl;
-    cout << " -c, --dip                 String, the destination IP addrss, must be specified, default as 0.0.0.0." << endl;
-    cout << " -d, --dport               Int, the destination port, must be specified, default as 8888." << endl;
+    cout << " -a, --sip                 String, the source IP addrss, default is 0.0.0.0." << endl;
+    cout << " -b, --sport               Int, the source port, default is 6666 as server, default is random as client." << endl;
+    cout << " -c, --dip                 String, the destination IP addrss, default is 0.0.0.0." << endl;
+    cout << " -d, --dport               Int, the destination port, default is 8888." << endl;
     cout << "2) Examples:" << endl;
-    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 8888 --rst  # Run RstFinTool as RST server which listen on 127.0.0.1:8888" << endl;
-    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 8888 --fin  # Run RstFinTool as FIN server which listen on 127.0.0.1:8888" << endl;
-    cout << " ./RstFinTool --sip 127.0.0.1 --sport 6666 --dip 127.0.0.1 --dport 8888 --fin" << endl;
-    cout << " \t\t\t# The client[127.0.0.1:6666] send data to FIN server[127.0.0.1:8888]" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --rst  # Run RstFinTool as RST server which listen on 127.0.0.1:6666" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --fin  # Run RstFinTool as FIN server which listen on 127.0.0.1:6666" << endl;
+    cout << " ./RstFinTool --sip 127.0.0.1 --sport 8888 --dip 127.0.0.1 --dport 6666 --fin" << endl;
+    cout << " \t\t\t# The client[127.0.0.1:8888] send data to FIN server[127.0.0.1:6666]" << endl;
 }
 
 int parseOpt(int argc, char *argv[]) {
@@ -100,6 +100,13 @@ int parseOpt(int argc, char *argv[]) {
                IS_HELP = true;
                break;
       }
+   }
+
+   if (!IS_SERVER)
+   {
+      // At this point, you can reach for the port 0 trick: 
+      // on both Windows and Linux, if you bind a socket to port 0, the kernel will assign it a free port number somewhere above 1024.
+      SRC_PORT=0;
    }
 
    return 0;
@@ -205,19 +212,19 @@ int startClient()
    if (IS_RST)
    {
       // IP fragmentation
-      char pcContent[5000]={0};
-      write(send_fd, pcContent,5000);
+      char pcContent[2050]={0};
+      write(send_fd, pcContent, 2050);
       printf("client[%s:%d] send data to server[%s:%d] for RST\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
    }
 
    if (IS_FIN)
    {
       char pcContent[16]={0};
-      write(send_fd, pcContent,16);
+      write(send_fd, pcContent, 16);
       printf("client[%s:%d] send data to server[%s:%d] for FIN\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
    }
 
-   sleep(1);
+   sleep(3);
    close(send_fd);
    return 0;
 }
