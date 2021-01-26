@@ -27,9 +27,9 @@ bool IS_HELP=false;
 bool IS_SERVER=false;
 bool IS_RST=true;
 bool IS_FIN=false;
-std::string SRC_IP=("0.0.0.0");
+string SRC_IP=("0.0.0.0");
 uint32_t SRC_PORT=8888;
-std::string DST_IP=("0.0.0.0");
+string DST_IP=("0.0.0.0");
 uint32_t DST_PORT=6666;
 
 void showUsage() {
@@ -84,13 +84,13 @@ int parseOpt(int argc, char *argv[]) {
                IS_FIN = true;
                break;
          case 'a':
-               SRC_IP = std::string(optarg);
+               SRC_IP = string(optarg);
                break;
          case 'b':
                SRC_PORT = atoi(optarg);
                break;
          case 'c':
-               DST_IP = std::string(optarg);
+               DST_IP = string(optarg);
                break;
          case 'd':
                DST_PORT = atoi(optarg);
@@ -110,20 +110,20 @@ int handleAccept(int fd)
    if (IS_RST)
    {
       char pcContent[4096];
-      ::bzero(pcContent, sizeof(pcContent));
-      ::read(fd,pcContent, 4096);
+      bzero(pcContent, sizeof(pcContent));
+      read(fd,pcContent, 4096);
       printf("send RST packet to client ok\n\n");
    }
 
    if (IS_FIN)
    {
       char pcContent[128];
-      ::bzero(pcContent, sizeof(pcContent));
-      ::read(fd,pcContent, 128);
+      bzero(pcContent, sizeof(pcContent));
+      read(fd,pcContent, 128);
       printf("send FIN packet to client ok\n\n");
    }
   
-   ::close(fd);
+   close(fd);
    return 0;
 }
 
@@ -132,24 +132,24 @@ int startServer()
    int listen_fd(-1), client_fd(-1);
    struct sockaddr_in listen_addr, client_addr;
    socklen_t len = sizeof(struct sockaddr_in);
-   listen_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+   listen_fd = socket(AF_INET, SOCK_STREAM, 0);
    if(listen_fd == -1)
    {
       perror("socket failed");
       return -1;
    }
 
-   ::bzero(&listen_addr,sizeof(listen_addr));
+   bzero(&listen_addr,sizeof(listen_addr));
    listen_addr.sin_family = AF_INET;
    listen_addr.sin_addr.s_addr = inet_addr(SRC_IP.c_str());    // INADDR_ANY
    listen_addr.sin_port = htons(SRC_PORT);
-   ::bind(listen_fd,(struct sockaddr *)&listen_addr, len);
-   ::listen(listen_fd, 9999);
+   bind(listen_fd,(struct sockaddr *)&listen_addr, len);
+   listen(listen_fd, 9999);
    printf("tcp server listen on %s:%d, type=%s, fd=%d\n", SRC_IP.c_str(), SRC_PORT, IS_RST ? "RST" : "FIN", listen_fd);
 
    while(1)
    {
-      client_fd = ::accept(listen_fd, (struct sockaddr*)&client_addr, &len);
+      client_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &len);
       if(client_fd == -1)
       {
          perror("tcp server accpet fail");
@@ -159,16 +159,16 @@ int startServer()
       {
          int port = ntohs(client_addr.sin_port);
          char ipDotDec[INET_ADDRSTRLEN];
-         ::bzero(ipDotDec, sizeof(ipDotDec));
-         ::inet_ntop(AF_INET, &(client_addr.sin_addr), ipDotDec, sizeof(ipDotDec));
+         bzero(ipDotDec, sizeof(ipDotDec));
+         inet_ntop(AF_INET, &(client_addr.sin_addr), ipDotDec, sizeof(ipDotDec));
          printf("*********client[%s:%d] connected, fd=%d*********\n", ipDotDec, port, client_fd);
       }
 
-      std::thread t(handleAccept, client_fd);
+      thread t(handleAccept, client_fd);
       t.detach();
    }
 
-   ::close(listen_fd);
+   close(listen_fd);
 }
 
 int startClient()
@@ -206,19 +206,19 @@ int startClient()
    {
       // IP fragmentation
       char pcContent[5000]={0};
-      ::write(send_fd, pcContent,5000);
+      write(send_fd, pcContent,5000);
       printf("client[%s:%d] send data to server[%s:%d] for RST\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
    }
 
    if (IS_FIN)
    {
       char pcContent[16]={0};
-      ::write(send_fd, pcContent,16);
+      write(send_fd, pcContent,16);
       printf("client[%s:%d] send data to server[%s:%d] for FIN\n", SRC_IP.c_str(), SRC_PORT, DST_IP.c_str(), DST_PORT);
    }
 
-   ::sleep(1);
-   ::close(send_fd);
+   sleep(1);
+   close(send_fd);
    return 0;
 }
 
