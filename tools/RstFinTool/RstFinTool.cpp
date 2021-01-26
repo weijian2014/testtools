@@ -112,7 +112,7 @@ int handleAccept(int fd)
       char pcContent[4096];
       ::bzero(pcContent, sizeof(pcContent));
       ::read(fd,pcContent, 4096);
-      printf("send RST packet to client ok\n\n", fd);
+      printf("send RST packet to client ok\n\n");
    }
 
    if (IS_FIN)
@@ -120,7 +120,7 @@ int handleAccept(int fd)
       char pcContent[128];
       ::bzero(pcContent, sizeof(pcContent));
       ::read(fd,pcContent, 128);
-      printf("send FIN packet to client ok\n\n", fd);
+      printf("send FIN packet to client ok\n\n");
    }
   
    ::close(fd);
