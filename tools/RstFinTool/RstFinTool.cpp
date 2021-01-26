@@ -23,31 +23,38 @@ Function:
 
 using namespace std;
 
-bool IS_HELP=false;
-bool IS_SERVER=false;
-bool IS_RST=true;
-bool IS_FIN=false;
+bool IS_HELP(false);
+bool IS_SERVER(false);
+bool IS_RST(true);
+bool IS_FIN(false);
+bool IS_CLIENT_RST(false);
 string SRC_IP=("0.0.0.0");
-uint32_t SRC_PORT=6666;
+uint32_t SRC_PORT(6666);
 string DST_IP=("0.0.0.0");
-uint32_t DST_PORT=8888;
+uint32_t DST_PORT(8888);
 
 void showUsage() {
-    cout << "RstFinTool: simulate the TCP server send a RST/FIN packet to client after 3-handshakes complete." << endl;
+    cout << "RstFinTool: simulate the TCP server send a RST/FIN packet after 3-handshakes complete." << endl;
     cout << "1) Usage:" << endl;
     cout << " -h, --help                Print this message and exit." << endl;
     cout << " -s, --server              Run the RstFinTool as tcp server, default run as client." << endl;
-    cout << " -r, --rst                 The RstFinTool send a RST packes to the client after 3-handshakes complete which dafault server type" << endl;
-    cout << " -f, --fin                 The RstFinTool send a FIN packes to the client after 3-handshakes complete." << endl;
+    cout << " -r, --rst                 The RstFinTool send a RST packet to the client after 3-handshakes complete." << endl;
+    cout << " -f, --fin                 The RstFinTool send a FIN packet to the client after 3-handshakes complete." << endl;
+    cout << " -e, --crst                The RstFinTool send a RST packet to the server after 3-handshakes complete." << endl;
     cout << " -a, --sip                 String, the source IP addrss, default is 0.0.0.0." << endl;
-    cout << " -b, --sport               Int, the source port, default is 6666 as server, default is random as client." << endl;
+    cout << " -b, --sport               Int, the source port, default is 6666 as server, default is random port as client." << endl;
     cout << " -c, --dip                 String, the destination IP addrss, default is 0.0.0.0." << endl;
     cout << " -d, --dport               Int, the destination port, default is 8888." << endl;
+    cout << endl;
     cout << "2) Examples:" << endl;
-    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --rst  # Run RstFinTool as RST server which listen on 127.0.0.1:6666" << endl;
-    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --fin  # Run RstFinTool as FIN server which listen on 127.0.0.1:6666" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --rst" << endl;
+    cout << "                           Run RstFinTool as RST server which listen on 127.0.0.1:6666" << endl;
+    cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --fin" << endl;
+    cout << "                           Run RstFinTool as FIN server which listen on 127.0.0.1:6666" << endl;
     cout << " ./RstFinTool --sip 127.0.0.1 --sport 8888 --dip 127.0.0.1 --dport 6666 --fin" << endl;
-    cout << " \t\t\t# The client[127.0.0.1:8888] send data to FIN server[127.0.0.1:6666]" << endl;
+    cout << "                           The client[127.0.0.1:8888] send data to FIN server[127.0.0.1:6666]" << endl;
+    cout << " ./RstFinTool --sip 127.0.0.1 --sport 8888 --dip 127.0.0.1 --dport 6666 --crst" << endl;
+    cout << "                           The client[127.0.0.1:8888] send RST to server[127.0.0.1:6666]" << endl;
 }
 
 int parseOpt(int argc, char *argv[]) {
@@ -56,6 +63,7 @@ int parseOpt(int argc, char *argv[]) {
       {"server", no_argument, NULL, 's'},
       {"rst", no_argument, NULL, 'r'},
       {"fin", no_argument, NULL, 'f'},
+      {"crst", no_argument, NULL, 'e'},
       {"sip", required_argument, NULL, 'a'},
       {"sport", required_argument, NULL, 'b'},
       {"dip", required_argument, NULL, 'c'},
@@ -75,14 +83,23 @@ int parseOpt(int argc, char *argv[]) {
       switch (optIndex) {
          case 's':
                IS_SERVER = true;
+               IS_CLIENT_RST = false;
                break;
          case 'r':
                IS_RST = true;
                IS_FIN = false;
+               IS_CLIENT_RST = false;
                break;
          case 'f':
                IS_RST = false;
                IS_FIN = true;
+               IS_CLIENT_RST = false;
+               break;
+         case 'e':
+               IS_CLIENT_RST = true;
+               IS_RST = false;
+               IS_FIN = false;
+               IS_SERVER = false;
                break;
          case 'a':
                SRC_IP = string(optarg);
@@ -235,7 +252,6 @@ int startClient()
 
    if (IS_RST)
    {
-      // IP fragmentation
       char pcContent[10248]={0};
       write(send_fd, pcContent, 10248);
       printf("client[%s:%d] <---> server[%s:%d] connected for RST\n", sIp, sPort, dIp, dPort);
@@ -248,8 +264,31 @@ int startClient()
       printf("client[%s:%d] <---> server[%s:%d] connected for FIN\n", sIp, sPort, dIp, dPort);
    }
 
+   if (IS_CLIENT_RST)
+   {
+      char pcContent[16]={0};
+      write(send_fd, pcContent, 16);
+
+      struct linger m_sLinger;
+      m_sLinger.l_onoff=1;
+      m_sLinger.l_linger=0;
+      if (0 != setsockopt(send_fd, SOL_SOCKET,SO_LINGER, &m_sLinger, sizeof(m_sLinger)))
+      {
+         perror("setsockopt fail");
+         return -1;
+      }
+      close(send_fd);
+      send_fd = -1;
+      printf("client[%s:%d] send RST to server[%s:%d] ok\n", sIp, sPort, dIp, dPort);
+   }
+
    sleep(2);
-   close(send_fd);
+
+   if (-1 != send_fd)
+   {
+      close(send_fd);
+   }
+
    return 0;
 }
 
