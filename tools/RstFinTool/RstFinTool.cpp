@@ -32,6 +32,7 @@ string SRC_IP=("0.0.0.0");
 uint32_t SRC_PORT(6666);
 string DST_IP=("0.0.0.0");
 uint32_t DST_PORT(8888);
+int WAIT_SECONDS(0);
 
 void showUsage() {
     cout << "RstFinTool: simulate the TCP server send a RST/FIN packet after 3-handshakes complete." << endl;
@@ -45,6 +46,7 @@ void showUsage() {
     cout << " -b, --sport               Int, the source port, default is 6666 as server, default is random port as client." << endl;
     cout << " -c, --dip                 String, the destination IP addrss, default is 0.0.0.0." << endl;
     cout << " -d, --dport               Int, the destination port, default is 8888." << endl;
+    cout << " -w, --wait                Int, the number of wait seconds after 3-handshakes complete, default is 0" << endl;
     cout << endl;
     cout << "2) Examples:" << endl;
     cout << " ./RstFinTool --server --sip 127.0.0.1 --sport 6666 --rst" << endl;
@@ -67,7 +69,8 @@ int parseOpt(int argc, char *argv[]) {
       {"sip", required_argument, NULL, 'a'},
       {"sport", required_argument, NULL, 'b'},
       {"dip", required_argument, NULL, 'c'},
-      {"dport", required_argument, NULL, 'd'}
+      {"dport", required_argument, NULL, 'd'},
+      {"wait", required_argument, NULL, 'w'}
    };
 
    int optIndex = 0;
@@ -114,6 +117,9 @@ int parseOpt(int argc, char *argv[]) {
          case 'd':
                DST_PORT = atoi(optarg);
                break;
+         case 'w':
+               WAIT_SECONDS = atoi(optarg);
+               break;
          case 'h':
          default:
                IS_HELP = true;
@@ -128,11 +134,21 @@ int parseOpt(int argc, char *argv[]) {
       SRC_PORT = 0;
    }
 
+   if (WAIT_SECONDS < 0)
+   {
+      WAIT_SECONDS = 0;
+   }
+
    return 0;
 }
 
 int handleAccept(int fd)
 {
+   if (0 != WAIT_SECONDS)
+   {
+      std::this_thread::sleep_for(std::chrono::seconds(WAIT_SECONDS));
+   }
+
    if (IS_RST)
    {
       char pcContent[4096];
@@ -280,6 +296,11 @@ int startClient()
       close(send_fd);
       send_fd = -1;
       printf("client[%s:%d] send RST to server[%s:%d] ok\n", sIp, sPort, dIp, dPort);
+   }
+
+   if (0 != WAIT_SECONDS)
+   {
+      std::this_thread::sleep_for(std::chrono::seconds(WAIT_SECONDS));
    }
 
    sleep(2);
