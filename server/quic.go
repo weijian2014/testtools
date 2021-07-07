@@ -84,11 +84,11 @@ func quicServerLoop(serverName string, listener quic.Listener) {
 
 func newQuicSessionHandler(sess quic.Session, serverName string) {
 	stream, err := sess.AcceptStream(context.Background())
-	defer stream.Close()
 	if err != nil {
 		common.Warn("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
 		return
 	}
+	defer stream.Close()
 
 	for {
 		// receive
