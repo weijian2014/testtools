@@ -17,10 +17,11 @@ func initUdpServer(serverName string, listenAddr common.IpAndPort) {
 		}
 
 		conn, err := net.ListenUDP("udp", lAddr)
-		defer conn.Close()
 		if err != nil {
 			panic(err)
 		}
+
+		defer conn.Close()
 
 		c := make(chan int)
 		err = insertControlChannel(listenAddr.String(), c)

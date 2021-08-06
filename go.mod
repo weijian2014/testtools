@@ -3,7 +3,7 @@ module testtools
 go 1.14
 
 require (
-	github.com/fsnotify/fsnotify v1.4.7
-	github.com/lucas-clemente/quic-go v0.17.3
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	github.com/fsnotify/fsnotify v1.4.9
+	github.com/lucas-clemente/quic-go v0.22.0
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 )
