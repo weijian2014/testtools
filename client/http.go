@@ -64,7 +64,7 @@ func sendByHttp(localAddr, remoteAddr *common.IpAndPort) {
 	}
 }
 
-func sendByHttps(localAddr, remoteAddr *common.IpAndPort, isEnableHttp20 bool) {
+func sendByHttps(localAddr, remoteAddr *common.IpAndPort, isEnableHttp2 bool) {
 	lAddr, err := net.ResolveTCPAddr("tcp", localAddr.String())
 	if nil != err {
 		panic(err)
@@ -78,7 +78,7 @@ func sendByHttps(localAddr, remoteAddr *common.IpAndPort, isEnableHttp20 bool) {
 	var client *http.Client
 	for i = 1; i <= common.FlagInfos.ClientSendNumbers; i++ {
 		// send request
-		if !isEnableHttp20 {
+		if !isEnableHttp2 {
 			client = &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{

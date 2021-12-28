@@ -153,13 +153,13 @@ func initAllServer() {
 		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
-	// Init Http20 server
-	if 0 != len(common.JsonConfigs.ServerHttp20ListenHosts) {
+	// Init Http2 server
+	if 0 != len(common.JsonConfigs.ServerHttp2ListenHosts) {
 		prepareCert()
 	}
-	for _, host := range common.JsonConfigs.ServerHttp20ListenHosts {
+	for _, host := range common.JsonConfigs.ServerHttp2ListenHosts {
 		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
-		initHttp20Server(fmt.Sprintf("Http20Server-%v", listenAddr.Port), listenAddr)
+		initHttp2Server(fmt.Sprintf("Http2Server-%v", listenAddr.Port), listenAddr)
 		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 

@@ -33,7 +33,7 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.ClientUsingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttp, "http", false, "Using HTTP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttps, "https", false, "Using HTTPS protocol")
-	flag.BoolVar(&common.FlagInfos.ClientUsingHttp20, "http20", false, "Using HTTP2.0 protocol")
+	flag.BoolVar(&common.FlagInfos.ClientUsingHttp2, "http2", false, "Using HTTP2 protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingQuic, "quic", false, "Using QUIC protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingDns, "dns", false, "Using DNS protocol")
 	flag.StringVar(&tmpQuicAlpn, "alpn", "", "The ALPN of QUIC protocol, which example as \"aaa,bbb,ccc\", \"ietf-quic-v1-echo-example\" is hard code both in server and client")

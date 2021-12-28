@@ -128,7 +128,7 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 	}(serverName, listenAddr)
 }
 
-func initHttp20Server(serverName string, listenAddr common.IpAndPort) {
+func initHttp2Server(serverName string, listenAddr common.IpAndPort) {
 	// control coroutine
 	go func(serverName string, listenAddr common.IpAndPort) {
 		common.Debug("%v server control coroutine running...\n", serverName)
