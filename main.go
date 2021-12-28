@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"testtools/client"
 	"testtools/common"
 	"testtools/server"
@@ -11,6 +12,7 @@ import (
 
 func init() {
 	var tmpSentToServerPort uint
+	var tmpQuicAlpn string
 
 	// common option
 	flag.BoolVar(&common.FlagInfos.IsHelp, "h", false, "Show help")
@@ -34,12 +36,19 @@ func init() {
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttp20, "http20", false, "Using HTTP2.0 protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingQuic, "quic", false, "Using QUIC protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingDns, "dns", false, "Using DNS protocol")
+	flag.StringVar(&tmpQuicAlpn, "alpn", "", "The ALPN of QUIC protocol, which example as \"aaa,bbb,ccc\", \"quic-echo-example\" is hard code both in server and client")
 	flag.Uint64Var(&common.FlagInfos.ClientWaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, QUIC protocols")
 	flag.IntVar(&common.FlagInfos.ClientLogLevel, "debug", 0, "The client log level, 0-Debug, 1-Info, 2-System, 3-Warn, 4-Error, 5-Fatal")
 	flag.Parse()
 
 	common.FlagInfos.ClientDestPort = uint16(tmpSentToServerPort)
+	if common.FlagInfos.ClientUsingQuic {
+		common.FlagInfos.ClientQuicAlpn = append(common.FlagInfos.ClientQuicAlpn, common.COMMON_QUIC_ALPN)
+		if 0 != len(tmpQuicAlpn) {
+			common.FlagInfos.ClientQuicAlpn = append(common.FlagInfos.ClientQuicAlpn, strings.Split(tmpQuicAlpn, ",")...)
+		}
+	}
 }
 
 func main() {
@@ -87,6 +96,7 @@ func main() {
 	if common.FlagInfos.IsServer {
 		server.StartServer()
 	} else {
+		// common.System("\nFlag info:%+v\n\n", common.FlagInfos)
 		client.StartClient()
 	}
 }

@@ -145,6 +145,6 @@ func generateQuicTLSConfig() *tls.Config {
 
 	return &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
-		NextProtos:   []string{"quic-echo-example"},
+		NextProtos:   []string{common.COMMON_QUIC_ALPN},
 	}
 }

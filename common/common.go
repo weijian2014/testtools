@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+const COMMON_QUIC_ALPN string = "ietf-quic-v1-echo-example"
+
 func IsLocalIP(ip string) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

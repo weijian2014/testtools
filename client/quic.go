@@ -29,7 +29,7 @@ func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {
 
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,
-		NextProtos:         []string{"quic-echo-example"},
+		NextProtos:         common.FlagInfos.ClientQuicAlpn,
 	}
 
 	session, err := quic.Dial(udpConn, rAddr, rAddr.String(), tlsConf, nil)

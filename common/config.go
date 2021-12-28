@@ -66,6 +66,7 @@ type FlagInfoStruct struct {
 	ClientLogLevel            int
 	ClientSendData            string
 	ClientRecvBufferSizeBytes uint64
+	ClientQuicAlpn            []string
 }
 
 type IpAndPort struct {
