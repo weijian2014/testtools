@@ -30,6 +30,7 @@ func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         common.FlagInfos.ClientQuicAlpn,
+		ServerName:         common.FlagInfos.ClientQuicSni,
 	}
 
 	session, err := quic.Dial(udpConn, rAddr, rAddr.String(), tlsConf, nil)
