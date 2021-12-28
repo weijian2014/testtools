@@ -33,7 +33,7 @@ type JsonConfigStruct struct {
 	ServerLogLevel                     int         `json:"ServerLogLevel"`
 	ServerLogRoll                      int         `json:"ServerLogRoll"`
 	ServerRecvBufferSizeBytes          uint64      `json:"ServerRecvBufferSizeBytes"`
-	ServerCounterOutputIntervalSeconds uint64      `json:ServerCounterOutputIntervalSeconds`
+	ServerCounterOutputIntervalSeconds uint64      `json:"ServerCounterOutputIntervalSeconds"`
 	ServerTcpListenHosts               []string    `json:"ServerTcpListenHosts"`
 	ServerUdpListenHosts               []string    `json:"ServerUdpListenHosts"`
 	ServerQuicListenHosts              []string    `json:"ServerQuicListenHosts"`
