@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	isGenerateCert = false
+	httpsFileName = "https"
+	http2FileName = "http2"
 )
 
 func initHttpServer(serverName string, listenAddr common.IpAndPort) {
@@ -97,8 +98,8 @@ func initHttpsServer(serverName string, listenAddr common.IpAndPort) {
 			case StartServerControlOption:
 				{
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
-					keyFullPath := certificatePath + "server.key"
-					crtFullPath := certificatePath + "server.crt"
+					keyFullPath := certificatePath + httpsFileName + ".key"
+					crtFullPath := certificatePath + httpsFileName + ".crt"
 					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
 					isExit = false
 				}
@@ -158,8 +159,8 @@ func initHttp2Server(serverName string, listenAddr common.IpAndPort) {
 			case StartServerControlOption:
 				{
 					common.System("%v server startup, listen on %v\n", serverName, listenAddr.String())
-					keyFullPath := certificatePath + "server.key"
-					crtFullPath := certificatePath + "server.crt"
+					keyFullPath := certificatePath + http2FileName + ".key"
+					crtFullPath := certificatePath + http2FileName + ".crt"
 					go server.ListenAndServeTLS(crtFullPath, keyFullPath)
 					isExit = false
 				}
@@ -285,30 +286,6 @@ func listDir(dirPth string, suffix string) (files []string, err error) {
 	return files, nil
 }
 
-func generateHttpsCertificate(keyFullPath string, crtFullPath string) error {
-	cmd := fmt.Sprintf("openssl genrsa -out %v 2048 > /dev/null", keyFullPath)
-	_, err := common.Command("/bin/sh", "-c", cmd)
-	if nil != err {
-		_, err1 := os.Stat(keyFullPath)
-		if os.IsNotExist(err1) {
-			return err
-		}
-	}
-
-	cmd = fmt.Sprintf(`openssl req -new -x509 -key %v -out %v -days 365 -subj /C=CN/ST=Some-State/O=Internet > /dev/null`, keyFullPath, crtFullPath)
-	_, err = common.Command("/bin/sh", "-c", cmd)
-	if nil != err {
-		return err
-	}
-
-	_, err = os.Stat(crtFullPath)
-	if os.IsNotExist(err) {
-		return err
-	}
-
-	return nil
-}
-
 func HttpServerGuide(listenPort uint16) {
 	ip := "127.0.0.1"
 	common.System("Http server use guide:\n")
@@ -328,39 +305,52 @@ func HttpsServerGuide(listenPort uint16) {
 	common.System("\tUse 'wget --no-check-certificate https://%v:%v/files/filename' download file\n", ip, listenPort)
 }
 
-func prepareCert() {
-	if !isGenerateCert {
-		_, err := os.Stat(certificatePath)
-		if os.IsNotExist(err) {
-			err = os.Mkdir(certificatePath, os.ModePerm)
-			if nil != err {
-				panic(err)
-			}
-		}
+func prepareHttpsCert() {
+	keyFullPath := certificatePath + httpsFileName + ".key"
+	crtFullPath := certificatePath + httpsFileName + ".crt"
 
-		keyFullPath := certificatePath + "server.key"
-		crtFullPath := certificatePath + "server.crt"
+	err := common.Rm(keyFullPath)
+	if nil != err {
+		panic(err)
+	}
 
-		_, err = os.Stat(keyFullPath)
-		if os.IsExist(err) {
-			err = os.Remove(keyFullPath)
-			if nil != err {
-				panic(err)
-			}
-		}
+	err = common.Rm(crtFullPath)
+	if nil != err {
+		panic(err)
+	}
 
-		_, err = os.Stat(crtFullPath)
-		if os.IsExist(err) {
-			err = os.Remove(crtFullPath)
-			if nil != err {
-				panic(err)
-			}
-		}
-		err = generateHttpsCertificate(keyFullPath, crtFullPath)
-		if nil != err {
-			panic(err)
-		}
+	// Two steps generation privary key and crt:
+	// 	openssl genrsa -out %v 2048 > /dev/null
+	//		openssl req -new -x509 -key %v -out %v -days 365 -subj /C=CN/ST=Some-State/O=Internet > /dev/null
 
-		isGenerateCert = true
+	cmd := fmt.Sprintf(`openssl req -newkey rsa:2048 -nodes -keyout %v -x509 -out %v -days 365 -subj /C=CN/ST=Some-State/O=Internet > /dev/null`, keyFullPath, crtFullPath)
+	_, err = common.Command("/bin/sh", "-c", cmd)
+	if nil != err {
+		if !common.IsExist(keyFullPath) || !common.IsExist(crtFullPath) {
+			panic(fmt.Sprintf("The file %v or %v not exist", keyFullPath, crtFullPath))
+		}
+	}
+}
+
+func prepareHttp2Cert() {
+	keyFullPath := certificatePath + http2FileName + ".key"
+	crtFullPath := certificatePath + http2FileName + ".crt"
+
+	err := common.Rm(keyFullPath)
+	if nil != err {
+		panic(err)
+	}
+
+	err = common.Rm(crtFullPath)
+	if nil != err {
+		panic(err)
+	}
+
+	cmd := fmt.Sprintf(`openssl req -newkey rsa:2048 -nodes -keyout %v -x509 -out %v -days 365 -subj /C=CN/ST=Some-State/O=Internet > /dev/null`, keyFullPath, crtFullPath)
+	_, err = common.Command("/bin/sh", "-c", cmd)
+	if nil != err {
+		if !common.IsExist(keyFullPath) || !common.IsExist(crtFullPath) {
+			panic(fmt.Sprintf("The file %v or %v not exist", keyFullPath, crtFullPath))
+		}
 	}
 }

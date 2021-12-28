@@ -143,9 +143,17 @@ func initAllServer() {
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
 
+	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) ||
+		0 != len(common.JsonConfigs.ServerHttp2ListenHosts) {
+		err := common.Mkdir(certificatePath)
+		if nil != err {
+			panic(err)
+		}
+	}
+
 	// Init Https server
 	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) {
-		prepareCert()
+		prepareHttpsCert()
 	}
 	for _, host := range common.JsonConfigs.ServerHttpsListenHosts {
 		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
@@ -155,7 +163,7 @@ func initAllServer() {
 
 	// Init Http2 server
 	if 0 != len(common.JsonConfigs.ServerHttp2ListenHosts) {
-		prepareCert()
+		prepareHttp2Cert()
 	}
 	for _, host := range common.JsonConfigs.ServerHttp2ListenHosts {
 		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)

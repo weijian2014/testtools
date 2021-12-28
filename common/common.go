@@ -169,3 +169,36 @@ func GetIpAndPort(host string) (string, uint16, error) {
 
 	return ip, port, nil
 }
+
+func Mkdir(dir string) error {
+	_, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(dir, os.ModePerm)
+		if nil != err {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func Rm(fileFullPath string) error {
+	_, err := os.Stat(fileFullPath)
+	if os.IsExist(err) {
+		err = os.Remove(fileFullPath)
+		if nil != err {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func IsExist(fileFullPath string) bool {
+	_, err := os.Stat(fileFullPath)
+	if nil != err {
+		return os.IsExist(err)
+	} else {
+		return true
+	}
+}
