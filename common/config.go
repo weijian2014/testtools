@@ -57,6 +57,7 @@ type FlagInfoStruct struct {
 	ClientUsingHttp           bool
 	ClientUsingHttps          bool
 	ClientUsingHttp2          bool
+	ClientUsingHttp3          bool
 	ClientUsingQuic           bool
 	ClientUsingDns            bool
 	ClientScrIp               string
