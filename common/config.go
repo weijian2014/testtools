@@ -40,6 +40,7 @@ type JsonConfigStruct struct {
 	ServerHttpListenHosts              []string    `json:"ServerHttpListenHosts"`
 	ServerHttpsListenHosts             []string    `json:"ServerHttpsListenHosts"`
 	ServerHttp2ListenHosts             []string    `json:"ServerHttp2ListenHosts"`
+	ServerHttp3ListenHosts             []string    `json:"ServerHttp3ListenHosts"`
 	ServerDnsListenHosts               []string    `json:"ServerDnsListenHosts"`
 	ServerDnsAEntrys                   interface{} `json:"ServerDnsAEntrys"`  // map[string]interface{}
 	ServerDns4AEntrys                  interface{} `json:"ServerDns4AEntrys"` // map[string]interface{}

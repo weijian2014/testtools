@@ -9,21 +9,25 @@ import (
 )
 
 var (
-	uploadPath       = ""
-	certificatePath  = ""
-	dnsAEntrys       map[string]string
-	dns4AEntrys      map[string]string
-	serverTcpCount   uint64 = 0
-	serverUdpCount   uint64 = 0
-	serverHttpCount  uint64 = 0
-	serverHttpsCount uint64 = 0
-	serverQuicCount  uint64 = 0
-	serverDnsCount   uint64 = 0
+	uploadPath              = ""
+	certificatePath         = ""
+	privateKeyFileFullPath  = ""
+	certificateFileFullPath = ""
+	dnsAEntrys              map[string]string
+	dns4AEntrys             map[string]string
+	serverTcpCount          uint64 = 0
+	serverUdpCount          uint64 = 0
+	serverHttpCount         uint64 = 0
+	serverHttpsCount        uint64 = 0
+	serverQuicCount         uint64 = 0
+	serverDnsCount          uint64 = 0
 )
 
 func init() {
 	uploadPath = common.CurrDir + "/files/"
 	certificatePath = common.CurrDir + "/cert/"
+	privateKeyFileFullPath = certificatePath + "server.key"
+	certificateFileFullPath = certificatePath + "server.crt"
 }
 
 func StartServer() {
@@ -144,17 +148,16 @@ func initAllServer() {
 	}
 
 	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) ||
-		0 != len(common.JsonConfigs.ServerHttp2ListenHosts) {
+		0 != len(common.JsonConfigs.ServerHttp2ListenHosts) ||
+		0 != len(common.JsonConfigs.ServerHttp3ListenHosts) {
 		err := common.Mkdir(certificatePath)
 		if nil != err {
 			panic(err)
 		}
+		preparePrivateKeyAndCert()
 	}
 
 	// Init Https server
-	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) {
-		prepareHttpsCert()
-	}
 	for _, host := range common.JsonConfigs.ServerHttpsListenHosts {
 		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
 		initHttpsServer(fmt.Sprintf("HttpsServer-%v", listenAddr.Port), listenAddr)
@@ -162,12 +165,16 @@ func initAllServer() {
 	}
 
 	// Init Http2 server
-	if 0 != len(common.JsonConfigs.ServerHttp2ListenHosts) {
-		prepareHttp2Cert()
-	}
 	for _, host := range common.JsonConfigs.ServerHttp2ListenHosts {
 		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
 		initHttp2Server(fmt.Sprintf("Http2Server-%v", listenAddr.Port), listenAddr)
+		time.Sleep(time.Duration(150) * time.Millisecond)
+	}
+
+	// Init Http3 server
+	for _, host := range common.JsonConfigs.ServerHttp3ListenHosts {
+		listenAddr.Ip, listenAddr.Port, _ = common.GetIpAndPort(host)
+		initHttp3Server(fmt.Sprintf("Http3Server-%v", listenAddr.Port), listenAddr)
 		time.Sleep(time.Duration(150) * time.Millisecond)
 	}
 
