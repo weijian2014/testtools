@@ -15,9 +15,16 @@ func sendByDns(localAddr, remoteAddr *common.IpAndPort) {
 	rAddr := &net.UDPAddr{IP: net.ParseIP(remoteAddr.Ip), Port: int(remoteAddr.Port)}
 
 	conn, err := net.DialUDP("udp", lAddr, rAddr)
-	defer conn.Close()
 	if err != nil {
 		panic(fmt.Sprintf("Dns client dial with %v failed, err : %v\n", rAddr.String(), err.Error()))
+	}
+	defer conn.Close()
+
+	if 0 != common.FlagInfos.ClientTimeoutSeconds {
+		err = conn.SetDeadline(time.Now().Add(time.Duration(common.FlagInfos.ClientTimeoutSeconds) * time.Second))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	var questionType dnsmessage.Type

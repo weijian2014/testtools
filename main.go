@@ -42,6 +42,7 @@ func init() {
 	flag.Uint64Var(&common.FlagInfos.ClientWaitingSeconds, "w", 0, "The second waiting to send before, support TCP, UDP, QUIC and DNS protocol")
 	flag.Uint64Var(&common.FlagInfos.ClientSendNumbers, "n", 1, "The number of client send data to server, valid only for UDP, TCP, QUIC protocols")
 	flag.IntVar(&common.FlagInfos.ClientLogLevel, "debug", 0, "The client log level, 0-Debug, 1-Info, 2-System, 3-Warn, 4-Error, 5-Fatal")
+	flag.Uint64Var(&common.FlagInfos.ClientTimeoutSeconds, "t", 0, "The timeout seconds of client read or write")
 	flag.Parse()
 
 	common.FlagInfos.ClientDestPort = uint16(tmpSentToServerPort)

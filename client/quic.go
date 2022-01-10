@@ -26,6 +26,14 @@ func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {
 	if err != nil {
 		panic(err)
 	}
+	defer udpConn.Close()
+
+	if 0 != common.FlagInfos.ClientTimeoutSeconds {
+		err = udpConn.SetDeadline(time.Now().Add(time.Duration(common.FlagInfos.ClientTimeoutSeconds) * time.Second))
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,

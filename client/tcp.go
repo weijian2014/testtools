@@ -19,9 +19,16 @@ func sendByTcp(localAddr, remoteAddr *common.IpAndPort) {
 	}
 
 	conn, err := net.DialTCP("tcp", lAddr, rAddr)
-	defer conn.Close()
 	if err != nil {
 		panic(fmt.Sprintf("Tcp client connect to %v failed, err : %v\n", remoteAddr.String(), err.Error()))
+	}
+	defer conn.Close()
+
+	if 0 != common.FlagInfos.ClientTimeoutSeconds {
+		err = conn.SetDeadline(time.Now().Add(time.Duration(common.FlagInfos.ClientTimeoutSeconds) * time.Second))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	common.Info("Tcp client bind on %v, will sent data to %v\n", localAddr.String(), remoteAddr.String())

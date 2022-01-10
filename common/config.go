@@ -65,6 +65,7 @@ type FlagInfoStruct struct {
 	ClientDestPort            uint16
 	ClientWaitingSeconds      uint64
 	ClientSendNumbers         uint64
+	ClientTimeoutSeconds      uint64
 	ClientLogLevel            int
 	ClientSendData            string
 	ClientRecvBufferSizeBytes uint64
