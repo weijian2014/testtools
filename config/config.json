@@ -53,5 +53,9 @@
       "www.qq.com": "2222::2222:2222:2222:2222",
       "www.cnblogs.com": "3333::3333:3333:3333:3333"
    },
-   "ServerSendData": "Hello Client"
+   "ServerSendData": "Hello Client",
+   "ServerDownloadPrefix": [
+      "files",
+      "test"
+   ]
 }

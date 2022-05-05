@@ -215,7 +215,11 @@ func initHttp3Server(serverName string, listenAddr common.IpAndPort) {
 
 func newServer(listenAddr common.IpAndPort) http.Server {
 	mux := http.NewServeMux()
-	mux.Handle("/files/", http.StripPrefix("/files/", http.FileServer(http.Dir(uploadPath))))
+
+	for _, filePrefix := range common.JsonConfigs.ServerDownloadPrefix {
+		mux.Handle("/"+filePrefix+"/", http.StripPrefix("/"+filePrefix+"/", http.FileServer(http.Dir(common.CurrDir+"/"+filePrefix+"/"))))
+	}
+
 	mux.HandleFunc("/", index)
 	mux.HandleFunc("/upload", upload)
 	mux.HandleFunc("/list", list)

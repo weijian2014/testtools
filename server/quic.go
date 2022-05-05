@@ -68,7 +68,7 @@ func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 
 func quicServerLoop(serverName string, listener quic.Listener) {
 	for {
-		session, err := listener.Accept(context.Background())
+		conn, err := listener.Accept(context.Background())
 		if err != nil {
 			if strings.Contains(err.Error(), "server closed") {
 				runtime.Goexit()
@@ -78,14 +78,14 @@ func quicServerLoop(serverName string, listener quic.Listener) {
 			}
 		}
 
-		go newQuicSessionHandler(session, serverName)
+		go newQuicSessionHandler(conn, serverName)
 	}
 }
 
-func newQuicSessionHandler(sess quic.Session, serverName string) {
-	stream, err := sess.AcceptStream(context.Background())
+func newQuicSessionHandler(conn quic.Connection, serverName string) {
+	stream, err := conn.AcceptStream(context.Background())
 	if err != nil {
-		common.Warn("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+		common.Warn("%v server[%v] ---- %v accept stream failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 		return
 	}
 	defer stream.Close()
@@ -103,23 +103,23 @@ func newQuicSessionHandler(sess quic.Session, serverName string) {
 				break
 			}
 
-			common.Warn("%v server[%v]----Quic client[%v] receive failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+			common.Warn("%v server[%v]----Quic client[%v] receive failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 			return
 		}
 
 		// send
 		n, err := stream.Write([]byte(common.JsonConfigs.ServerSendData))
 		if nil != err {
-			common.Warn("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, sess.LocalAddr(), sess.RemoteAddr(), err)
+			common.Warn("%v server[%v]----Quic client[%v] send failed, err: %v\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), err)
 			return
 		}
 
 		serverQuicCount++
 		common.Info("%v server[%v]----Quic client[%v]:\n\trecv: %s\n\tsend: %s\n",
-			serverName, sess.LocalAddr(), sess.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
+			serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
-	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, sess.LocalAddr(), sess.RemoteAddr())
+	common.Info("%v server[%v]----Quic client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())
 }
 
 // Setup a bare-bones TLS config for the server

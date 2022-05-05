@@ -45,6 +45,7 @@ type JsonConfigStruct struct {
 	ServerDnsAEntrys                   interface{} `json:"ServerDnsAEntrys"`  // map[string]interface{}
 	ServerDns4AEntrys                  interface{} `json:"ServerDns4AEntrys"` // map[string]interface{}
 	ServerSendData                     string      `json:"ServerSendData"`
+	ServerDownloadPrefix               []string    `json:"ServerDownloadPrefix"`
 }
 
 type FlagInfoStruct struct {
