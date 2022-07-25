@@ -167,7 +167,8 @@ func initHttp3Server(serverName string, listenAddr common.IpAndPort) {
 		common.Debug("%v server control coroutine running...\n", serverName)
 		server := newServer(listenAddr)
 		http3server := http3.Server{
-			Server:     &server,
+			Addr:       listenAddr.Ip,
+			Port:       int(listenAddr.Port),
 			QuicConfig: &quic.Config{},
 		}
 
