@@ -1,3 +1,57 @@
+# 一个Golang开发的TCP, UDP, HTTP 1.0/2.0/3.0, HTTPS, QUIC, DNS协议的echo测试工具
+- 分client和server端, 使用json配置文件, 支持配置热更新
+- client端支持指定源地址,目标端口和地址
+- HTTP和HTTPS支持文件下载和上传
+
+# 使用
+```
+# testtools -h
+Usage of /root/testtools/testtools:
+  -alpn string
+    	The ALPN of QUIC protocol, which example as "aaa,bbb,ccc", "ietf-quic-v1-echo-example" is hard code both in server and client
+  -d string
+    	The destination IP address of client
+    	This parameter takes precedence over ClientSendToIpv4Address or ClientSendToIpv6Address in the config.json file
+    	
+  -debug int
+    	The client log level, 0-Debug, 1-Info, 2-System, 3-Warn, 4-Error, 5-Fatal
+  -dns
+    	Using DNS protocol
+  -dport uint
+    	The port of server, valid only for UDP, TCP, QUIC protocols
+  -f string
+    	The path of config.json file, support for absolute and relative paths (default "/root/weijian/testtools/config.json")
+  -h	Show help
+  -http
+    	Using HTTP protocol
+  -http2
+    	Using HTTP2 protocol
+  -http3
+    	Using HTTP3 over QUIC protocol
+  -https
+    	Using HTTPS protocol
+  -n uint
+    	The number of client send data to server, valid only for UDP, TCP, QUIC protocols (default 1)
+  -quic
+    	Using QUIC protocol
+  -s string
+    	The source IP address of client
+    	This parameter takes precedence over clientBindIpAddress in the config.json file
+    	If the parameter is an IPv6 address, the client will send data to the ClientSendToIpv6Address of config.json file
+  -server
+    	As server running, default as client
+  -sni string
+    	The SNI of QUIC protocol
+  -t uint
+    	The timeout seconds of client read or write
+  -tcp
+    	Using TCP protocol
+  -udp
+    	Using UDP protocol
+  -w uint
+    	The second waiting to send before, support TCP, UDP, QUIC and DNS protocol
+```
+
 # go mod命令说明
 
     go mod download: 下载依赖的 module 到本地 cache
