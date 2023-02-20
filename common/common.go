@@ -157,6 +157,9 @@ func GetIpAndPort(host string) (string, uint16, error) {
 	index := strings.LastIndex(host, ":")
 	ip := host[0:index]
 
+	ip = strings.ReplaceAll(ip, "[", "")
+	ip = strings.ReplaceAll(ip, "]", "")
+
 	p, err := strconv.ParseUint(host[index+1:], 10, 16)
 	if nil != err {
 		return "", 0, fmt.Errorf("host[%v] parse fail, err: %v", host, err)
