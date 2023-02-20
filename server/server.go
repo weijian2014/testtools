@@ -31,15 +31,16 @@ func init() {
 }
 
 func StartServer() {
-	err := checkJsonConfig()
-	if nil != err {
-		panic(err)
-	}
+	// No need to check the server host in order to support :port or ip:port
+	// err := checkJsonConfig()
+	// if nil != err {
+	// 	panic(err)
+	// }
 
 	common.Debug("Check the %v file done!\n", common.FlagInfos.ConfigFileFullPath)
 
 	// 创建./files/目录
-	_, err = os.Stat(uploadPath)
+	_, err := os.Stat(uploadPath)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(uploadPath, os.ModePerm)
 		if nil != err {

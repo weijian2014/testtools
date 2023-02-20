@@ -4,44 +4,21 @@
    "ServerRecvBufferSizeBytes": 512,
    "ServerCounterOutputIntervalSeconds": 3600,
    "ServerTcpListenHosts": [
-      "0.0.0.0:1001",
-      "0.0.0.0:1002",
-      "0.0.0.0:1003"
    ],
    "ServerUdpListenHosts": [
-      "0.0.0.0:2001",
-      "0.0.0.0:2002",
-      "0.0.0.0:2003"
+      ":2001"
    ],
    "ServerQuicListenHosts": [
-      "0.0.0.0:3001",
-      "0.0.0.0:3002",
-      "0.0.0.0:3003"
    ],
    "ServerHttpListenHosts": [
-      "0.0.0.0:8101",
-      "0.0.0.0:8102",
-      "0.0.0.0:8103"
    ],
    "ServerHttpsListenHosts": [
-      "0.0.0.0:8111",
-      "0.0.0.0:8112",
-      "0.0.0.0:8113"
    ],
    "ServerHttp2ListenHosts": [
-      "0.0.0.0:8201",
-      "0.0.0.0:8202",
-      "0.0.0.0:8203"
    ],
    "ServerHttp3ListenHosts": [
-      "0.0.0.0:8301",
-      "0.0.0.0:8302",
-      "0.0.0.0:8303"
    ],
    "ServerDnsListenHosts": [
-      "0.0.0.0:5301",
-      "0.0.0.0:5302",
-      "0.0.0.0:5303"
    ],
    "ServerDnsAEntrys": {
       "www.google.com": "1.1.1.1",
