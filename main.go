@@ -98,7 +98,7 @@ func main() {
 
 	err := common.SetUdpReceiveBufferSizeByQuic()
 	if nil != err {
-		common.Debug("Set UDP receive buffer size by QUIC failed, err: [%v]\n", err.Error())
+		common.System("Set UDP receive buffer size by QUIC failed, err: [%v]\n", err.Error())
 	}
 
 	if common.FlagInfos.IsServer {
