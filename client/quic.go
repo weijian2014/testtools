@@ -8,7 +8,7 @@ import (
 	"testtools/common"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 )
 
 func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {

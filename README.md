@@ -90,7 +90,7 @@ Usage of /root/testtools/testtools:
 
 # go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
 
-    require github.com/lucas-clemente/quic-go 0810051
+    require github.com/quic-go/quic-go 0810051
 
 # Go Build Environment:
 

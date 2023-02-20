@@ -93,7 +93,7 @@ func Command(name string, arg ...string) ([]byte, error) {
 	return opBytes[:], nil
 }
 
-//RSA公钥私钥产生 无法启动HTTPS服务器
+// RSA公钥私钥产生 无法启动HTTPS服务器
 func GenerateX509Certificate(keyFullPath string, crtFullPath string) error {
 	max := new(big.Int).Lsh(big.NewInt(1), 128)   //把 1 左移 128 位，返回给 big.Int
 	serialNumber, _ := rand.Int(rand.Reader, max) //返回在 [0, max) 区间均匀随机分布的一个随机值

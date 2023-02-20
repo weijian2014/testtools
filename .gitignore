@@ -4,4 +4,5 @@ go.sum
 files/
 cert/
 testtools
+testtools.exe
 bin/

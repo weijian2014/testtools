@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testtools/common"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 )
 
 func initQuicServer(serverName string, listenAddr common.IpAndPort) {
