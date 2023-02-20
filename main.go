@@ -52,8 +52,6 @@ func init() {
 			common.FlagInfos.ClientQuicAlpn = append(common.FlagInfos.ClientQuicAlpn, strings.Split(tmpQuicAlpn, ",")...)
 		}
 	}
-
-	common.SetRecBufSizeByQuic()
 }
 
 func main() {
@@ -97,6 +95,11 @@ func main() {
 
 	// The third parameter "" mean the log output to stdout
 	common.LoggerInit(logLevel, logRoll, "")
+
+	err := common.SetUdpReceiveBufferSizeByQuic()
+	if nil != err {
+		common.Debug("Set UDP receive buffer size by QUIC failed, err: [%v]\n", err.Error())
+	}
 
 	if common.FlagInfos.IsServer {
 		server.StartServer()
