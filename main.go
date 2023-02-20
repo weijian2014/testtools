@@ -48,10 +48,12 @@ func init() {
 	common.FlagInfos.ClientDestPort = uint16(tmpSentToServerPort)
 	if common.FlagInfos.ClientUsingQuic {
 		common.FlagInfos.ClientQuicAlpn = append(common.FlagInfos.ClientQuicAlpn, common.COMMON_QUIC_ALPN)
-		if 0 != len(tmpQuicAlpn) {
+		if 0 < len(tmpQuicAlpn) {
 			common.FlagInfos.ClientQuicAlpn = append(common.FlagInfos.ClientQuicAlpn, strings.Split(tmpQuicAlpn, ",")...)
 		}
 	}
+
+	common.SetRecBufSizeByQuic()
 }
 
 func main() {

@@ -202,3 +202,15 @@ func IsExist(fileFullPath string) bool {
 		return true
 	}
 }
+
+func SetRecBufSizeByQuic() bool {
+	// https://github.com/quic-go/quic-go/wiki/UDP-Receive-Buffer-Size
+	// sysctl -w net.core.rmem_max=2500000
+	cmd := fmt.Sprintf(`sysctl -w net.core.rmem_max=2500000 > /dev/null`)
+	_, err := Command("/bin/sh", "-c", cmd)
+	if nil != err {
+		panic(err)
+	}
+
+	return true
+}
