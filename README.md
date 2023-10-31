@@ -1,9 +1,11 @@
-# 一个Golang开发的TCP, UDP, HTTP 1.0/2.0/3.0, HTTPS, QUIC, DNS协议的echo测试工具
-- 分client和server端, 使用json配置文件, 支持配置热更新
-- client端支持指定源地址,目标端口和地址
-- HTTP和HTTPS支持文件下载和上传
+# 一个 Golang 开发的 TCP, UDP, HTTP 1.0/2.0/3.0, HTTPS, QUIC, DNS 协议的 echo 测试工具
+
+- 分 client 和 server 端, 使用 json 配置文件, 支持配置热更新
+- client 端支持指定源地址,目标端口和地址
+- HTTP 和 HTTPS 支持文件下载和上传
 
 # 使用
+
 ```
 # testtools -h
 Usage of /root/testtools/testtools:
@@ -12,7 +14,7 @@ Usage of /root/testtools/testtools:
   -d string
     	The destination IP address of client
     	This parameter takes precedence over ClientSendToIpv4Address or ClientSendToIpv6Address in the config.json file
-    	
+
   -debug int
     	The client log level, 0-Debug, 1-Info, 2-System, 3-Warn, 4-Error, 5-Fatal
   -dns
@@ -52,7 +54,7 @@ Usage of /root/testtools/testtools:
     	The second waiting to send before, support TCP, UDP, QUIC and DNS protocol
 ```
 
-# go mod命令说明
+# go mod 命令说明
 
     go mod download: 下载依赖的 module 到本地 cache
     go mod edit: 编辑 go.mod
@@ -64,31 +66,32 @@ Usage of /root/testtools/testtools:
     go mod why: 解释为什么需要依赖
     go list -m -json all: JSON格式显示所有Import库信息
 
-# GoLand配置
+# GoLand 配置
 
     settings---GO---Go Modules(vgo)---勾选 Enable Go Modules(vgo) integration  #开启Go Modules
     settings---GO---Go Modules(vgo)---proxy中填入https://goproxy.io            #开启代理
 
-# 项目中使用Go Modules, 并构建项目
+# 项目中使用 Go Modules, 并构建项目
 
     mkdir -p /opt/go/gopath
-    echo "export PATH=${PATH}:/opt/go" >> ~/.profile
     echo "export GOROOT=/opt/go" >> ~/.profile
-    echo "export GOPATH=/opt/go/gopath" >> ~/.profile
-    echo "export GOPROXY=https://goproxy.io" >> ~/.profile
+    echo "export PATH=${PATH}:${GOROOT}/bin" >> ~/.profile
+    echo "export GOPATH=${GOROOT}/gopath" >> ~/.profile
     echo "export GO111MODULE=on" >> ~/.profile
+    echo "export GOPROXY=https://goproxy.cn" >> ~/.profile
+
     source ~/.profile
     cd testtools
     go mod init testtools
     go mod tidy
-    go get -u golang.org/x/net
+    gofmt -l -w .
     go build .
 
 # 格式化整个项目
 
     gofmt -l -w .
 
-# go.mod中加入quic-go的google版本， 0810051为google版本的最后一个commit id
+# go.mod 中加入 quic-go 的 google 版本， 0810051 为 google 版本的最后一个 commit id
 
     require github.com/quic-go/quic-go 0810051
 

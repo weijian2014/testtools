@@ -24,7 +24,7 @@ func sendByTcp(localAddr, remoteAddr *common.IpAndPort) {
 	}
 	defer conn.Close()
 
-	if 0 != common.FlagInfos.ClientTimeoutSeconds {
+	if common.FlagInfos.ClientTimeoutSeconds != 0 {
 		err = conn.SetDeadline(time.Now().Add(time.Duration(common.FlagInfos.ClientTimeoutSeconds) * time.Second))
 		if err != nil {
 			panic(err)
@@ -33,7 +33,7 @@ func sendByTcp(localAddr, remoteAddr *common.IpAndPort) {
 
 	common.Info("Tcp client bind on %v, will sent data to %v\n", localAddr.String(), remoteAddr.String())
 
-	if 0 != common.FlagInfos.ClientWaitingSeconds {
+	if common.FlagInfos.ClientWaitingSeconds != 0 {
 		common.Info("Tcp client waiting %v...\n", common.FlagInfos.ClientWaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.ClientWaitingSeconds) * time.Second)
 	}

@@ -7,12 +7,6 @@ import (
 	"testtools/common"
 )
 
-var (
-	sendToServerIpAddress          string
-	clientBindIpAddressRange       []string
-	clientBindIpAddressRangeLength uint64 = 0
-)
-
 func StartClient() {
 	err := checkFlags()
 	if nil != err {
@@ -72,7 +66,7 @@ func StartClient() {
 
 func checkFlags() error {
 	// -s src IP check
-	if 0 == len(common.FlagInfos.ClientScrIp) {
+	if len(common.FlagInfos.ClientScrIp) == 0 {
 		return fmt.Errorf("ClientScrIp is invalid address, please specify a correct source ip using -s")
 	}
 	if nil == net.ParseIP(common.FlagInfos.ClientScrIp).To4() &&
@@ -81,7 +75,7 @@ func checkFlags() error {
 	}
 
 	// -d dest IP check
-	if 0 == len(common.FlagInfos.ClientDestIp) {
+	if len(common.FlagInfos.ClientDestIp) == 0 {
 		return fmt.Errorf("ClientDestIp is invalid address, please specify a correct destination ip using -d")
 	}
 	if nil == net.ParseIP(common.FlagInfos.ClientDestIp).To4() &&

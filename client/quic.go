@@ -28,7 +28,7 @@ func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {
 	}
 	defer udpConn.Close()
 
-	if 0 != common.FlagInfos.ClientTimeoutSeconds {
+	if common.FlagInfos.ClientTimeoutSeconds != 0 {
 		err = udpConn.SetDeadline(time.Now().Add(time.Duration(common.FlagInfos.ClientTimeoutSeconds) * time.Second))
 		if err != nil {
 			panic(err)
@@ -41,19 +41,19 @@ func sendByQuic(localAddr, remoteAddr *common.IpAndPort) {
 		ServerName:         common.FlagInfos.ClientQuicSni,
 	}
 
-	session, err := quic.Dial(udpConn, rAddr, rAddr.String(), tlsConf, nil)
+	session, err := quic.DialAddr(context.Background(), rAddr.String(), tlsConf, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Quic client dial with %v failed, err : %v\n", remoteAddr.String(), err.Error()))
 	}
 
 	stream, err := session.OpenStreamSync(context.Background())
-	defer stream.Close()
 	if err != nil {
 		panic(fmt.Sprintf("Quic client[%v]----Quic server[%v] open stream failed, err : %v\n", session.LocalAddr(), session.RemoteAddr(), err.Error()))
 	}
+	defer stream.Close()
 
 	common.Info("Quic client bind on %v, will sent data to %v\n", localAddr.String(), remoteAddr.String())
-	if 0 != common.FlagInfos.ClientWaitingSeconds {
+	if common.FlagInfos.ClientWaitingSeconds != 0 {
 		common.Info("Quic client waiting %v...\n", common.FlagInfos.ClientWaitingSeconds)
 		time.Sleep(time.Duration(common.FlagInfos.ClientWaitingSeconds) * time.Second)
 	}
