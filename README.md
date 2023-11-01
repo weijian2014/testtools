@@ -74,13 +74,13 @@ Usage of /root/testtools/testtools:
 # 项目中使用 Go Modules, 并构建项目
 
     mkdir -p /opt/go/gopath
-    echo "export GOROOT=/opt/go" >> ~/.profile
-    echo "export PATH=${PATH}:${GOROOT}/bin" >> ~/.profile
-    echo "export GOPATH=${GOROOT}/gopath" >> ~/.profile
-    echo "export GO111MODULE=on" >> ~/.profile
-    echo "export GOPROXY=https://goproxy.cn" >> ~/.profile
+    echo "export GOROOT=/opt/go" >> ~/.bashrc
+    echo "export PATH=${PATH}:${GOROOT}/bin" >> ~/.bashrc
+    echo "export GOPATH=${GOROOT}/gopath" >> ~/.bashrc
+    echo "export GO111MODULE=on" >> ~/.bashrc
+    echo "export GOPROXY=https://goproxy.cn" >> ~/.bashrc
 
-    source ~/.profile
+    source ~/.bashrc
     cd testtools
     go mod init testtools
     go mod tidy

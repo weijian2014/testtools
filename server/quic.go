@@ -66,7 +66,7 @@ func initQuicServer(serverName string, listenAddr common.IpAndPort) {
 	}()
 }
 
-func quicServerLoop(serverName string, listener* quic.Listener) {
+func quicServerLoop(serverName string, listener *quic.Listener) {
 	for {
 		conn, err := listener.Accept(context.Background())
 		if err != nil {
