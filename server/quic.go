@@ -95,8 +95,8 @@ func newQuicSessionHandler(conn quic.Connection, serverName string) {
 		recvBuffer := make([]byte, common.JsonConfigs.ServerRecvBufferSizeBytes)
 		_, err = stream.Read(recvBuffer)
 		if err != nil {
-			if "NO_ERROR" == err.Error() ||
-				"EOF" == err.Error() ||
+			if err.Error() == "NO_ERROR" ||
+				err.Error() == "EOF" ||
 				strings.Contains(err.Error(), "PeerGoingAway") ||
 				strings.Contains(err.Error(), "NetworkIdleTimeout") ||
 				strings.Contains(err.Error(), "No recent network activity") {

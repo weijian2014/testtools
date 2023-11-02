@@ -75,7 +75,7 @@ func StartServer() {
 	common.Debug("Start all servers done!\n")
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
-	if 0 == len(common.JsonConfigs.ServerHttpListenHosts) {
+	if len(common.JsonConfigs.ServerHttpListenHosts) == 0 {
 		HttpServerGuide(80)
 	} else {
 		_, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpListenHosts[0])
@@ -86,7 +86,7 @@ func StartServer() {
 	}
 	common.Debug("Show the http server guide done!\n")
 
-	if 0 == len(common.JsonConfigs.ServerHttpsListenHosts) {
+	if len(common.JsonConfigs.ServerHttpsListenHosts) == 0 {
 		HttpsServerGuide(443)
 	} else {
 		_, port, err := common.GetIpAndPort(common.JsonConfigs.ServerHttpsListenHosts[0])
@@ -106,7 +106,7 @@ func StartServer() {
 	common.System("================================================================================\n")
 
 	for {
-		if 0 == common.JsonConfigs.ServerCounterOutputIntervalSeconds {
+		if common.JsonConfigs.ServerCounterOutputIntervalSeconds == 0 {
 			time.Sleep(time.Duration(5) * time.Second)
 		} else {
 			time.Sleep(time.Duration(common.JsonConfigs.ServerCounterOutputIntervalSeconds) * time.Second)
@@ -148,9 +148,9 @@ func initAllServer() {
 		time.Sleep(time.Duration(5) * time.Millisecond)
 	}
 
-	if 0 != len(common.JsonConfigs.ServerHttpsListenHosts) ||
-		0 != len(common.JsonConfigs.ServerHttp2ListenHosts) ||
-		0 != len(common.JsonConfigs.ServerHttp3ListenHosts) {
+	if len(common.JsonConfigs.ServerHttpsListenHosts) != 0 ||
+		len(common.JsonConfigs.ServerHttp2ListenHosts) != 0 ||
+		len(common.JsonConfigs.ServerHttp3ListenHosts) != 0 {
 		err := common.Mkdir(certificatePath)
 		if nil != err {
 			panic(err)
@@ -180,7 +180,7 @@ func initAllServer() {
 	}
 
 	// Init Dns server
-	if 0 != len(common.JsonConfigs.ServerDnsListenHosts) {
+	if len(common.JsonConfigs.ServerDnsListenHosts) != 0 {
 		saveDnsEntrys()
 	}
 	for _, host := range common.JsonConfigs.ServerDnsListenHosts {
@@ -199,7 +199,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for tcp server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for tcp server", host)
 		}
 	}
 
@@ -212,7 +212,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for udp server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for udp server", host)
 		}
 	}
 
@@ -225,7 +225,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for quic server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for quic server", host)
 		}
 	}
 
@@ -238,7 +238,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for http server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for http server", host)
 		}
 	}
 
@@ -251,7 +251,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for https server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for https server", host)
 		}
 	}
 
@@ -264,7 +264,7 @@ func checkJsonConfig() error {
 
 		if nil == net.ParseIP(ip).To4() &&
 			nil == net.ParseIP(ip).To16() {
-			return fmt.Errorf("Listen host[%v] invalid of config.json file for dns server", host)
+			return fmt.Errorf("listen host[%v] invalid of config.json file for dns server", host)
 		}
 	}
 

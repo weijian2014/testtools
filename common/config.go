@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,6 +64,7 @@ type FlagInfoStruct struct {
 	ClientScrIp               string
 	ClientDestIp              string
 	ClientDestPort            uint16
+	ClientJsonDataFile        string
 	ClientWaitingSeconds      uint64
 	ClientSendNumbers         uint64
 	ClientTimeoutSeconds      uint64
@@ -81,7 +82,7 @@ type IpAndPort struct {
 
 func (addr *IpAndPort) String() string {
 	str := ""
-	if false == strings.Contains(addr.Ip, ":") {
+	if !strings.Contains(addr.Ip, ":") {
 		str = fmt.Sprintf("%v:%v", addr.Ip, addr.Port)
 	} else {
 		str = fmt.Sprintf("[%v]:%v", addr.Ip, addr.Port)
@@ -98,7 +99,7 @@ func LoadConfigFile(filePath string) (*JsonConfigStruct, error) {
 	}
 	defer file.Close()
 
-	cData, err := ioutil.ReadAll(file)
+	cData, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -109,4 +110,19 @@ func LoadConfigFile(filePath string) (*JsonConfigStruct, error) {
 	}
 
 	return c, nil
+}
+
+func ReadJsonFile(filePath string) (string, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	cData, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+
+	return string(cData), nil
 }

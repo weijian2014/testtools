@@ -91,7 +91,7 @@ func dnsServerLoop(serverName string, conn *net.UDPConn) {
 
 		//fmt.Printf("Dns server[%v]----Dns client[%v], recv msg:\n\t%+v\n", conn.LocalAddr(), remoteAddress, requestMessage)
 		questionCount := len(requestMessage.Questions)
-		if 0 == questionCount {
+		if questionCount == 0 {
 			common.Warn("%v server[%v]----Dns client[%v] question count is zero\n", serverName, conn.LocalAddr(), remoteAddress)
 			continue
 		} else {
@@ -165,14 +165,14 @@ func dnsServerLoop(serverName string, conn *net.UDPConn) {
 }
 
 func printDnsServerEntrys() {
-	if 0 != len(dnsAEntrys) {
+	if len(dnsAEntrys) != 0 {
 		common.System("Dns server a record:\n")
 	}
 	for k, v := range dnsAEntrys {
 		common.System("\t%v ---- %v\n", k, v)
 	}
 
-	if 0 != len(dns4AEntrys) {
+	if len(dns4AEntrys) != 0 {
 		common.System("Dns server aaaa record:\n")
 	}
 	for k, v := range dns4AEntrys {
@@ -182,15 +182,15 @@ func printDnsServerEntrys() {
 
 func checkDomainName(domainName string) error {
 	if strings.Contains(domainName, " ") {
-		return fmt.Errorf("The domain name %v invalid", domainName)
+		return fmt.Errorf("the domain name %v invalid", domainName)
 	}
 
 	if strings.HasPrefix(domainName, "http") {
-		return fmt.Errorf("The domain name %v invalid, the prefix has 'http'", domainName)
+		return fmt.Errorf("the domain name %v invalid, the prefix has 'http'", domainName)
 	}
 
 	if strings.HasPrefix(domainName, "https") {
-		return fmt.Errorf("The domain name %v invalid, the prefix has 'https", domainName)
+		return fmt.Errorf("the domain name %v invalid, the prefix has 'https", domainName)
 	}
 
 	//支持以http://或者https://开头并且域名中间有/的情况
@@ -226,7 +226,7 @@ func saveDnsEntrys() {
 
 		ipv4 := ip.(string)
 		if nil == net.ParseIP(ipv4) ||
-			false == strings.Contains(ipv4, ".") {
+			!strings.Contains(ipv4, ".") {
 			panic(fmt.Sprintf("The domain name %v not match valid IPv4 address", domainName))
 		}
 		dnsAEntrys[domainName+"."] = ipv4
@@ -243,7 +243,7 @@ func saveDnsEntrys() {
 
 		ipv6 := ip.(string)
 		if nil == net.ParseIP(ipv6) ||
-			false == strings.Contains(ipv6, ":") {
+			!strings.Contains(ipv6, ":") {
 			panic(fmt.Sprintf("The domain name %v not match valid IPv6 address", domainName))
 		}
 		dns4AEntrys[domainName+"."] = ipv6

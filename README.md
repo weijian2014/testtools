@@ -73,6 +73,7 @@ Usage of /root/testtools/testtools:
 
 # 项目中使用 Go Modules, 并构建项目
 
+    修改项目.vscode/settings.json中的go.goroot和go.gopath
     mkdir -p /opt/go/gopath
     echo "export GOROOT=/opt/go" >> ~/.bashrc
     echo "export PATH=${PATH}:${GOROOT}/bin" >> ~/.bashrc

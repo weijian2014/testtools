@@ -246,7 +246,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		prefix = "Https"
 	}
-	if "Http" == prefix {
+	if prefix == "Http" {
 		serverHttpCount++
 	} else {
 		serverHttpsCount++
@@ -294,7 +294,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 		listFile += line
 	}
 
-	if 0 == len(listFile) {
+	if len(listFile) == 0 {
 		w.Write([]byte("\t\tNot have any file on web server"))
 	} else {
 		w.Write([]byte(fmt.Sprintf("\tTotal %v files, see below:\n", len(files))))

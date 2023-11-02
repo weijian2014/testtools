@@ -29,6 +29,8 @@ func init() {
 
 	flag.UintVar(&tmpSentToServerPort, "dport", 0, "The port of server, valid only for UDP, TCP, QUIC protocols")
 
+	flag.StringVar(&common.FlagInfos.ClientJsonDataFile, "json", "", "The path of json format data file to send")
+
 	flag.BoolVar(&common.FlagInfos.ClientUsingTcp, "tcp", false, "Using TCP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingUdp, "udp", false, "Using UDP protocol")
 	flag.BoolVar(&common.FlagInfos.ClientUsingHttp, "http", false, "Using HTTP protocol")
@@ -75,7 +77,7 @@ func main() {
 
 			_, err = os.Stat(common.FlagInfos.ConfigFileFullPath)
 			if os.IsNotExist(err) {
-				panic(fmt.Sprintf("Please using -f option specifying a configuration file"))
+				panic("Please using -f option specifying a configuration file")
 			}
 		}
 
@@ -89,8 +91,17 @@ func main() {
 	} else {
 		// client
 		logLevel = common.FlagInfos.ClientLogLevel
-		common.FlagInfos.ClientSendData = "Hello Server"
-		common.FlagInfos.ClientRecvBufferSizeBytes = 512
+		if len(common.FlagInfos.ClientJsonDataFile) != 0 {
+			jsonData, err := common.ReadJsonFile(common.FlagInfos.ClientJsonDataFile)
+			if nil != err {
+				panic(fmt.Sprintf("Read json format data file %v failed, error %v", common.FlagInfos.ClientJsonDataFile, err.Error()))
+			} else {
+				common.FlagInfos.ClientSendData = jsonData
+			}
+		} else {
+			common.FlagInfos.ClientSendData = "Hello Server"
+		}
+		common.FlagInfos.ClientRecvBufferSizeBytes = 1024
 	}
 
 	// The third parameter "" mean the log output to stdout

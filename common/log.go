@@ -69,7 +69,7 @@ func LoggerInit(lev int, roll int, fullPath string) {
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
 
 	var w io.Writer
-	if "" == logger.filePath {
+	if logger.filePath == "" {
 		w = os.Stdout
 	} else {
 		createLogFile()
@@ -142,7 +142,7 @@ func createLogFile() {
 }
 
 func (*Logger) Write(buf []byte) (n int, err error) {
-	if "" == logger.filePath {
+	if logger.filePath == "" {
 		return logger.file.Write(buf)
 	}
 

@@ -80,11 +80,11 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 		recvBuffer := make([]byte, common.JsonConfigs.ServerRecvBufferSizeBytes)
 		n, err := conn.Read(recvBuffer)
 		if err != nil {
-			if "NO_ERROR" == err.Error() {
+			if err.Error() == "NO_ERROR" {
 				break
 			}
 
-			if "EOF" == err.Error() {
+			if err.Error() == "EOF" {
 				break
 			}
 

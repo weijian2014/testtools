@@ -206,7 +206,7 @@ func insertControlChannel(host string, ctrlChan chan int) error {
 
 	_, ok := controlChannelsMap[host]
 	if ok {
-		return fmt.Errorf("The control channel[%v] already exists to insert control channel", host)
+		return fmt.Errorf("the control channel[%v] already exists to insert control channel", host)
 	}
 
 	controlChannelsMap[host] = ctrlChan
@@ -219,7 +219,7 @@ func deleteControlChannel(host string) error {
 
 	_, ok := controlChannelsMap[host]
 	if !ok {
-		return fmt.Errorf("The control channel[%v] does not exist to delete", host)
+		return fmt.Errorf("the control channel[%v] does not exist to delete", host)
 	}
 
 	delete(controlChannelsMap, host)
@@ -237,7 +237,7 @@ func sendOptionToControlChannel(host string, option int) error {
 
 	ctrlChan, ok := controlChannelsMap[host]
 	if !ok {
-		return fmt.Errorf("The control channel[%v] does not exist to send option", host)
+		return fmt.Errorf("the control channel[%v] does not exist to send option", host)
 	}
 
 	ctrlChan <- option
@@ -278,7 +278,7 @@ func stopServer(host string) error {
 
 func checkControlOption(option int) error {
 	if StartServerControlOption > option || MaxControlOption <= option {
-		return fmt.Errorf("Invalid option")
+		return fmt.Errorf("invalid option")
 	}
 
 	return nil
@@ -324,7 +324,7 @@ func reflushServer(old, new []string, name string) error {
 		del := subtraction(old, r)
 		add := subtraction(new, r)
 
-		if 0 != len(del) || 0 != len(add) {
+		if len(del) != 0 || len(add) != 0 {
 			common.System("%v server listen hosts has changed, old=%v, new=%v, del=%v, add=%v\n", name, old, old, del, add)
 
 			listenAddr := common.IpAndPort{Ip: "0.0.0.0", Port: 0}
