@@ -100,7 +100,7 @@ func newTcpConnectionHandler(conn net.Conn, serverName string) {
 		}
 
 		serverTcpCount++
-		common.Info("%v server[%v]----Tcp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
+		common.Info("%v server[%v]----Tcp client[%v]:\n\trecv: \n%s\n\tsend: \n%s\n", serverName, conn.LocalAddr(), conn.RemoteAddr(), recvBuffer[:n], common.JsonConfigs.ServerSendData)
 	}
 
 	common.Info("%v server[%v]----Tcp client[%v] closed\n", serverName, conn.LocalAddr(), conn.RemoteAddr())

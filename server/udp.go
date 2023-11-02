@@ -87,7 +87,7 @@ func udpServerLoop(serverName string, conn *net.UDPConn) {
 			}
 
 			serverUdpCount++
-			common.Info("%v server[%v]----Udp client[%v]:\n\trecv: %s\n\tsend: %s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
+			common.Info("%v server[%v]----Udp client[%v]:\n\trecv: \n%s\n\tsend: \n%s\n", serverName, conn.LocalAddr(), remoteAddress, recvBuffer[:n], common.JsonConfigs.ServerSendData)
 			runtime.Goexit()
 		}()
 	}

@@ -54,6 +54,6 @@ func sendByTcp(localAddr, remoteAddr *common.IpAndPort) {
 			continue
 		}
 
-		common.Info("Tcp client[%v]----Tcp server[%v], times[%d]:\n\tsend: %s\n\trecv: %s\n", conn.LocalAddr(), conn.RemoteAddr(), i, common.FlagInfos.ClientSendData, recvBuffer[:n])
+		common.Info("Tcp client[%v]----Tcp server[%v], times[%d]:\n\tsend: \n%s\n\trecv: \n%s\n", conn.LocalAddr(), conn.RemoteAddr(), i, common.FlagInfos.ClientSendData, recvBuffer[:n])
 	}
 }
